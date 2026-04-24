@@ -699,6 +699,40 @@ body::before {
 @keyframes flashLine { to { opacity: 0; } }
 
 /* King ring pulse — radial expanding ring */
+/* 킹 — 칼날 회오리 (회전하는 십자 블레이드) */
+.king-blade-storm {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9;
+  animation: kingBladeSpin 0.46s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+}
+.king-blade-storm .kb-blade {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 100%; height: 6px;
+  transform-origin: 50% 50%;
+  border-radius: 3px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,235,160,0.95) 25%,
+    rgba(255,200,80,1) 50%,
+    rgba(255,235,160,0.95) 75%,
+    rgba(255,255,255,0) 100%);
+  box-shadow:
+    0 0 14px rgba(255,210,80,1),
+    0 0 28px rgba(255,170,40,0.7),
+    0 0 50px rgba(255,140,20,0.4);
+  filter: brightness(1.2) saturate(1.3);
+}
+.king-blade-storm .kb-blade.kb-h { transform: translate(-50%, -50%) rotate(0deg); }
+.king-blade-storm .kb-blade.kb-v { transform: translate(-50%, -50%) rotate(90deg); }
+@keyframes kingBladeSpin {
+  0%   { transform: translate(-50%, -50%) rotate(0deg)   scale(0.3); opacity: 0.3; }
+  20%  { transform: translate(-50%, -50%) rotate(180deg) scale(1.0); opacity: 1; }
+  60%  { transform: translate(-50%, -50%) rotate(420deg) scale(1.05); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) rotate(540deg) scale(1.15); opacity: 0; }
+}
 .king-ring {
   position: absolute;
   border: 3px solid rgba(255,210,80,0.85);
@@ -1532,6 +1566,9 @@ body::before {
     <h3>자동 시작 ⏭</h3>
     <p>시작 버튼 옆 ⏭ 버튼을 켜두면 라운드가 끝난 뒤 5·4·3·2·1 카운트(실시간, 배속 무관) 후 자동으로 다음 라운드가 시작됩니다. 카운트 중에 다시 누르면 취소.</p>
 
+    <h3>👑 보스 CC 면역</h3>
+    <p>보스가 등장한 지 <b>30초가 지나면</b> 스턴/넉백 효과가 점점 줄어들고, <b>60초 후 완전 면역</b>이 됩니다. 빠르게 처치하세요!</p>
+
     <h3>📊 개별 말 DPS 보기</h3>
     <p>보드 위 <b>체스 말을 탭(클릭)하면</b> 해당 타일의 <b>직전 라운드 DPS</b>를 볼 수 있어요. <b>같은 타일 재탭하면 창이 닫힘</b>. 전투 중에는 표시되지 않고 라운드 종료 후에만 표시.</p>
 
@@ -1636,7 +1673,8 @@ const PIECE_STATS = {
   bishop: { atk: 58,  aps: 1.00, range: 4.0, type: "chain",    desc: "연쇄 감전 (3회)",  critBase: 0.06 },
   // 퀸 — 파바바박 초고속 광역 (aps 대폭 상향, 데미지 하향으로 밸런스)
   queen:  { atk: 38,  aps: 1.85, range: 5.8, type: "multi",    desc: "파바바박 광역 (최대 6명)", critBase: 0.02 },
-  king:   { atk: 320, aps: 0.55, range: 1.8, type: "aoe_buff", desc: "초근접 즉사급 + 아군 +15%", critBase: 0.08 }
+  // 킹 — 중간 사거리 + 빠른 공속 + 강력한 광역, 광범위 오라, "왕의 명령" 짧은 스턴
+  king:   { atk: 240, aps: 0.85, range: 2.8, type: "aoe_buff", desc: "광역 + 강한 오라 + 왕의 명령(스턴)", critBase: 0.10 }
 };
 
 // 정보 패널에서 보여줄 상세 능력 설명
@@ -1646,7 +1684,7 @@ const PIECE_ABILITY = {
   rook:   ["상하좌우 축 위의 적만 타격 (범위 제한)", "환영이 날아가 축의 모든 적 관통 + 넉백", "느린 공속 · 단발 화력"],
   bishop: ["주 타겟 → 주변 적 2명까지 연쇄 (총 3타)", "튕길 때마다 70% 감쇠", "진화 순서에서 룩보다 강한 범용 딜러"],
   queen:  ["사거리 5.8칸 내 적 최대 6명 동시 타격", "aps 1.85로 <b>파바바박</b> 초고속 광역", "치명타 2%로 낮고 단일 피해는 얕음"],
-  king:   ["초근접(1.8칸)에서 거의 즉사급 단일 피해", "느리지만 광역 + 주변 2.5칸 아군 +15%", "좁은 공간을 완전 장악"],
+  king:   ["사거리 2.8칸 + 광역 2.5칸 (광역 큼)", "주변 4칸 아군 오라: 공격 +25% · 공속 +10% · 치명 +5%", "20% 확률로 주 타겟 0.5초 스턴 (왕의 명령)", "이펙트: 황금 빔 + 확장 링"],
 };
 
 // 말 카드 내부 확률
@@ -2053,7 +2091,7 @@ const REWARDS = [
   { id: "atk_king",    name: "킹 공격력 +8%",      desc: "킹 즉사급 피해 ↑", icon: "♚", add: { atk_king: 0.08 } },
   // ─── 특수 능력 ───
   { id: "knightStunR", name: "나이트 스턴 범위 +10%", desc: "스플래시 기절 범위 확장", icon: "♞", add: { knightStunR: 0.10 } },
-  { id: "rookKnockback", name: "룩 넉백 +15%",     desc: "룩 넉백 거리 강화", icon: "♜", add: { rookKnockback: 0.15 } },
+  { id: "rookKnockback", name: "룩 넉백 부여 (+0.4 거리)", desc: "룩이 적을 뒤로 밀치게 됨 (없으면 넉백 없음)", icon: "♜", add: { rookKnockback: 0.40 } },
   { id: "support",     name: "지원 기여도 +7%",    desc: "연결망 지원 피해 증가", icon: "🔗", add: { supportBoost: 0.07 } },
   // ─── 즉시 자원 ───
   { id: "coin",        name: "코인 +10",           desc: "즉시 10 코인 획득", icon: "🪙", instant: "coin10" },
@@ -2439,10 +2477,15 @@ function collectUnits() {
     }
   }
   for (const u of list) if (u.piece === "king") {
+    // 왕의 오라: 4칸 이내 아군 atk +25%, aps +10%, crit +5%
     for (const v of list) {
       if (v === u) continue;
       const d = Math.hypot(v.tileX - u.tileX, v.tileY - u.tileY);
-      if (d <= 2.5) v.atk *= 1.15;
+      if (d <= 4.0) {
+        v.atk *= 1.25;
+        v.aps *= 1.10;
+        v.crit = Math.min(0.9, v.crit + 0.05);
+      }
     }
   }
   return list;
@@ -2569,6 +2612,7 @@ function startRound() {
       pathIdx: -i * 0.55,
       dead: false, reachedEnd: false, stunTimer: 0,
       modifiers: {},
+      spawnTime: performance.now(),
     };
     // 보스 패턴
     if (type === "boss") {
@@ -2739,6 +2783,15 @@ function simulate(dt) {
   state.monsters = state.monsters.filter(m => !m.reachedEnd);
 }
 
+// 보스 CC 면역 램프 — 보스가 살아남은 시간이 길수록 stun/넉백 효과 감소
+// 0초~30초: 100% / 30~60초: 100→0 선형 감쇠 / 60초+: 0% (완전 면역)
+function bossCCMul(m) {
+  if (!m || m.type !== "boss") return 1;
+  const elapsed = (performance.now() - (m.spawnTime || performance.now())) / 1000;
+  if (elapsed <= 30) return 1;
+  if (elapsed >= 60) return 0;
+  return 1 - (elapsed - 30) / 30;
+}
 function performAttack(u, targets) {
   // 치명타 2배 (기존 1.8 → 2.0)
   const critRand = combatRand();
@@ -2795,12 +2848,13 @@ function performAttack(u, targets) {
       curPos = best.p;
     }
   } else if (u.attackType === "aoe_buff") {
+    // 킹: 주 타겟 + 광역 2.5칸
     const primary = targets[0];
     hitTargets.push(primary);
     for (const t of targets) {
       if (t.m === primary.m) continue;
       const d = Math.hypot(t.p.x - primary.p.x, t.p.y - primary.p.y);
-      if (d <= 1.6) hitTargets.push(t);
+      if (d <= 2.5) hitTargets.push(t);
     }
   } else {
     hitTargets.push(targets[0]);
@@ -2808,33 +2862,45 @@ function performAttack(u, targets) {
 
   const dmgPerTarget = baseDmg + supportDmg;
   const knightStunRadius = 0.7 + (state.mods?.knightStunR || 0);
-  const rookKnockback = 0.45 + (state.mods?.rookKnockback || 0);
+  // 룩 넉백: 기본 0 (증강 'rookKnockback'으로 활성화)
+  const rookKnockback = (state.mods?.rookKnockback || 0);
 
   for (let i = 0; i < hitTargets.length; i++) {
     const t = hitTargets[i];
     const chainMult = t.chained ? Math.pow(0.7, t.chained) : 1;
     let dmg = dmgPerTarget * chainMult;
 
-    // 나이트: 약한 스턴 (몬스터가 너무 멈추지 않도록)
+    // 나이트: 약한 스턴 — 보스에게는 시간이 흐를수록 효과 감소
     if (u.attackType === "jump") {
       const resistMul = (t.m.modifiers && t.m.modifiers.stunResist) ? 0.5 : 1;
-      // 주 타겟 8% 확률 · 0.2초
-      if (combatRand() < 0.08 * resistMul) t.m.stunTimer = Math.max(t.m.stunTimer, 0.2);
+      const ccMul = bossCCMul(t.m);
+      if (combatRand() < 0.08 * resistMul * ccMul) t.m.stunTimer = Math.max(t.m.stunTimer, 0.2 * ccMul);
       for (const other of state.monsters) {
         if (other === t.m || other.dead || other.reachedEnd) continue;
         const op = monsterPos(other);
         if (Math.hypot(op.x - t.p.x, op.y - t.p.y) <= knightStunRadius) {
           const rm = (other.modifiers && other.modifiers.stunResist) ? 0.5 : 1;
-          // 주변 20% 확률 · 0.15초
-          if (combatRand() < 0.20 * rm) other.stunTimer = Math.max(other.stunTimer, 0.15);
+          const otherCC = bossCCMul(other);
+          if (combatRand() < 0.20 * rm * otherCC) other.stunTimer = Math.max(other.stunTimer, 0.15 * otherCC);
           if (u.track) u.stunCount++;
         }
       }
     }
-    // 룩: 넉백 (pathIdx 감소)
-    if (u.attackType === "line") {
+    // 킹: 왕의 명령 — 주 타겟 20% 스턴 0.5초 (보스 면역 램프 적용)
+    if (u.attackType === "aoe_buff" && i === 0) {
+      const ccMul = bossCCMul(t.m);
+      const resistMul = (t.m.modifiers && t.m.modifiers.stunResist) ? 0.5 : 1;
+      if (combatRand() < 0.20 * resistMul * ccMul) {
+        t.m.stunTimer = Math.max(t.m.stunTimer, 0.5 * ccMul);
+        if (u.track) u.stunCount++;
+      }
+    }
+    // 룩: 넉백 — 증강(rookKnockback)이 있을 때만 발동
+    if (u.attackType === "line" && rookKnockback > 0) {
       const kbResist = (t.m.modifiers && t.m.modifiers.kbResist) ? 0.4 : 1;
-      t.m.pathIdx = Math.max(-1, t.m.pathIdx - rookKnockback * kbResist);
+      // 보스 면역 램프 적용
+      const kbCoef = bossCCMul(t.m);
+      t.m.pathIdx = Math.max(-1, t.m.pathIdx - rookKnockback * kbResist * kbCoef);
       if (u.track) u.knockbackCount++;
     }
 
@@ -2844,9 +2910,21 @@ function performAttack(u, targets) {
       u.damageDone += dmg;
       if (isCrit) u.critCount++;
     }
-    // 룩/비숍은 per-target 스킵 — 루프 끝나고 한 번에 커스텀으로 그림
-    if (u.attackType !== "line" && u.attackType !== "chain") spawnAttackLine(u, t.p);
-    spawnDamageText(t.p, Math.round(dmg), isCrit);
+    // 룩/비숍/킹은 per-target 스킵 — 루프 끝나고 한 번에 커스텀으로 그림
+    if (u.attackType !== "line" && u.attackType !== "chain" && u.attackType !== "aoe_buff") {
+      spawnAttackLine(u, t.p);
+      spawnDamageText(t.p, Math.round(dmg), isCrit);
+    } else if (u.attackType === "aoe_buff") {
+      // 킹: 데미지 텍스트를 3타로 쪼개 staggered로 표시 (실제 hp는 위에서 한 번에 적용됨)
+      const sub = Math.round(dmg / 3);
+      const tp = t.p;
+      const isCritK = isCrit;
+      spawnDamageText(tp, sub, isCritK);
+      setTimeout(() => spawnDamageText(tp, sub, isCritK), 110);
+      setTimeout(() => spawnDamageText(tp, Math.round(dmg) - sub * 2, isCritK), 220);
+    } else {
+      spawnDamageText(t.p, Math.round(dmg), isCrit);
+    }
     if (t.m.hp <= 0 && !t.m.dead) {
       t.m.dead = true;
       if (u.track) u.killCount++;
@@ -2860,6 +2938,10 @@ function performAttack(u, targets) {
       } else sfx("kill");
       renderStats();
     }
+  }
+  // 킹: 칼날 회오리 — 한 번 공격마다 회전하는 십자 블레이드 비주얼
+  if (u.attackType === "aoe_buff" && hitTargets.length) {
+    spawnKingBladeStorm(u);
   }
   // 비숍: 체인 감전 — 비숍→target0→target1 처럼 타겟 간 빔이 이어짐
   if (u.attackType === "chain" && hitTargets.length) {
@@ -3405,6 +3487,28 @@ function spawnAttackLine(u, targetPos) {
   fxLayer.appendChild(line);
   const dur = piece === "rook" ? 340 : (piece === "knight" ? 220 : 180);
   setTimeout(() => line.remove(), dur);
+}
+function spawnKingBladeStorm(u) {
+  if (!fxLayer) return;
+  const w = fxRect.w, h = fxRect.h;
+  const cellW = w / GRID, cellH = h / GRID;
+  const cx = ((u.tileX + 0.5) / GRID) * w;
+  const cy = ((u.tileY + 0.5) / GRID) * h;
+  // 킹 AoE 반경 2.5칸에 맞춰 비주얼 크기
+  const size = cellW * 5; // 직경 ≈ 2.5칸 * 2 = 5칸
+  const wrapper = document.createElement("div");
+  wrapper.className = "king-blade-storm";
+  wrapper.style.cssText = `left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;`;
+  // 십자 모양 블레이드 (가로 + 세로) 두 개
+  wrapper.innerHTML = '<div class="kb-blade kb-h"></div><div class="kb-blade kb-v"></div>';
+  fxLayer.appendChild(wrapper);
+  setTimeout(() => wrapper.remove(), 460);
+  // 추가 확장 링도 함께 (강조)
+  const ring = document.createElement("div");
+  ring.className = "king-ring";
+  ring.style.cssText = `left:${cx}px;top:${cy}px`;
+  fxLayer.appendChild(ring);
+  setTimeout(() => ring.remove(), 520);
 }
 function spawnRookGhost(u, axis, dir) {
   if (!fxLayer) return;
