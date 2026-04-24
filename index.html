@@ -932,6 +932,94 @@ body::before {
 .modal p { font-size: 12px; line-height: 1.5; color: var(--ink-dim); margin-bottom: 6px; }
 .modal-close-btn { margin-top: 12px; width: 100%; }
 
+/* tutorial */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  background:
+    radial-gradient(rectangle at var(--tx) var(--ty), transparent, rgba(0,0,0,0.82) 60%);
+}
+.tutorial-overlay::before {
+  content: "";
+  position: absolute;
+  left: var(--tx);
+  top: var(--ty);
+  width: var(--tw);
+  height: var(--th);
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.78);
+  border-radius: 12px;
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  pointer-events: none;
+  animation: tutPulse 1.4s ease-in-out infinite;
+}
+@keyframes tutPulse { 50% { outline-color: var(--gold-2); box-shadow: 0 0 0 9999px rgba(0,0,0,0.8); } }
+.tutorial-bubble {
+  position: fixed;
+  left: 50%;
+  max-width: 340px;
+  width: min(80vw, 340px);
+  background: linear-gradient(165deg, rgba(44,28,90,0.98), rgba(18,10,42,0.98));
+  border: 2px solid var(--gold);
+  border-radius: 14px;
+  padding: 12px 14px;
+  z-index: 210;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 0 16px rgba(255,210,74,0.35);
+  animation: tutPop 0.2s ease-out;
+}
+@keyframes tutPop { from { opacity: 0; transform: translate(-50%, -10px); } }
+.tutorial-bubble .tut-text {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.tutorial-bubble .tut-text b { color: var(--gold-2); }
+.tutorial-bubble .tut-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+}
+.tutorial-bubble .tut-actions .btn { flex: 0 0 auto; padding: 6px 10px; font-size: 11px; }
+.tutorial-bubble .tut-actions #tut-next { flex: 1; }
+.tutorial-bubble .tut-hint { font-size: 10px; color: var(--gold-2); flex: 1; }
+.tutorial-bubble .tut-step { font-size: 10px; color: var(--ink-mute); }
+
+/* reward modal */
+.reward-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.reward-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, rgba(60,40,120,0.8), rgba(20,12,50,0.7));
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.08s, border-color 0.15s, box-shadow 0.15s;
+}
+.reward-card:hover, .reward-card:active {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 0 14px rgba(255,210,74,0.3);
+}
+.reward-card .r-ico {
+  font-size: 26px;
+  flex: 0 0 auto;
+  width: 38px;
+  text-align: center;
+}
+.reward-card .r-name { font-size: 13px; font-weight: 900; color: var(--gold-2); }
+.reward-card .r-desc { font-size: 11px; color: var(--ink-dim); line-height: 1.35; }
+.reward-card > div:nth-child(2) { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+
 /* combine modal */
 .combine-result {
   display: flex;
@@ -1236,7 +1324,8 @@ body::before {
     <div class="kbd-row"><span>새 지도</span><kbd>N / ㅜ</kbd></div>
     <div class="kbd-row"><span>도움말 / 닫기</span><kbd>? / Esc</kbd></div>
 
-    <button class="btn primary modal-close-btn" id="modal-close-btn">닫기</button>
+    <button class="btn ghost" id="btn-replay-tut" style="width:100%; margin-top:10px">🎓 튜토리얼 다시보기</button>
+    <button class="btn primary modal-close-btn" id="modal-close-btn" style="margin-top:6px">닫기</button>
   </div>
 </div>
 
@@ -1259,6 +1348,14 @@ body::before {
       <button class="btn primary" id="btn-start-with-seed" style="flex:2">▶ 이 시드로 시작</button>
     </div>
     <button class="btn ghost" id="seed-modal-close" style="width:100%; margin-top:8px; font-size:11px;">취소</button>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="reward-modal">
+  <div class="modal" style="max-width:420px">
+    <h2>🎁 선택 보상</h2>
+    <p style="margin-bottom:10px">3개 중 하나를 선택하세요. 선택한 효과는 게임이 끝날 때까지 유지됩니다.</p>
+    <div id="reward-list" class="reward-list"></div>
   </div>
 </div>
 
@@ -1286,7 +1383,7 @@ const INITIAL_PIECE_DRAW_COST = 5;
 const INITIAL_TERRAIN_DRAW_COST = 8;
 const TERRAIN_COST_INCREMENT = 3;
 const PIECE_COST_INCREMENT = 1;
-const COMBINE_INPUT = 5;
+const COMBINE_INPUT = 3;
 
 const PIECE_ORDER = ["pawn", "knight", "rook", "bishop", "queen", "king"];
 const PIECE_NAMES = { pawn:"폰", knight:"나이트", rook:"룩", bishop:"비숍", queen:"퀸", king:"킹" };
@@ -1385,6 +1482,8 @@ function mulberry32(seed) {
   };
 }
 function makeSeed() { return Math.floor(Math.random() * 0xFFFFFFFF); }
+// 전투 루프용 결정론적 RNG (round마다 재시드)
+function combatRand() { return state.combatRand ? state.combatRand() : Math.random(); }
 function formatSeed(s) {
   return (s >>> 0).toString(16).toUpperCase().padStart(6, "0").slice(-6);
 }
@@ -1603,6 +1702,7 @@ function drawPieceCards() {
   renderHand();
   renderStats();
   refreshButtons();
+  tutorialEvent("drew-piece");
 }
 function drawTerrainCards() {
   if (state.coin < state.terrainDrawCost) return toast("코인 부족", "error");
@@ -1644,56 +1744,98 @@ function selectedCard() {
 //  COMBINE (gacha)
 // =====================================================================
 function tryCombine() {
-  // Take 5 lowest-tier piece cards (excluding king since it's max)
+  // 같은 등급 3장씩 묶어서 → 1단계 상승 확정 (실패 없음)
   const piecesInHand = state.hand
     .map((c, i) => ({ c, i }))
     .filter(x => x.c.kind === "piece" && x.c.piece !== "king");
   if (piecesInHand.length < COMBINE_INPUT) {
-    return toast(`캐릭터 카드 ${COMBINE_INPUT}장 필요 (킹 제외)`, "error");
+    return toast(`캐릭터 ${COMBINE_INPUT}장 필요 (킹 제외)`, "error");
   }
-  // Sort by rarity ascending, take lowest 5
-  piecesInHand.sort((a, b) => PIECE_RARITY[a.c.piece] - PIECE_RARITY[b.c.piece]);
-  const chosen = piecesInHand.slice(0, COMBINE_INPUT);
-  const sumRarity = chosen.reduce((s, x) => s + PIECE_RARITY[x.c.piece], 0);
-  const avgRarity = sumRarity / COMBINE_INPUT;
-
-  // Roll outcome
-  state.cardRand = (state.cardRand * 1664525 + 1013904223) >>> 0;
-  const rand = mulberry32(state.cardRand);
-  const roll = rand();
-  let resultPiece = null;
-  let outcomeText = "";
-  let outcomeFail = false;
-  // 50% +1 tier from avg, 30% +2 tier, 15% +3 tier, 5% fail
-  let bonus;
-  if (roll < 0.05) { bonus = -1; outcomeFail = true; outcomeText = "💥 합성 실패"; }
-  else if (roll < 0.55) { bonus = 1; outcomeText = "🎉 +1 등급"; }
-  else if (roll < 0.85) { bonus = 2; outcomeText = "✨ +2 등급"; }
-  else                  { bonus = 3; outcomeText = "🌟 대성공! +3 등급"; }
-
-  if (!outcomeFail) {
-    const targetTier = Math.min(5, Math.floor(avgRarity) + bonus);
-    resultPiece = PIECE_ORDER[targetTier];
+  // 낮은 등급부터 같은 등급 3장 묶음 찾기
+  const byType = new Map();
+  for (const x of piecesInHand) {
+    if (!byType.has(x.c.piece)) byType.set(x.c.piece, []);
+    byType.get(x.c.piece).push(x);
   }
-
-  // Remove the 5 chosen cards (sorted by index desc to splice safely)
-  chosen.sort((a, b) => b.i - a.i);
-  for (const x of chosen) state.hand.splice(x.i, 1);
-
+  // 낮은 등급부터 3장 충족하는 첫 번째 그룹
+  const ordered = [...byType.entries()].sort((a, b) => PIECE_RARITY[a[0]] - PIECE_RARITY[b[0]]);
+  let chosenGroup = null;
+  let chosenPiece = null;
+  for (const [piece, arr] of ordered) {
+    if (arr.length >= COMBINE_INPUT) { chosenGroup = arr.slice(0, COMBINE_INPUT); chosenPiece = piece; break; }
+  }
+  if (!chosenGroup) {
+    return toast(`같은 캐릭터 3장이 필요해요 (폰 3장 / 나이트 3장 …)`, "error");
+  }
+  const next = PIECE_NEXT[chosenPiece];
+  // Remove 3 cards (desc idx to splice safely)
+  chosenGroup.sort((a, b) => b.i - a.i);
+  for (const x of chosenGroup) state.hand.splice(x.i, 1);
   // Add result
-  if (resultPiece) state.hand.push({ kind: "piece", piece: resultPiece });
-
-  if (outcomeFail) sfx("fail");
-  else if (PIECE_RARITY[resultPiece] >= 4) sfx("chime");
-  else sfx("levelup");
-
-  // Auto-clear selection
+  state.hand.push({ kind: "piece", piece: next });
+  sfx("levelup");
   state.selectedCardKey = null;
   saveGame();
   renderHand();
   renderStats();
   refreshButtons();
-  showCombineResult(resultPiece, outcomeText, outcomeFail);
+  // Notify tutorial
+  tutorialEvent("combined");
+  showCombineResult(next, `${PIECE_NAMES[chosenPiece]} ×3 → ${PIECE_NAMES[next]}`, false);
+}
+
+// =====================================================================
+//  Round Rewards (R3/6/9 roguelike choice)
+// =====================================================================
+const REWARDS = [
+  { id: "knightStunR", name: "나이트 스턴 범위 +20%", desc: "나이트의 스플래시 범위가 넓어집니다", icon: "♞", add: { knightStunR: 0.2 } },
+  { id: "rookKnockback", name: "룩 넉백 +30%", desc: "룩의 넉백 거리가 강해집니다", icon: "♜", add: { rookKnockback: 0.3 } },
+  { id: "terrainBoost", name: "지형 효과 +15%", desc: "모든 지형 보너스가 강화됩니다", icon: "🌍", add: { terrainBoost: 0.15 } },
+  { id: "atkAll", name: "전체 공격력 +10%", desc: "모든 말의 기본 공격력", icon: "⚔", add: { atkAll: 0.10 } },
+  { id: "apsAll", name: "전체 공속 +10%", desc: "모든 말의 공격속도", icon: "⚡", add: { apsAll: 0.10 } },
+  { id: "critAll", name: "전체 치명타 +8%", desc: "모든 말의 치명타 확률", icon: "💥", add: { critAll: 0.08 } },
+  { id: "coin", name: "코인 +15", desc: "즉시 15 코인 획득", icon: "🪙", instant: "coin15" },
+  { id: "life", name: "HP +5", desc: "즉시 체력 5 회복", icon: "❤", instant: "life5" },
+  { id: "support", name: "지원 기여도 +15%", desc: "연결망 지원 피해 증가", icon: "🔗", add: { supportBoost: 0.15 } },
+];
+function openRewardModal() {
+  // 3 random rewards
+  state.cardRand = (state.cardRand * 1664525 + 1013904223) >>> 0;
+  const rand = mulberry32(state.cardRand);
+  const pool = [...REWARDS].sort(() => rand() - 0.5);
+  const picks = pool.slice(0, 3);
+  const modal = $("#reward-modal");
+  const list = $("#reward-list");
+  list.innerHTML = picks.map((r, i) => `
+    <div class="reward-card" data-idx="${i}">
+      <div class="r-ico">${r.icon}</div>
+      <div class="r-name">${r.name}</div>
+      <div class="r-desc">${r.desc}</div>
+    </div>
+  `).join("");
+  list.querySelectorAll(".reward-card").forEach(el => {
+    el.addEventListener("click", () => {
+      const r = picks[+el.dataset.idx];
+      applyReward(r);
+      modal.classList.add("hidden");
+      // 자동시작 대기였으면 여기서 재개
+      if (state.autoNext && state.life > 0) startAutoCountdown();
+    });
+  });
+  modal.classList.remove("hidden");
+}
+function applyReward(r) {
+  if (!state.mods) state.mods = {};
+  if (r.add) {
+    for (const k in r.add) state.mods[k] = (state.mods[k] || 0) + r.add[k];
+  }
+  if (r.instant === "coin15") state.coin += 15;
+  if (r.instant === "life5") state.life = Math.min(999, state.life + 5);
+  sfx("chime");
+  toast(`보상: ${r.name}`, "success");
+  saveGame();
+  renderStats();
+  refreshButtons();
 }
 
 let combineCloseTimer = null;
@@ -1793,6 +1935,7 @@ function placeSelectedCardAt(x, y) {
   renderPlacementHints();
   refreshButtons();
   if (state.inBattle) refreshBattleState();
+  tutorialEvent("placed-piece");
 }
 
 function sellTile(x, y) {
@@ -1801,22 +1944,28 @@ function sellTile(x, y) {
     return toast("판매할 게 없음", "error");
   }
   let refund = 0;
+  let terrainChanged = false;
+  // 1) 캐릭터가 있으면 스택 1개 먼저 감소
   if (t.piece) {
     const tier = PIECE_RARITY[t.piece.type];
     const tierCost = [5, 15, 45, 135, 405, 1215][tier] || 0;
-    refund += Math.floor(tierCost * 0.5 * (1 + (t.piece.count - 1) * 0.35));
+    refund = Math.max(1, Math.floor(tierCost * 0.5));
+    t.piece.count -= 1;
+    if (t.piece.count <= 0) t.piece = null;
+  } else {
+    // 2) 캐릭터가 없으면 그 타일의 지형 전부 제거
+    const totalTerrain = TERRAIN_ORDER.reduce((s,k)=>s + t.terrains[k], 0);
+    refund = Math.max(1, totalTerrain * 4);
+    t.terrains = { sky:0, ground:0, underground:0 };
+    terrainChanged = true;
   }
-  const totalTerrain = TERRAIN_ORDER.reduce((s,k)=>s + t.terrains[k], 0);
-  refund += totalTerrain * 4;
-  refund = Math.max(1, refund);
   state.coin += refund;
-  state.tiles[y * GRID + x] = blankTile();
   toast(`💰 +${refund} 환불`, "success");
   sfx("coin");
-  markNetworksDirty();
+  if (terrainChanged) markNetworksDirty();
   saveGame();
   renderTile(x, y);
-  renderNetworkDots();
+  if (terrainChanged) renderNetworkDots();
   renderStats();
   renderPlacementHints();
   refreshButtons();
@@ -1910,20 +2059,27 @@ function getUnitStats(x, y) {
   let range = base.range;
   let crit = 0.05;
 
-  // 새 지형 효과
+  const terrainBoost = 1 + (state.mods?.terrainBoost || 0);
   const sky = tile.terrains.sky;
   if (sky > 0) {
-    aps *= 1 + stackBonus(0.18, sky);
-    crit -= stackBonus(0.04, sky); // sky reduces crit
+    aps *= 1 + stackBonus(0.18, sky) * terrainBoost;
+    crit -= stackBonus(0.04, sky) * terrainBoost;
   }
   const gnd = tile.terrains.ground;
   if (gnd > 0) {
-    crit += stackBonus(0.10, gnd);
+    crit += stackBonus(0.10, gnd) * terrainBoost;
   }
   const ug = tile.terrains.underground;
   if (ug > 0) {
-    aps *= 1 - stackBonus(0.08, ug);
-    atk *= 1 + stackBonus(0.30, ug);
+    aps *= 1 - stackBonus(0.08, ug) * terrainBoost;
+    atk *= 1 + stackBonus(0.30, ug) * terrainBoost;
+  }
+
+  // 라운드 보상 전역 수정치
+  if (state.mods) {
+    if (state.mods.atkAll)  atk *= 1 + state.mods.atkAll;
+    if (state.mods.apsAll)  aps *= 1 + state.mods.apsAll;
+    if (state.mods.critAll) crit += state.mods.critAll;
   }
 
   return {
@@ -2003,7 +2159,7 @@ function refreshBattleState() {
   const units = collectUnits();
   for (const u of units) {
     const old = oldMap.get(`${u.tileX},${u.tileY}`);
-    u.cd = old ? old.cd : 0.15 + Math.random() * 0.35;
+    u.cd = old ? old.cd : 0.15 + combatRand() * 0.35;
   }
   state.unitsCache = units;
   precomputeSupporters();
@@ -2038,18 +2194,37 @@ function startRound() {
     } else if (roll < 0.12 && state.round >= 3) type = "tank";
     else if (roll < 0.38) type = "fast";
     const mt = MONSTER_TYPES[type];
-    const hp = roundBaseHP(state.round) * mt.hpMul;
-    monsters.push({
+    let hp = roundBaseHP(state.round) * mt.hpMul;
+    const monster = {
       id: `m${state.round}_${i}`,
       type, maxHP: hp, hp,
-      speed: mt.speed,
+      speed: mt.speed, baseSpeed: mt.speed,
       pathIdx: -i * 0.55,
       dead: false, reachedEnd: false, stunTimer: 0,
-    });
+      modifiers: {},
+    };
+    // 보스 패턴
+    if (type === "boss") {
+      monster.modifiers = { enrage: true, stunResist: true, kbResist: true };
+    } else if (type === "tank") {
+      monster.modifiers = { kbResist: true };
+    }
+    monsters.push(monster);
   }
   state.monsters = monsters;
+  // Seeded combat rng (deterministic combat)
+  state.combatRand = mulberry32(((state.seed + state.round * 31337) >>> 0));
   state.unitsCache = collectUnits();
-  for (const u of state.unitsCache) u.cd = 0.15 + Math.random() * 0.35;
+  for (const u of state.unitsCache) {
+    u.cd = 0.15 + combatRand() * 0.35;
+    // 개별 기여도 카운터 초기화
+    u.damageDone = 0;
+    u.stunCount = 0;
+    u.knockbackCount = 0;
+    u.critCount = 0;
+    u.killCount = 0;
+    u.track = true;
+  }
   precomputeSupporters();
   state.lastTick = performance.now();
 
@@ -2057,6 +2232,7 @@ function startRound() {
   sfx("start");
   renderStats();
   refreshButtons();
+  tutorialEvent("started");
   requestAnimationFrame(tickLoop);
 }
 
@@ -2070,7 +2246,14 @@ function endRound(success) {
     state.coin += bonus;
     toast(`라운드 클리어! +${bonus} 코인`, "success");
     sfx("victory");
+    const justCleared = state.round;
     state.round += 1;
+    // R3/6/9: 로그라이크 선택 카드
+    if ([3, 6, 9, 12, 15].includes(justCleared)) {
+      openRewardModal();
+      saveGame();
+      return; // 자동시작 카운트다운 보류 (선택 후 재시작)
+    }
   } else {
     showBanner("DEFEAT", true);
     toast("라운드 실패! 새 지도를 누르세요", "error");
@@ -2117,6 +2300,11 @@ function monsterPos(m) {
 function simulate(dt) {
   for (const m of state.monsters) {
     if (m.dead || m.reachedEnd) continue;
+    // 보스 격노: HP 50% 이하 시 속도 1.5배
+    if (m.modifiers?.enrage && m.hp / m.maxHP <= 0.5 && !m._enraged) {
+      m.speed = m.baseSpeed * 1.5;
+      m._enraged = true;
+    }
     if (m.stunTimer > 0) { m.stunTimer -= dt; continue; }
     m.pathIdx += m.speed * dt;
     if (m.pathIdx >= state.path.length - 1) {
@@ -2147,10 +2335,12 @@ function simulate(dt) {
 }
 
 function performAttack(u, targets) {
-  const isCrit = Math.random() < u.crit;
-  const baseDmg = u.atk * (isCrit ? 1.8 : 1);
+  // 치명타 2배 (기존 1.8 → 2.0)
+  const critRand = combatRand();
+  const isCrit = critRand < u.crit;
+  const baseDmg = u.atk * (isCrit ? 2.0 : 1);
 
-  // Precomputed supporter sum (supporter's atk × tier factor × decay)
+  // Precomputed supporter sum
   let supportDmg = 0;
   const supHits = u.supporters || [];
   for (let i = 0; i < supHits.length; i++) {
@@ -2162,6 +2352,7 @@ function performAttack(u, targets) {
   if (u.attackType === "multi") {
     hitTargets = targets.slice(0, 3);
   } else if (u.attackType === "line") {
+    // 룩: 한 방향 직선 관통 1개만 (넉백 적용)
     const primary = targets[0];
     hitTargets.push(primary);
     const dx = primary.p.x - (u.tileX + 0.5), dy = primary.p.y - (u.tileY + 0.5);
@@ -2203,16 +2394,47 @@ function performAttack(u, targets) {
   }
 
   const dmgPerTarget = baseDmg + supportDmg;
+  const knightStunRadius = 1.0 + (state.mods?.knightStunR || 0);
+  const rookKnockback = 0.45 + (state.mods?.rookKnockback || 0);
+
   for (let i = 0; i < hitTargets.length; i++) {
     const t = hitTargets[i];
     const chainMult = t.chained ? Math.pow(0.7, t.chained) : 1;
     let dmg = dmgPerTarget * chainMult;
-    if (u.attackType === "jump" && Math.random() < 0.2) t.m.stunTimer = 0.45;
+
+    // 나이트: 스플래시 스턴 — 타겟 중심 knightStunRadius 칸 이내 몬스터도 스턴
+    if (u.attackType === "jump") {
+      const resistMul = (t.m.modifiers && t.m.modifiers.stunResist) ? 0.5 : 1;
+      if (combatRand() < 0.25 * resistMul) t.m.stunTimer = Math.max(t.m.stunTimer, 0.4);
+      for (const other of state.monsters) {
+        if (other === t.m || other.dead || other.reachedEnd) continue;
+        const op = monsterPos(other);
+        if (Math.hypot(op.x - t.p.x, op.y - t.p.y) <= knightStunRadius) {
+          const rm = (other.modifiers && other.modifiers.stunResist) ? 0.5 : 1;
+          if (combatRand() < 0.5 * rm) other.stunTimer = Math.max(other.stunTimer, 0.3);
+          if (u.track) u.stunCount++;
+        }
+      }
+    }
+    // 룩: 넉백 (pathIdx 감소)
+    if (u.attackType === "line") {
+      const kbResist = (t.m.modifiers && t.m.modifiers.kbResist) ? 0.4 : 1;
+      t.m.pathIdx = Math.max(-1, t.m.pathIdx - rookKnockback * kbResist);
+      if (u.track) u.knockbackCount++;
+    }
+
     t.m.hp -= dmg;
+    // 개별 유닛 기여도 기록 (숫자만 누적)
+    if (u.track) {
+      u.damageDone += dmg;
+      if (isCrit) u.critCount++;
+      if (u.attackType === "jump" && combatRand() < 0.25) u.stunCount++;
+    }
     spawnAttackLine(u, t.p);
     spawnDamageText(t.p, Math.round(dmg), isCrit);
     if (t.m.hp <= 0 && !t.m.dead) {
       t.m.dead = true;
+      if (u.track) u.killCount++;
       const c = coinPerKill(t.m.type, state.round);
       state.coin += c;
       spawnCoinText(t.p, c);
@@ -2461,16 +2683,17 @@ function renderHand() {
 // Light-touch selection: just toggle .selected, don't full-rebuild
 function selectCardByKey(key) {
   state.sellMode = false;
+  const before = state.selectedCardKey;
   if (state.selectedCardKey === key) state.selectedCardKey = null;
   else state.selectedCardKey = key;
   hideRangePreview();
-  // Toggle .selected only (avoid full re-render lag)
   hand.querySelectorAll(".card").forEach(c => {
     c.classList.toggle("selected", c.dataset.key === state.selectedCardKey);
   });
   renderPlacementHints();
   refreshButtons();
   sfx("click");
+  if (!before && state.selectedCardKey) tutorialEvent("selected-card");
 }
 
 function renderPlacementHints() {
@@ -3169,6 +3392,10 @@ function init() {
   $("#btn-pause").addEventListener("click", () => togglePause());
   $("#btn-help").addEventListener("click", () => $("#help-modal").classList.toggle("hidden"));
   $("#modal-close-btn").addEventListener("click", () => $("#help-modal").classList.add("hidden"));
+  $("#btn-replay-tut").addEventListener("click", () => {
+    $("#help-modal").classList.add("hidden");
+    startTutorial(true);
+  });
   $("#combine-close-btn").addEventListener("click", () => $("#combine-modal").classList.add("hidden"));
   $("#help-modal").addEventListener("click", (e) => {
     if (e.target.id === "help-modal") e.currentTarget.classList.add("hidden");
@@ -3200,10 +3427,83 @@ function init() {
   window.addEventListener("resize", () => { updateFxRect(); renderMonsters(); });
   requestAnimationFrame(updateFxRect);
 
-  // welcome
-  if (state.round === 1 && state.coin === INITIAL_COIN && state.hand.length === 0) {
-    setTimeout(() => toast("💡 D=캐릭터 / T=지형 뽑기 / 🎵 음악 켜기", ""), 400);
+  // reward modal listeners
+  $("#reward-modal")?.addEventListener("click", (e) => {
+    // require an explicit selection — don't auto-close on backdrop
+  });
+
+  // 첫 실행이면 튜토리얼
+  if (!localStorage.getItem("tutorialSeen")) {
+    setTimeout(() => startTutorial(), 300);
+  } else if (state.round === 1 && state.coin === INITIAL_COIN && state.hand.length === 0) {
+    setTimeout(() => toast("💡 D=캐릭터 / T=지형 뽑기 / 🎵 음악", ""), 400);
   }
+}
+
+// =====================================================================
+//  TUTORIAL
+// =====================================================================
+const TUT_STEPS = [
+  { text: "🛡️ 몬스터가 오른쪽 끝에 닿기 전에 막으세요! 여기가 당신의 보드입니다.", target: "#board", wait: "next", delay: 0 },
+  { text: "먼저 <b>캐릭터 뽑기</b>를 눌러 카드를 받으세요. (단축키 D)", target: "#btn-draw-piece", wait: "drew-piece" },
+  { text: "👇 손패에서 카드를 하나 골라 선택하세요. (숫자 키 1~9도 가능)", target: "#hand", wait: "selected-card" },
+  { text: "빈 타일을 눌러 <b>배치</b>하세요. 같은 말을 같은 타일에 3개 쌓으면 진화!", target: "#board", wait: "placed-piece" },
+  { text: "🌍 지형은 같은 종류 3개까지 쌓이면 효과가 커지고, 같은 지형이 붙으면 <b>연결망</b>이 돼요 (점으로 표시).", target: "#btn-draw-terrain", wait: "next" },
+  { text: "준비되면 <b>시작</b>을 눌러 몬스터를 막아보세요! 전투 중에도 카드 뽑고 배치할 수 있어요.", target: "#btn-start-round", wait: "started" },
+];
+let tutState = null;
+function startTutorial(restart) {
+  tutState = { step: 0 };
+  if (restart) localStorage.removeItem("tutorialSeen");
+  renderTutStep();
+}
+function endTutorial() {
+  tutState = null;
+  localStorage.setItem("tutorialSeen", "1");
+  document.querySelector(".tutorial-overlay")?.remove();
+  document.querySelector(".tutorial-bubble")?.remove();
+}
+function renderTutStep() {
+  document.querySelector(".tutorial-overlay")?.remove();
+  document.querySelector(".tutorial-bubble")?.remove();
+  if (!tutState) return;
+  const step = TUT_STEPS[tutState.step];
+  if (!step) { endTutorial(); return; }
+  const tgt = document.querySelector(step.target);
+  const rect = tgt ? tgt.getBoundingClientRect() : { left: 0, top: 0, width: 100, height: 50 };
+  const pad = 6;
+  const overlay = document.createElement("div");
+  overlay.className = "tutorial-overlay";
+  overlay.style.cssText = `--tx:${rect.left-pad}px; --ty:${rect.top-pad}px; --tw:${rect.width+pad*2}px; --th:${rect.height+pad*2}px;`;
+  document.body.appendChild(overlay);
+  const bubble = document.createElement("div");
+  bubble.className = "tutorial-bubble";
+  const below = rect.bottom + 160 < window.innerHeight;
+  const by = below ? rect.bottom + 12 : rect.top - 12;
+  bubble.style.top = by + "px";
+  bubble.style.transform = below ? "translateX(-50%)" : "translate(-50%, -100%)";
+  bubble.innerHTML = `
+    <div class="tut-text">${step.text}</div>
+    <div class="tut-actions">
+      <button class="btn ghost" id="tut-skip">건너뛰기</button>
+      ${step.wait === "next" ? '<button class="btn primary" id="tut-next">다음</button>' : '<span class="tut-hint">↑ 직접 눌러보세요</span>'}
+      <span class="tut-step">${tutState.step + 1} / ${TUT_STEPS.length}</span>
+    </div>`;
+  document.body.appendChild(bubble);
+  $("#tut-skip").addEventListener("click", endTutorial);
+  $("#tut-next")?.addEventListener("click", () => tutorialAdvance());
+}
+function tutorialAdvance() {
+  if (!tutState) return;
+  tutState.step++;
+  if (tutState.step >= TUT_STEPS.length) { endTutorial(); return; }
+  renderTutStep();
+}
+function tutorialEvent(ev) {
+  if (!tutState) return;
+  const step = TUT_STEPS[tutState.step];
+  if (!step) return;
+  if (step.wait === ev) tutorialAdvance();
 }
 
 init();
