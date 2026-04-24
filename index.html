@@ -102,17 +102,28 @@ body::before {
 
 /* ============== TOPBAR ============== */
 .topbar {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 8px 8px;
   padding: 7px 12px;
-  background: var(--glass);
+  background: linear-gradient(135deg, rgba(50,32,100,0.92), rgba(20,12,46,0.88));
   border: 1px solid var(--panel-edge);
   border-radius: 16px;
   box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.06);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+}
+.topbar .brand-col { flex: 0 1 auto; min-width: 0; }
+.topbar .stat-row  { flex: 1 1 auto; justify-content: center; }
+.topbar .ctrl-group {
+  flex: 0 1 auto;
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  /* 좁은 화면에서 컨트롤 그룹은 새 줄로 wrap (전체 가로폭 사용) */
+}
+@media (max-width: 520px) {
+  .topbar .ctrl-group { flex-basis: 100%; justify-content: center; }
 }
 .brand-col { display: flex; flex-direction: column; gap: 3px; }
 .brand-tag {
@@ -177,6 +188,7 @@ body::before {
   font-feature-settings: "tnum";
 }
 .stat.gold .v  { color: var(--gold-2); text-shadow: 0 0 10px rgba(255,210,74,0.55); }
+.stat .hi-best { display:block; font-size:8px; color: var(--ink-mute); letter-spacing:0.04em; line-height:1; margin-top:2px; font-weight:700; }
 .stat.life .v  { color: var(--rose);   text-shadow: 0 0 10px rgba(255,110,156,0.55); }
 .stat.round .v { color: var(--cyan);   text-shadow: 0 0 10px rgba(94,233,213,0.45); }
 
@@ -700,6 +712,44 @@ body::before {
 
 /* King ring pulse — radial expanding ring */
 /* 킹 — 칼날 회오리 (회전하는 십자 블레이드) */
+/* 보스 텔레포트 이펙트 */
+.boss-teleport-fx {
+  position: absolute;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,80,160,0.85) 0%, rgba(180,40,200,0) 70%);
+  transform: translate(-50%,-50%);
+  box-shadow: 0 0 30px rgba(255,80,180,0.9);
+  pointer-events: none;
+  animation: bossTeleportFx 0.6s ease-out forwards;
+  z-index: 10;
+}
+@keyframes bossTeleportFx {
+  0%   { transform: translate(-50%,-50%) scale(0.3); opacity: 0; }
+  30%  { transform: translate(-50%,-50%) scale(1.4); opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(2.2); opacity: 0; }
+}
+/* 보스 소환 이펙트 */
+.boss-summon-fx {
+  position: absolute;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,140,80,0.9) 0%, rgba(255,80,40,0) 70%);
+  transform: translate(-50%,-50%);
+  box-shadow: 0 0 22px rgba(255,160,80,0.9);
+  pointer-events: none;
+  animation: bossSummonFx 0.5s ease-out forwards;
+  z-index: 10;
+}
+@keyframes bossSummonFx {
+  0%   { transform: translate(-50%,-50%) scale(0.3); opacity: 0.2; }
+  50%  { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(1.8); opacity: 0; }
+}
+/* 보스 실드 활성 시 글로우 */
+.monster.type-boss.shielded {
+  filter: drop-shadow(0 0 12px rgba(120,200,255,1)) drop-shadow(0 0 20px rgba(80,150,255,0.7)) brightness(1.15);
+}
 .king-blade-storm {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -893,12 +943,10 @@ body::before {
   flex-direction: column;
   gap: 7px;
   padding: 9px;
-  background: var(--glass-2);
+  background: linear-gradient(135deg, rgba(36,22,80,0.95), rgba(14,8,38,0.92));
   border: 1px solid var(--panel-edge);
   border-radius: 16px;
   box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.06);
-  backdrop-filter: blur(14px) saturate(1.15);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
 }
 .actions { display: flex; gap: 5px; }
 .btn {
@@ -1116,13 +1164,11 @@ body::before {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(8,4,22,0.78);
+  background: rgba(8,4,22,0.92);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  backdrop-filter: blur(10px) saturate(1.2);
-  -webkit-backdrop-filter: blur(10px) saturate(1.2);
   animation: fadeIn 0.18s ease-out;
   padding: 16px;
 }
@@ -1136,10 +1182,7 @@ body::before {
   max-width: 440px;
   max-height: 86vh;
   overflow-y: auto;
-  box-shadow:
-    var(--shadow-lg),
-    0 0 60px -10px rgba(140,90,255,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.10);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.10);
   width: 100%;
   animation: modalIn 0.22s cubic-bezier(0.2,0.9,0.3,1);
 }
@@ -1370,22 +1413,27 @@ body::before {
 /* responsive */
 @media (max-width: 480px) {
   #app { padding: 5px 6px 6px; gap: 5px; max-width: 100%; }
-  .topbar { padding: 5px 7px; gap: 4px; }
+  .topbar { padding: 6px 8px; gap: 6px 4px; }
   .brand-tag { font-size: 10px; }
   .stat { min-width: 36px; padding: 2px 5px 3px; }
   .stat .v { font-size: 13px; }
   .stat .k { font-size: 7px; }
-  .icon-btn { width: 28px; height: 28px; font-size: 13px; }
+  .icon-btn { width: 30px; height: 30px; font-size: 13px; border-radius: 8px; }
+  .topbar .ctrl-group { gap: 3px; flex-wrap: wrap; justify-content: center; }
   .card { width: 55px; min-height: 66px; }
   .card .card-icon { font-size: 20px; }
   .card .card-title { font-size: 10px; }
   .card .card-desc { font-size: 8px; }
   .btn { padding: 8px 5px; font-size: 11px; }
   .info-panel { width: 170px; font-size: 10.5px; }
+  /* 모바일: 강한 외곽 글로우 줄여서 페인팅 비용 감소 */
+  .board { box-shadow: 0 0 24px rgba(140,70,210,0.18), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04), var(--shadow-md); }
+  .modal { box-shadow: var(--shadow-md); }
 }
 @media (max-width: 360px) {
-  .stat { min-width: 32px; padding: 2px 4px; }
+  .stat { min-width: 30px; padding: 2px 4px; }
   .stat .v { font-size: 12px; }
+  .icon-btn { width: 28px; height: 28px; font-size: 12px; }
 }
 </style>
 </head>
@@ -1483,7 +1531,7 @@ body::before {
       <button class="seed-chip" id="btn-seed-chip" title="시드 보기/공유 (친구와 같은 맵)">🌱 <span id="seed-display">—</span></button>
     </div>
     <div class="stat-row">
-      <div class="stat round"><span class="k">R</span><span class="v" id="stat-round">1</span></div>
+      <div class="stat round" title="현재 라운드 / 최고 기록"><span class="k">R</span><span class="v" id="stat-round">1</span><span id="stat-best" class="hi-best" title="최고 라운드">최고 -</span></div>
       <div class="stat gold"><span class="k">코인</span><span class="v" id="stat-coin">11</span></div>
       <div class="stat life"><span class="k">HP</span><span class="v" id="stat-life">20</span></div>
     </div>
@@ -1492,6 +1540,7 @@ body::before {
       <button class="icon-btn" id="btn-sfx" title="효과음">🔊</button>
       <button class="icon-btn" id="btn-speed" title="속도 (S)">1×</button>
       <button class="icon-btn" id="btn-pause" title="일시정지 (P)">⏸</button>
+      <button class="icon-btn" id="btn-meta" title="통계 / 영구 업그레이드">📈</button>
       <button class="icon-btn" id="btn-help" title="도움말 (?)">?</button>
       <button class="icon-btn" id="btn-new-map" title="새 지도 (N)">↻</button>
     </div>
@@ -1566,6 +1615,8 @@ body::before {
     <h3>자동 시작 ⏭</h3>
     <p>시작 버튼 옆 ⏭ 버튼을 켜두면 라운드가 끝난 뒤 5·4·3·2·1 카운트(실시간, 배속 무관) 후 자동으로 다음 라운드가 시작됩니다. 카운트 중에 다시 누르면 취소.</p>
 
+    <h3>👑 보스 패턴 (라운드별 변형)</h3>
+    <p>R5+ 표준 / <b>R10+ 텔레포트</b> (HP 50% 시 길 앞으로 점프) / <b>R15+ 소환</b> (6초마다 미니언 1마리 스폰) / <b>R20+ 실드</b> (8초마다 3초간 90% 데미지 감소) / <b>R25+</b> 이후 랜덤 패턴.</p>
     <h3>👑 보스 CC 면역</h3>
     <p>보스가 등장한 지 <b>1분(60초)이 지나면</b> 스턴/넉백 효과가 점점 줄어들고, <b>2분(120초) 후 완전 면역</b>이 됩니다. 빠르게 처치하세요!</p>
 
@@ -1624,6 +1675,26 @@ body::before {
     <h2>🎁 증강 선택</h2>
     <p style="margin-bottom:10px">3개 중 하나를 선택하세요. <b>증강</b> 효과는 게임이 끝날 때까지 유지됩니다.</p>
     <div id="reward-list" class="reward-list"></div>
+    <button class="btn ghost" id="btn-reroll-reward" style="width:100%; margin-top:10px; font-size:12px;">🎲 다시 뽑기 (<span id="reroll-cost">10</span> 코인)</button>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="event-modal">
+  <div class="modal" style="max-width:440px">
+    <h2 id="event-title">✨ 특별 이벤트</h2>
+    <p id="event-desc" style="margin-bottom:10px"></p>
+    <div id="event-list" class="reward-list"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="meta-modal">
+  <div class="modal" style="max-width:440px">
+    <h2>📈 게임 통계 · 영구 업그레이드</h2>
+    <div id="meta-stats" style="margin-bottom:14px; padding:10px; background:rgba(0,0,0,0.3); border-radius:10px; font-size:12px; line-height:1.7;"></div>
+    <h3>영구 업그레이드</h3>
+    <p style="font-size:11px; color:var(--ink-mute); margin-bottom:6px">게임을 클리어할수록 모이는 <b>왕관</b>으로 영구 업그레이드를 살 수 있어요.</p>
+    <div id="meta-upgrades" class="reward-list"></div>
+    <button class="btn primary modal-close-btn" id="meta-close-btn" style="margin-top:10px">닫기</button>
   </div>
 </div>
 
@@ -1649,7 +1720,7 @@ const INITIAL_COIN = 11;
 const INITIAL_LIFE = 20;
 const INITIAL_PIECE_DRAW_COST = 5;
 const INITIAL_TERRAIN_DRAW_COST = 5;
-const TERRAIN_COST_INCREMENT = 2;
+const TERRAIN_COST_INCREMENT = 1;
 const PIECE_COST_INCREMENT = 1;
 const COMBINE_INPUT = 3;
 
@@ -1666,15 +1737,15 @@ const PIECE_SUPPORT_FACTOR = {
 
 const PIECE_STATS = {
   pawn:   { atk: 14,  aps: 1.40, range: 2.4, type: "single",   desc: "근거리 속사",     critBase: 0.05 },
-  knight: { atk: 32,  aps: 1.10, range: 2.6, type: "jump",     desc: "짧은 점프 + 약한 기절", critBase: 0.05 },
+  knight: { atk: 38,  aps: 1.10, range: 2.8, type: "jump",     desc: "점프 + 스플래시 기절", critBase: 0.07 },
   // 룩 — 상하좌우 관통, 살짝 너프 (비숍보다 낮음)
   rook:   { atk: 56,  aps: 0.70, range: 4.2, type: "line",     desc: "상하좌우 관통 레이저", critBase: 0.08 },
   // 비숍 — 연쇄 3회 + 공격력/공속 상향 (진화 순서대로 실제로 더 강함)
   bishop: { atk: 58,  aps: 1.00, range: 4.0, type: "chain",    desc: "연쇄 감전 (3회)",  critBase: 0.06 },
   // 퀸 — 파바바박 초고속 광역 (aps 대폭 상향, 데미지 하향으로 밸런스)
-  queen:  { atk: 38,  aps: 1.85, range: 5.8, type: "multi",    desc: "파바바박 광역 (최대 6명)", critBase: 0.02 },
+  queen:  { atk: 42,  aps: 1.45, range: 5.5, type: "multi",    desc: "광역 파괴 (최대 5명)", critBase: 0.03 },
   // 킹 — 중간 사거리 + 빠른 공속 + 강력한 광역, 광범위 오라, "왕의 명령" 짧은 스턴
-  king:   { atk: 240, aps: 0.85, range: 2.8, type: "aoe_buff", desc: "광역 + 강한 오라 + 왕의 명령(스턴)", critBase: 0.10 }
+  king:   { atk: 200, aps: 0.80, range: 3.0, type: "aoe_buff", desc: "광역 + 강한 오라 + 왕의 명령(스턴)", critBase: 0.10 }
 };
 
 // 정보 패널에서 보여줄 상세 능력 설명
@@ -1683,7 +1754,7 @@ const PIECE_ABILITY = {
   knight: ["짧은 사거리 단발 공격", "15% 확률로 0.25초 기절", "스플래시: 0.7칸 내 추가 기절 확률 30%"],
   rook:   ["상하좌우 축 위의 적만 타격 (범위 제한)", "환영이 날아가 축의 모든 적 관통 + 넉백", "느린 공속 · 단발 화력"],
   bishop: ["주 타겟 → 주변 적 2명까지 연쇄 (총 3타)", "튕길 때마다 70% 감쇠", "진화 순서에서 룩보다 강한 범용 딜러"],
-  queen:  ["사거리 5.8칸 내 적 최대 6명 동시 타격", "aps 1.85로 <b>파바바박</b> 초고속 광역", "치명타 2%로 낮고 단일 피해는 얕음"],
+  queen:  ["사거리 5.5칸 내 적 최대 5명 동시 타격", "광역 파괴자 (단일 피해는 약함)", "치명타 3%로 낮음"],
   king:   ["사거리 2.8칸 + 광역 2.5칸 (광역 큼)", "주변 4칸 아군 오라: 공격 +25% · 공속 +10% · 치명 +5%", "20% 확률로 주 타겟 0.5초 스턴 (왕의 명령)", "이펙트: 황금 빔 + 확장 링"],
 };
 
@@ -1707,7 +1778,7 @@ const MONSTER_TYPES = {
   normal: { name:"일반", hpMul:1.00, speed:1.6, coinBase:1, svg:"#m-normal" },
   fast:   { name:"속공", hpMul:0.65, speed:3.0, coinBase:1, svg:"#m-fast" },
   tank:   { name:"탱커", hpMul:2.80, speed:1.0, coinBase:2, svg:"#m-tank" },
-  boss:   { name:"보스", hpMul:22.0, speed:0.85,coinBase:15,svg:"#m-boss" },
+  boss:   { name:"보스", hpMul:18.0, speed:0.85,coinBase:15,svg:"#m-boss" },
 };
 
 function networkDecay(d) {
@@ -1904,9 +1975,18 @@ function newGame(seed = null) {
     { kind:"terrain", terrain:"ground" },
     { kind:"terrain", terrain:"underground" },
   ];
+  // 메타 업그레이드: 시작 카드 +N
+  try {
+    const _meta = loadMeta();
+    const extras = _meta.upgrades.startPiece || 0;
+    for (let i = 0; i < extras; i++) {
+      const cardRand = mulberry32(s ^ (0xCAFEC0DE + i));
+      initialHand.push({ kind:"piece", piece: weightedPick(cardRand, Object.entries(PIECE_WEIGHTS)) });
+    }
+  } catch (_) {}
   state = {
     seed: s, path, pathSet, tiles,
-    coin: INITIAL_COIN, life: INITIAL_LIFE, round: 1,
+    coin: metaStartingCoin(), life: metaStartingLife(), round: 1,
     pieceDrawCost: INITIAL_PIECE_DRAW_COST,
     terrainDrawCost: INITIAL_TERRAIN_DRAW_COST,
     hand: initialHand,
@@ -1919,6 +1999,8 @@ function newGame(seed = null) {
     mods: {},
     bossKillsPending: 0,
   };
+  // 캐시: 최고 라운드 (renderStats가 매번 localStorage 안 읽도록)
+  try { state._cachedBestRound = parseInt(localStorage.getItem("chess-defense-best-round") || "0", 10); } catch (_) { state._cachedBestRound = 0; }
   saveGame();
 }
 function saveGame() {
@@ -1958,6 +2040,7 @@ function loadGame() {
       mods: s.mods || {},
       bossKillsPending: s.bossKillsPending || 0,
     };
+    try { state._cachedBestRound = parseInt(localStorage.getItem("chess-defense-best-round") || "0", 10); } catch (_) { state._cachedBestRound = 0; }
     return true;
   } catch (_) { return false; }
 }
@@ -2068,8 +2151,177 @@ function tryCombine() {
 }
 
 // =====================================================================
+//  Event Rounds (특별 이벤트 — 보상 선택지)
+// =====================================================================
+// 발동 라운드: justCleared === 3, 7, 12 일 때
+// 모달은 보스 증강 모달 후에 체이닝됨
+const EVENT_TRIGGERS = [3, 7, 12];
+const EVENTS = {
+  treasure: {
+    title: "💰 보물 상자",
+    desc: "여행 중 발견한 작은 보물 상자. 무엇을 꺼낼까?",
+    options: [
+      { name: "코인 +30",  desc: "즉시 30 코인 획득", icon: "🪙",
+        apply: () => { state.coin += 30; toast("보물: 코인 +30", "success"); } },
+      { name: "체력 +8",   desc: "즉시 HP 8 회복",     icon: "❤️",
+        apply: () => { state.life = Math.min(999, state.life + 8); toast("보물: HP +8", "success"); } },
+      { name: "캐릭터 카드 +3", desc: "무료로 캐릭터 카드 3장 뽑기", icon: "🃏",
+        apply: () => { for (let i=0;i<3;i++) state.hand.push(makePieceCard()); renderHand(); toast("보물: 카드 +3", "success"); } },
+    ]
+  },
+  shop: {
+    title: "🏪 떠돌이 상인",
+    desc: "정체불명의 상인. 흥미로운 물건을 판다.",
+    options: [
+      { name: "지형 카드 무료 5장", desc: "지형 카드 5장을 무료로 손패에 추가", icon: "🌍",
+        apply: () => { for (let i=0;i<5;i++) state.hand.push(makeTerrainCard()); renderHand(); toast("상인: 지형 카드 +5", "success"); } },
+      { name: "전체 능력치 +3% (영구)", desc: "전 능력 atk·aps·crit +3%", icon: "✨",
+        apply: () => { if (!state.mods) state.mods = {}; state.mods.atkAll = (state.mods.atkAll||0) + 0.03; state.mods.apsAll = (state.mods.apsAll||0) + 0.03; state.mods.critAll = (state.mods.critAll||0) + 0.03; toast("상인: 전체 +3%", "success"); } },
+      { name: "체력 +15 + 코인 -10", desc: "10 코인을 내고 HP 15 회복 (코인 부족 시 0)", icon: "❤️",
+        apply: () => { const c = Math.min(state.coin, 10); state.coin -= c; state.life = Math.min(999, state.life + 15); toast(`상인: HP +15 / -${c} 코인`, "success"); } },
+    ]
+  },
+  gambit: {
+    title: "🎲 차원의 균열",
+    desc: "다음 라운드의 운명을 바꿀 수 있다. 위험과 보상.",
+    options: [
+      { name: "다음 라운드 보스 추가 (+큰 보상)", desc: "다음 라운드에 보스 1마리 추가 → 처치 시 증강 +1, 보너스 코인 +30", icon: "👹",
+        apply: () => { state.gambit_extraBoss = (state.gambit_extraBoss||0) + 1; toast("균열: 다음 라운드 보스 +1", "success"); } },
+      { name: "다음 라운드 몬스터 2배 / HP 절반", desc: "수는 많지만 약한 적", icon: "⚡",
+        apply: () => { state.gambit_doubleHalf = true; toast("균열: 몬스터 2배수, HP 절반", "success"); } },
+      { name: "코인 +25 + HP -3", desc: "체력을 약간 잃고 코인 획득", icon: "🩸",
+        apply: () => { state.coin += 25; state.life = Math.max(1, state.life - 3); toast("균열: +25 코인, -3 HP", "success"); } },
+    ]
+  }
+};
+function rollEventForRound(r) {
+  // R3 → treasure, R7 → shop, R12 → gambit, 기타 → random
+  if (r === 3)  return "treasure";
+  if (r === 7)  return "shop";
+  if (r === 12) return "gambit";
+  const pool = ["treasure", "shop", "gambit"];
+  state.cardRand = (state.cardRand * 1664525 + 1013904223) >>> 0;
+  return pool[state.cardRand % pool.length];
+}
+function openEventModal(eventKey, onClose) {
+  const ev = EVENTS[eventKey];
+  if (!ev) { if (onClose) onClose(); return; }
+  cancelAutoCountdown();
+  const modal = $("#event-modal");
+  $("#event-title").textContent = ev.title;
+  $("#event-desc").textContent  = ev.desc;
+  const list = $("#event-list");
+  list.innerHTML = ev.options.map((o, i) => `
+    <div class="reward-card" data-idx="${i}">
+      <div class="r-ico">${o.icon}</div>
+      <div class="r-name">${o.name}</div>
+      <div class="r-desc">${o.desc}</div>
+    </div>
+  `).join("");
+  list.querySelectorAll(".reward-card").forEach(el => {
+    el.addEventListener("click", () => {
+      const o = ev.options[+el.dataset.idx];
+      try { o.apply(); } catch (err) { console.warn(err); }
+      sfx("chime");
+      saveGame();
+      renderStats();
+      refreshButtons();
+      modal.classList.add("hidden");
+      if (onClose) onClose();
+    });
+  });
+  modal.classList.remove("hidden");
+}
+
+// =====================================================================
 //  Round Rewards (R3/6/9 roguelike choice)
 // =====================================================================
+// =====================================================================
+//  META PROGRESSION (영구 진행)
+// =====================================================================
+const META_KEY = "chess-defense-meta-v1";
+function defaultMeta() {
+  return {
+    gamesPlayed: 0,
+    totalKills: 0,
+    totalBossKills: 0,
+    bestRound: 0,
+    crowns: 0,
+    upgrades: { startCoin: 0, startLife: 0, startPiece: 0 },
+  };
+}
+function loadMeta() {
+  try {
+    const raw = localStorage.getItem(META_KEY);
+    if (!raw) return defaultMeta();
+    const m = JSON.parse(raw);
+    const d = defaultMeta();
+    return { ...d, ...m, upgrades: { ...d.upgrades, ...(m.upgrades || {}) } };
+  } catch (_) { return defaultMeta(); }
+}
+function saveMeta(m) {
+  try { localStorage.setItem(META_KEY, JSON.stringify(m)); } catch (_) {}
+}
+function metaStartingCoin() {
+  const m = loadMeta();
+  return INITIAL_COIN + (m.upgrades.startCoin || 0) * 2;
+}
+function metaStartingLife() {
+  const m = loadMeta();
+  return INITIAL_LIFE + (m.upgrades.startLife || 0) * 2;
+}
+const META_UPGRADES = [
+  { id: "startCoin", name: "시작 코인 +2", desc: "새 게임 시작 시 +2 코인", icon: "🪙",
+    cost: lvl => 1 + lvl, max: 10 },
+  { id: "startLife", name: "시작 HP +2",   desc: "새 게임 시작 시 +2 HP", icon: "❤",
+    cost: lvl => 1 + lvl, max: 10 },
+  { id: "startPiece", name: "시작 카드 +1 (랜덤)", desc: "새 게임에 무료 캐릭터 카드 +1", icon: "🃏",
+    cost: lvl => 2 + lvl * 2, max: 3 },
+];
+function openMetaModal() {
+  const meta = loadMeta();
+  const stats = $("#meta-stats");
+  stats.innerHTML = `
+    <div>플레이 횟수: <b>${meta.gamesPlayed}</b></div>
+    <div>최고 라운드: <b>R${meta.bestRound || "-"}</b></div>
+    <div>누적 처치: <b>${meta.totalKills.toLocaleString()}</b></div>
+    <div>보스 처치: <b>${meta.totalBossKills}</b></div>
+    <div>보유 왕관: <b>👑 ${meta.crowns}</b></div>
+  `;
+  const list = $("#meta-upgrades");
+  list.innerHTML = META_UPGRADES.map(u => {
+    const lvl = (meta.upgrades[u.id] || 0);
+    const cost = u.cost(lvl);
+    const maxed = lvl >= u.max;
+    const canAfford = meta.crowns >= cost;
+    return `
+      <div class="reward-card" data-id="${u.id}" style="${maxed?'opacity:0.45':''}">
+        <div class="r-ico">${u.icon}</div>
+        <div class="r-name">${u.name} <span style="color:var(--cyan); font-size:11px">Lv ${lvl}/${u.max}</span></div>
+        <div class="r-desc">${u.desc}<br/><span style="color:var(--gold-2)">비용: 👑 ${cost}${maxed?' · MAX':canAfford?'':' · 부족'}</span></div>
+      </div>
+    `;
+  }).join("");
+  list.querySelectorAll(".reward-card").forEach(el => {
+    el.addEventListener("click", () => {
+      const id = el.dataset.id;
+      const u = META_UPGRADES.find(x => x.id === id);
+      const m = loadMeta();
+      const lvl = m.upgrades[id] || 0;
+      if (lvl >= u.max) { toast("최대 레벨", "error"); return; }
+      const cost = u.cost(lvl);
+      if (m.crowns < cost) { toast(`왕관 부족 (필요 👑${cost})`, "error"); return; }
+      m.crowns -= cost;
+      m.upgrades[id] = lvl + 1;
+      saveMeta(m);
+      sfx("chime");
+      toast(`${u.name} 구매됨`, "success");
+      openMetaModal(); // refresh
+    });
+  });
+  $("#meta-modal").classList.remove("hidden");
+}
+
 const REWARDS = [
   // ─── 지형별 세분 강화 ───
   { id: "skyBoost",    name: "하늘 지형 강화 +10%", desc: "하늘 지형의 공속↑/치명↓ 효과 증폭", icon: "☁", add: { skyBoost: 0.10 } },
@@ -2120,6 +2372,25 @@ function openRewardModal() {
       <div class="r-desc">${r.desc}</div>
     </div>
   `).join("");
+  // Reroll 비용: 라운드별 점진 비용 (5 + round/2 코인)
+  const rerollCost = 5 + Math.floor(state.round / 2);
+  const rerollBtn = $("#btn-reroll-reward");
+  const costEl = $("#reroll-cost");
+  if (costEl) costEl.textContent = String(rerollCost);
+  if (rerollBtn) {
+    rerollBtn.disabled = state.coin < rerollCost;
+    // 기존 핸들러 제거 후 새로 연결
+    const newBtn = rerollBtn.cloneNode(true);
+    rerollBtn.parentNode.replaceChild(newBtn, rerollBtn);
+    newBtn.addEventListener("click", () => {
+      if (state.coin < rerollCost) { toast("코인 부족", "error"); return; }
+      state.coin -= rerollCost;
+      sfx("coin");
+      renderStats();
+      // 모달은 그대로 두고 새 픽 다시 호출
+      openRewardModal();
+    });
+  }
   list.querySelectorAll(".reward-card").forEach(el => {
     el.addEventListener("click", () => {
       const r = picks[+el.dataset.idx];
@@ -2131,9 +2402,19 @@ function openRewardModal() {
       // 남은 보스 증강이 있으면 다음 모달
       if ((state.bossKillsPending || 0) > 0) {
         setTimeout(() => openRewardModal(), 280);
-      } else if (state.autoNext && state.life > 0) {
-        // 모달 닫힌 직후 약간 텀을 주고 자동 카운트다운 시작
-        setTimeout(() => { if (!state.inBattle && state.life > 0) startAutoCountdown(); }, 350);
+      } else {
+        // 보스 증강 모두 끝났으면 → 이벤트 라운드 트리거 체크
+        const justCleared = state.round - 1; // round was incremented in endRound
+        if (EVENT_TRIGGERS.includes(justCleared) && !state.eventDoneFor?.[justCleared]) {
+          if (!state.eventDoneFor) state.eventDoneFor = {};
+          state.eventDoneFor[justCleared] = true;
+          const evKey = rollEventForRound(justCleared);
+          setTimeout(() => openEventModal(evKey, () => {
+            if (state.autoNext && state.life > 0) setTimeout(() => startAutoCountdown(), 350);
+          }), 350);
+        } else if (state.autoNext && state.life > 0) {
+          setTimeout(() => { if (!state.inBattle && state.life > 0) startAutoCountdown(); }, 350);
+        }
       }
     });
   });
@@ -2436,7 +2717,7 @@ function getUnitStats(x, y) {
   const sky = ksz("sky");
   if (sky > 0) {
     aps *= 1 + stackBonus(0.18, sky) * skyBoost;
-    crit -= stackBonus(0.04, sky) * skyBoost;
+    crit -= stackBonus(0.025, sky) * skyBoost;  // 너프: 큰 하늘망에서도 치명 완전 봉쇄 안 되게
   }
   const gnd = ksz("ground");
   if (gnd > 0) {
@@ -2591,10 +2872,24 @@ function startRound() {
   const isTutorialWeak = isTutorialR1 || isTutorialR2;
   let [mnC, mxC] = monsterCountForRound(state.round);
   if (isTutorialWeak) { mnC = 5; mxC = 8; }
+  // 균열: 다음 라운드 몬스터 2배 / HP 절반 (this round)
+  let gambitDoubleHalf = false;
+  if (state.gambit_doubleHalf) {
+    mnC = Math.floor(mnC * 2);
+    mxC = Math.floor(mxC * 2);
+    gambitDoubleHalf = true;
+    state.gambit_doubleHalf = false;
+  }
   const count = rInt(rand, mnC, mxC);
   const monsters = [];
   let bossPlaced = 0;
-  const bossTarget = (isTutorialWeak ? 0 : (state.round % 10 === 0 ? 2 : (state.round % 5 === 0 ? 1 : 0)));
+  let bossTarget = (isTutorialWeak ? 0 : (state.round % 15 === 0 ? 2 : (state.round % 5 === 0 ? 1 : 0)));
+  // 균열 이벤트: 보스 추가
+  if (state.gambit_extraBoss) {
+    bossTarget += state.gambit_extraBoss;
+    state.coin += 30 * state.gambit_extraBoss; // 즉시 보너스 (개당)
+    state.gambit_extraBoss = 0;
+  }
   state.bossesSpawnedThisRound = 0;
 
   for (let i = 0; i < count; i++) {
@@ -2609,6 +2904,7 @@ function startRound() {
     else if (roll < 0.38) type = "fast";
     const mt = MONSTER_TYPES[type];
     let hp = isTutorialWeak ? 1 : roundBaseHP(state.round) * mt.hpMul;
+    if (gambitDoubleHalf) hp *= 0.5;
     const monster = {
       id: `m${state.round}_${i}`,
       type, maxHP: hp, hp,
@@ -2618,9 +2914,21 @@ function startRound() {
       modifiers: {},
       spawnTime: performance.now(),
     };
-    // 보스 패턴
+    // 보스 패턴 — 라운드별 변형
     if (type === "boss") {
       monster.modifiers = { enrage: true, stunResist: true, kbResist: true };
+      // 라운드별 패턴 부여
+      const r = state.round;
+      const pat = (r >= 25) ? combatRand() < 0.5 ? "summoner" : "shielded"
+                : (r >= 20) ? "shielded"
+                : (r >= 15) ? "summoner"
+                : (r >= 10) ? "teleport"
+                : "standard";
+      monster.bossPattern = pat;
+      // 패턴별 데이터 초기화
+      if (pat === "summoner") monster.lastSummon = performance.now();
+      if (pat === "shielded") { monster.shieldUntil = 0; monster.nextShieldAt = performance.now() + 8000; }
+      if (pat === "teleport") monster.usedTeleport = false;
     } else if (type === "tank") {
       monster.modifiers = { kbResist: true };
     }
@@ -2655,6 +2963,26 @@ function startRound() {
 function endRound(success) {
   state.inBattle = false;
   state.paused = false;
+  // 최고 라운드 갱신 + 메타 통계 업데이트
+  try {
+    const meta = loadMeta();
+    if (state.round > meta.bestRound) meta.bestRound = state.round;
+    localStorage.setItem("chess-defense-best-round", String(meta.bestRound));
+    state._cachedBestRound = meta.bestRound;
+    // 처치/보스 통계
+    const killedThisRound  = (state.monsters || []).filter(m => m.dead).length;
+    const bossesThisRound  = (state.monsters || []).filter(m => m.dead && m.type === "boss").length;
+    meta.totalKills += killedThisRound;
+    meta.totalBossKills += bossesThisRound;
+    if (!success && state.life <= 0) {
+      // 게임 오버 — 왕관 지급 (도달 라운드의 1/3)
+      const earned = Math.floor(state.round / 3);
+      meta.crowns += earned;
+      meta.gamesPlayed += 1;
+      if (earned > 0) setTimeout(() => toast(`👑 왕관 +${earned} 획득`, "success"), 600);
+    }
+    saveMeta(meta);
+  } catch (_) {}
   // 보스 증강 카운트:
   // - 라운드 내 죽인 보스(state.monsters에 dead로 남아있음)
   // - 보스가 도망(reachedEnd)했더라도 "등장만 했으면" 증강 부여
@@ -2709,6 +3037,18 @@ function endRound(success) {
       saveGame();
       return;
     }
+    // 이벤트 라운드 트리거 (보스 없는 경우에도)
+    if (EVENT_TRIGGERS.includes(justCleared) && !state.eventDoneFor?.[justCleared]) {
+      if (!state.eventDoneFor) state.eventDoneFor = {};
+      state.eventDoneFor[justCleared] = true;
+      const evKey = rollEventForRound(justCleared);
+      setTimeout(() => openEventModal(evKey, () => {
+        saveGame(); renderStats(); refreshButtons();
+        if (state.autoNext && state.life > 0) setTimeout(() => startAutoCountdown(), 350);
+      }), 400);
+      saveGame();
+      return;
+    }
   } else {
     showBanner("DEFEAT", true);
     toast("라운드 실패! 새 지도를 누르세요", "error");
@@ -2755,10 +3095,62 @@ function monsterPos(m) {
 function simulate(dt) {
   for (const m of state.monsters) {
     if (m.dead || m.reachedEnd) continue;
-    // 보스 격노: HP 50% 이하 시 속도 1.5배
-    if (m.modifiers?.enrage && m.hp / m.maxHP <= 0.5 && !m._enraged) {
-      m.speed = m.baseSpeed * 1.5;
+    // 보스 격노
+    if (m.modifiers?.enrage && m.hp / m.maxHP <= 0.35 && !m._enraged) {
+      m.speed = m.baseSpeed * 1.4;
       m._enraged = true;
+    }
+    // 보스 패턴: 텔레포트 — HP 50% 이하 시 1회만 길 1/4 앞으로 점프
+    if (m.bossPattern === "teleport" && m.hp / m.maxHP <= 0.5 && !m.usedTeleport) {
+      m.usedTeleport = true;
+      const jump = (state.path.length - 1) * 0.25;
+      m.pathIdx = Math.min(state.path.length - 1.1, m.pathIdx + jump);
+      m.stunTimer = 0;
+      // 텔레포트 비주얼
+      try {
+        const p = monsterPos(m);
+        const tw = fxRect.w, th = fxRect.h;
+        const tp = document.createElement("div");
+        tp.className = "boss-teleport-fx";
+        tp.style.cssText = `left:${(p.x/GRID)*tw}px;top:${(p.y/GRID)*th}px`;
+        if (fxLayer) fxLayer.appendChild(tp);
+        setTimeout(() => tp.remove(), 600);
+      } catch (_) {}
+    }
+    // 보스 패턴: 실드 — 8초마다 3초간 데미지 90% 감소
+    if (m.bossPattern === "shielded") {
+      const now = performance.now();
+      if (now >= (m.nextShieldAt || 0) && now > (m.shieldUntil || 0)) {
+        m.shieldUntil = now + 3000;
+        m.nextShieldAt = now + 8000;
+      }
+    }
+    // 보스 패턴: 소환 — 8초마다 1마리 (라운드당 동시 최대 4마리 캡)
+    if (m.bossPattern === "summoner") {
+      const now = performance.now();
+      const aliveMinions = state.monsters.filter(mm => mm._isMinion && !mm.dead && !mm.reachedEnd).length;
+      if (now - (m.lastSummon || 0) >= 8000 && aliveMinions < 4) {
+        m.lastSummon = now;
+        const minionHp = roundBaseHP(state.round) * 0.5;
+        const minion = {
+          id: `minion${state.round}_${Math.floor(now)}`,
+          type: "fast", maxHP: minionHp, hp: minionHp,
+          speed: 2.6, baseSpeed: 2.6,
+          pathIdx: m.pathIdx,
+          dead: false, reachedEnd: false, stunTimer: 0,
+          modifiers: {}, spawnTime: now,
+          _isMinion: true,
+        };
+        state.monsters.push(minion);
+        try {
+          const p = monsterPos(m);
+          const sp = document.createElement("div");
+          sp.className = "boss-summon-fx";
+          sp.style.cssText = `left:${(p.x/GRID)*fxRect.w}px;top:${(p.y/GRID)*fxRect.h}px`;
+          if (fxLayer) fxLayer.appendChild(sp);
+          setTimeout(() => sp.remove(), 500);
+        } catch (_) {}
+      }
     }
     if (m.stunTimer > 0) { m.stunTimer -= dt; continue; }
     m.pathIdx += m.speed * dt;
@@ -2766,6 +3158,9 @@ function simulate(dt) {
       m.reachedEnd = true;
       state.life -= (m.type === "boss" ? 5 : 1);
       sfx("hurt");
+      // 도망 즉시 DOM 엘리먼트 제거 (오른쪽 끝에 잔상으로 남는 버그 수정)
+      if (m._el) { m._el.remove(); m._el = null; }
+      m._visible = false;
       renderStats();
     }
   }
@@ -2826,8 +3221,8 @@ function performAttack(u, targets) {
 
   let hitTargets = [];
   if (u.attackType === "multi") {
-    // 퀸: 광범위 파괴 — 사거리 안 최대 6명 동시 타격
-    hitTargets = targets.slice(0, 6);
+    // 퀸: 광범위 파괴 — 사거리 안 최대 5명 동시 타격
+    hitTargets = targets.slice(0, 5);
   } else if (u.attackType === "line") {
     // 룩: 상하좌우 직선만 — primary 축(수평/수직) 결정 후 같은 축의 적 관통
     const primary = targets[0];
@@ -2924,6 +3319,10 @@ function performAttack(u, targets) {
       if (u.track) u.knockbackCount++;
     }
 
+    // 보스 실드 패턴 — 활성 중이면 데미지 90% 감소
+    if (t.m.bossPattern === "shielded" && (t.m.shieldUntil || 0) > performance.now()) {
+      dmg *= 0.1;
+    }
     t.m.hp -= dmg;
     // 개별 유닛 기여도 기록 (숫자만 누적)
     if (u.track) {
@@ -3342,6 +3741,11 @@ function renderStats() {
   $("#stat-round").textContent = state.round;
   $("#stat-coin").textContent = state.coin;
   $("#stat-life").textContent = state.life;
+  // 최고 라운드는 캐시된 값 사용 (init / endRound에서만 갱신)
+  const elBest = $("#stat-best");
+  if (elBest && state._cachedBestRound != null) {
+    elBest.textContent = state._cachedBestRound > 0 ? `최고 R${state._cachedBestRound}` : "최고 -";
+  }
   $("#cost-piece").textContent = "-" + state.pieceDrawCost;
   $("#cost-terrain").textContent = "-" + state.terrainDrawCost;
   // 코인이 변하면 뽑기 버튼 활성/비활성 즉시 반영
@@ -3446,6 +3850,11 @@ function renderMonsters() {
     if (Math.abs(pct - m._hpPctLast) > 0.01) {
       m._fill.style.width = (pct * 100) + "%";
       m._hpPctLast = pct;
+    }
+    // 보스 실드 시각 표시
+    if (m.bossPattern === "shielded") {
+      const shieldOn = (m.shieldUntil || 0) > performance.now();
+      m._el.classList.toggle("shielded", shieldOn);
     }
     const stateKey = (pct <= 0.25 ? "crit" : pct <= 0.5 ? "low" : "ok") + (m.stunTimer > 0 ? "_s" : "");
     if (stateKey !== m._stateLast) {
@@ -3752,7 +4161,7 @@ function showTileInfo(x, y) {
     // ───── 치명타: base + 지상 − 하늘 + 증강 ─────
     const critBase = (base.critBase != null) ? base.critBase : 0.05;
     const critGnd  = (_gndN > 0) ? stackBonus(0.10, _gndN) * gndB : 0;
-    const critSky  = (_skyN > 0) ? -stackBonus(0.04, _skyN) * skyB : 0;
+    const critSky  = (_skyN > 0) ? -stackBonus(0.025, _skyN) * skyB : 0;
     const critMod  = state.mods?.critAll || 0;
     let critStr = fmt((critBase*100).toFixed(0) + "%", C.base);
     if (critGnd > 0.0001) critStr += ` ${fmt("+" + (critGnd*100).toFixed(0) + "%", C.ground)}<small>⛰</small>`;
@@ -4224,8 +4633,25 @@ function init() {
   $("#combine-modal").addEventListener("click", (e) => {
     if (e.target.id === "combine-modal") e.currentTarget.classList.add("hidden");
   });
+  $("#btn-meta")?.addEventListener("click", () => openMetaModal());
+  $("#meta-close-btn")?.addEventListener("click", () => $("#meta-modal").classList.add("hidden"));
+  $("#meta-modal")?.addEventListener("click", (e) => {
+    if (e.target.id === "meta-modal") e.currentTarget.classList.add("hidden");
+  });
+  $("#event-modal")?.addEventListener("click", (e) => {
+    // 이벤트 모달은 명시적 선택만 — 배경 클릭으로 닫지 않음
+  });
   $("#btn-music").addEventListener("click", () => toggleMusic());
   $("#btn-sfx").addEventListener("click", () => toggleSfx());
+
+  // Auto-pause when tab becomes hidden (mobile browsers, alt-tab on PC)
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state.inBattle && !state.paused) {
+      state.paused = true;
+      refreshButtons();
+      toast("자동 일시정지 (탭 숨김)");
+    }
+  });
 
   // Auto-start music if it was on (but only after first user interaction due to autoplay policy)
   let musicResumed = false;
