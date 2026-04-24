@@ -225,25 +225,40 @@ body::before {
 }
 .tile:hover:not(.path) { background: var(--tile-hover); }
 
+/* 몬스터 길 — 차분한 회색, 살짝 반짝 */
 .tile.path {
-  background: linear-gradient(145deg, var(--path), var(--path-edge));
+  background: linear-gradient(145deg, #4a4a55, #2c2c33);
   cursor: default;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    inset 0 0 10px rgba(0,0,0,0.35);
 }
+/* 은은한 표면 광택 + 미묘한 반짝임 */
 .tile.path::after {
   content: "";
-  position: absolute; inset: 0;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 50%);
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.10), transparent 65%);
   pointer-events: none;
+  animation: pathShimmer 3.5s ease-in-out infinite;
+  animation-delay: var(--pdelay, 0s);
+}
+@keyframes pathShimmer {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.85; }
 }
 .tile.path-start {
-  background: linear-gradient(145deg, #3aa066, #1f5e38);
-  box-shadow: inset 0 0 14px rgba(110,255,160,0.4), inset 0 0 0 1px rgba(170,255,200,0.4);
+  background: linear-gradient(145deg, #3aa066, #1f5e38) !important;
+  box-shadow: inset 0 0 14px rgba(110,255,160,0.4), inset 0 0 0 1px rgba(170,255,200,0.4) !important;
 }
 .tile.path-end {
-  background: linear-gradient(145deg, #a23a4d, #5a1c2a);
-  box-shadow: inset 0 0 14px rgba(255,110,140,0.5), inset 0 0 0 1px rgba(255,170,190,0.4);
+  background: linear-gradient(145deg, #a23a4d, #5a1c2a) !important;
+  box-shadow: inset 0 0 14px rgba(255,110,140,0.5), inset 0 0 0 1px rgba(255,170,190,0.4) !important;
   animation: pulseEnd 1.4s ease-in-out infinite;
+}
+@keyframes pulseEnd {
+  50% { box-shadow: inset 0 0 22px rgba(255,110,140,0.8), inset 0 0 0 1px rgba(255,200,220,0.6) !important; }
 }
 @keyframes pulseEnd {
   50% { box-shadow: inset 0 0 22px rgba(255,110,140,0.8), inset 0 0 0 1px rgba(255,200,220,0.6); }
@@ -271,6 +286,35 @@ body::before {
 .tile.sell-mode-ok {
   animation: sellShake 0.55s ease-in-out infinite;
   box-shadow: inset 0 0 0 2px rgba(255,160,80,0.95);
+}
+.tile.placement-pending {
+  box-shadow: inset 0 0 0 3px var(--gold), 0 0 24px rgba(255,210,74,0.55);
+  outline: 2px dashed rgba(255,232,153,0.9);
+  outline-offset: -5px;
+  animation: pendingPulse 0.8s ease-in-out infinite;
+  z-index: 8;
+}
+.tile.placement-pending::after {
+  content: "다시 탭하여 확정";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--gold), #ff9f2e);
+  color: #1a0e3d;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+@keyframes pendingPulse {
+  0%, 100% { box-shadow: inset 0 0 0 3px var(--gold), 0 0 16px rgba(255,210,74,0.45); }
+  50% { box-shadow: inset 0 0 0 3px var(--gold-2), 0 0 28px rgba(255,232,153,0.7); }
 }
 @keyframes sellShake {
   0%, 100% { transform: rotate(0); }
@@ -501,10 +545,97 @@ body::before {
   animation: flashLine 0.2s forwards;
 }
 .attack-line.atk-rook {
+  height: 6px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,1) 0%,
+    rgba(255,235,160,0.95) 18%,
+    rgba(255,160,80,0.85) 55%,
+    rgba(255,160,80,0) 100%);
+  box-shadow: 0 0 14px rgba(255,200,120,0.95), 0 0 26px rgba(255,140,60,0.55);
+  border-radius: 3px;
+  filter: brightness(1.25) saturate(1.3);
+  animation: rookLaserFade 0.34s ease-out forwards;
+  transform-origin: left center;
+}
+@keyframes rookLaserFade {
+  0%   { opacity: 0.15; filter: brightness(2) saturate(1.5); }
+  25%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.attack-line.atk-rook-OLD_UNUSED {
   height: 5px;
   background: linear-gradient(90deg, rgba(255,170,90,1), rgba(255,140,40,0.8) 60%, rgba(255,140,40,0));
   box-shadow: 0 0 18px rgba(255,160,60,0.95), 0 0 6px rgba(255,255,180,1) inset;
   animation: flashLine 0.32s forwards;
+}
+.rook-ghost {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 200, 120, 0.75);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 900;
+  text-shadow:
+    0 0 10px rgba(255, 200, 120, 0.9),
+    0 0 20px rgba(255, 150, 60, 0.7),
+    0 0 30px rgba(255, 120, 40, 0.4);
+  filter: blur(0.3px);
+  pointer-events: none;
+  z-index: 9;
+  animation: rookGhostFly 0.38s cubic-bezier(0.25, 0.9, 0.3, 1) forwards;
+}
+@keyframes rookGhostFly {
+  0%   { transform: translate(-50%, -50%) translate(0, 0) scale(0.7); opacity: 0; }
+  15%  { transform: translate(-50%, -50%) translate(calc(var(--tx) * 0.08), calc(var(--ty) * 0.08)) scale(1.0); opacity: 0.85; }
+  80%  { opacity: 0.75; }
+  100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1.1); opacity: 0; }
+}
+.bishop-spark {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,220,255,1) 0%, rgba(200,120,255,0.75) 45%, transparent 75%);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 14px rgba(255,180,255,0.95), 0 0 26px rgba(180,100,255,0.65);
+  pointer-events: none;
+  animation: bishopSparkPulse 0.3s ease-out forwards;
+  z-index: 10;
+}
+@keyframes bishopSparkPulse {
+  0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  40%  { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+/* 비숍 감전 전용 아크 — transform 단독 (rotate 인라인만 사용) */
+.bishop-arc {
+  position: absolute;
+  height: 3px;
+  transform-origin: 0 50%;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    rgba(255,220,255,1) 0%,
+    rgba(220,140,255,0.95) 30%,
+    rgba(180,90,255,0.85) 70%,
+    rgba(180,90,255,0) 100%);
+  box-shadow:
+    0 0 10px rgba(230,150,255,1),
+    0 0 22px rgba(180,100,255,0.75),
+    0 0 36px rgba(150,80,255,0.4);
+  pointer-events: none;
+  filter: brightness(1.3) saturate(1.4);
+  animation: bishopArcFlash 0.32s ease-out forwards;
+  z-index: 9;
+}
+@keyframes bishopArcFlash {
+  0%   { opacity: 0; filter: brightness(2.5) saturate(1.5); }
+  15%  { opacity: 1; }
+  55%  { opacity: 0.95; }
+  100% { opacity: 0; }
 }
 .attack-line.atk-bishop {
   height: 3px;
@@ -520,9 +651,10 @@ body::before {
 }
 .attack-line.atk-queen {
   height: 4px;
-  background: linear-gradient(90deg, rgba(255,160,210,1), rgba(255,100,170,0));
-  box-shadow: 0 0 18px rgba(255,130,200,0.9);
-  animation: flashLine 0.3s forwards;
+  background: linear-gradient(90deg, rgba(255,170,220,1), rgba(255,100,170,0));
+  box-shadow: 0 0 18px rgba(255,130,200,0.95);
+  animation: flashLine 0.18s forwards;
+  filter: brightness(1.25);
 }
 .attack-line.atk-king {
   height: 6px;
@@ -686,6 +818,8 @@ body::before {
 .info-panel .row .k { color: var(--ink-mute); font-weight: 600; }
 .info-panel .row .v { font-weight: 800; font-variant-numeric: tabular-nums; }
 .info-panel .sep { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 0; }
+.info-panel .row .v small { font-size: 8.5px; opacity: 0.75; margin-left: 1px; font-weight: 700; }
+.info-panel .row .v b { margin-left: 2px; }
 .info-panel .actions { margin-top: 8px; display: flex; gap: 4px; }
 .info-panel .actions .btn { padding: 6px 8px; font-size: 11px; }
 
@@ -1255,12 +1389,12 @@ body::before {
     <div class="actions">
       <button class="btn primary" id="btn-draw-piece">
         <span class="ico">🃏</span><span class="lbl">캐릭터</span>
-        <span class="cost" id="cost-piece">5</span>
+        <span class="cost" id="cost-piece">-5</span>
         <span class="kbd">D</span>
       </button>
       <button class="btn terrain" id="btn-draw-terrain">
         <span class="ico">🌍</span><span class="lbl">지형</span>
-        <span class="cost" id="cost-terrain">8</span>
+        <span class="cost" id="cost-terrain">-8</span>
         <span class="kbd">T</span>
       </button>
       <button class="btn success" id="btn-start-round">
@@ -1273,10 +1407,10 @@ body::before {
     </div>
     <div class="actions-row-2">
       <button class="btn combine" id="btn-combine">
-        🎰 합성 (5장→상위)
+        🎰 합성 (3장→상위)
       </button>
       <button class="btn warn ghost" id="btn-sell">
-        💰 판매 (X)
+        💰 판매 모드
       </button>
     </div>
     <div class="hand-wrap">
@@ -1296,27 +1430,36 @@ body::before {
     <h2>도움말 · How to Play</h2>
     <p>왼쪽 녹색 시작점에서 출발한 몬스터가 오른쪽 붉은 도착점에 닿기 전에 모두 잡으세요. 카드를 뽑아 체스 말과 지형을 배치하고, 같은 말을 한 타일에 3개 쌓으면 진화합니다.</p>
 
-    <h3>지형 효과 (한 타일에 한 종류만)</h3>
-    <p>• <b>지상</b> 🟢 — 치명타 확률만 증가</p>
-    <p>• <b>하늘</b> 🔵 — 공격속도 증가, 치명타 감소</p>
-    <p>• <b>지하</b> 🟣 — 공격속도 감소, 공격력 증가</p>
-    <p>같은 지형을 또 놓으면 효과가 강해지고, 다른 지형을 놓으면 교체됩니다.</p>
+    <h3>지형 효과 (한 타일 = 1지형, 중첩 없음)</h3>
+    <p>• <b>지상</b> 🟢 — 치명타 확률 증가</p>
+    <p>• <b>하늘</b> 🔵 — 공격속도 증가, 치명타 <span style="color:var(--danger);font-weight:900">감소</span></p>
+    <p>• <b>지하</b> 🟣 — 공격속도 <span style="color:var(--danger);font-weight:900">감소</span>, 공격력 크게 증가</p>
+    <p>같은 지형을 한 타일에 또 놓을 수 없어요. 대신 <b>인접한 같은 지형 타일끼리 자동으로 연결망</b>이 되고, 연결망 위의 모든 말은 <b>연결망 크기만큼 강한 효과</b>를 받습니다 (예: 하늘 3칸이 이어지면 = 하늘×3 효과).</p>
 
     <h3>지형 연결망</h3>
     <p>같은 지형이 상하좌우로 이어지면 연결망이 됩니다. 연결만으로는 효과가 없고, <b>그 위에 놓인 말의 등급에 따라</b> 공격 시 지원 피해를 보내줘요. 더 강한 말을 네트워크에 넣을수록 지원도 강해집니다.</p>
 
     <h3>카드 합성 🎰</h3>
-    <p><b>가장 낮은 등급의 캐릭터 카드부터</b> 5장이 자동으로 합성 재료로 들어가요 (폰 5장 우선, 폰이 없으면 나이트 5장 …). 결과는 50% +1 등급 / 30% +2 등급 / 15% +3 등급 / 5% 실패. 단축키 C 또는 ㅊ.</p>
+    <p><b>가장 낮은 등급의 캐릭터 카드부터</b> 3장이 자동으로 합성 재료로 들어가요 (폰 3장 우선, 폰이 없으면 나이트 3장 …). 3장 → 1단계 상승 <b>확정</b> (실패 없음). 킹 카드는 재료 제외. 단축키 C 또는 ㅊ.</p>
 
     <h3>자동 시작 ⏭</h3>
     <p>시작 버튼 옆 ⏭ 버튼을 켜두면 라운드가 끝난 뒤 5·4·3·2·1 카운트(실시간, 배속 무관) 후 자동으로 다음 라운드가 시작됩니다. 카운트 중에 다시 누르면 취소.</p>
+
+    <h3>📊 개별 말 DPS 보기</h3>
+    <p>보드 위 <b>체스 말을 탭(클릭)하면</b> 해당 타일의 <b>직전 라운드 DPS</b>를 볼 수 있어요. <b>같은 타일 재탭하면 창이 닫힘</b>. 전투 중에는 표시되지 않고 라운드 종료 후에만 표시.</p>
+
+    <h3>📱 모바일 배치 (2탭 확정)</h3>
+    <p>터치 기기에선 카드를 고른 뒤 <b>첫 탭으로 미리보기</b>, <b>같은 타일 다시 탭하면 확정</b>됩니다. 다른 타일을 탭하면 미리보기가 옮겨가고, Esc / 다른 카드 선택으로 취소할 수 있어요. (PC는 기존대로 클릭 즉시 배치)</p>
+
+    <h3>🔗 시드 공유</h3>
+    <p>🌱 시드 창에서 <b>📋 복사</b>로 시드를 복사해 친구에게 공유하세요. 상대는 같은 시드를 입력해서 같은 맵을 플레이할 수 있어요. URL에 <code>?seed=ABC123</code> 형태로 직접 입력해도 됩니다.</p>
 
     <h3>단축키 (한영 무관)</h3>
     <div class="kbd-row"><span>카드 1~9번 묶음 선택</span><kbd>1 … 9</kbd></div>
     <div class="kbd-row"><span>캐릭터 카드 뽑기</span><kbd>D / ㅇ</kbd></div>
     <div class="kbd-row"><span>지형 카드 뽑기</span><kbd>T / ㅅ</kbd></div>
     <div class="kbd-row"><span>합성</span><kbd>C / ㅊ</kbd></div>
-    <div class="kbd-row"><span>판매 모드</span><kbd>X / ㅌ</kbd></div>
+    <div class="kbd-row"><span>판매 모드 (켜고 타일 탭)</span><kbd>X / ㅌ</kbd></div>
     <div class="kbd-row"><span>라운드 시작 / 일시정지</span><kbd>Space</kbd></div>
     <div class="kbd-row"><span>속도 1×→2×→3×</span><kbd>S / ㄴ</kbd></div>
     <div class="kbd-row"><span>일시정지</span><kbd>P / ㅔ</kbd></div>
@@ -1340,6 +1483,7 @@ body::before {
       <button class="btn ghost" id="btn-copy-seed" style="flex:0 0 auto; padding:6px 10px; font-size:11px;">📋 복사</button>
     </div>
 
+
     <input id="seed-input" type="text" placeholder="시드 입력 (예: 친구와공유, ABC123, 12345)" autocomplete="off" autocapitalize="off" autocorrect="off"
       style="width:100%; padding:10px; background:rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:var(--ink); font-family:'SF Mono',Menlo,monospace; font-size:13px; margin-bottom:10px;">
 
@@ -1353,8 +1497,8 @@ body::before {
 
 <div class="modal-backdrop hidden" id="reward-modal">
   <div class="modal" style="max-width:420px">
-    <h2>🎁 선택 보상</h2>
-    <p style="margin-bottom:10px">3개 중 하나를 선택하세요. 선택한 효과는 게임이 끝날 때까지 유지됩니다.</p>
+    <h2>🎁 증강 선택</h2>
+    <p style="margin-bottom:10px">3개 중 하나를 선택하세요. <b>증강</b> 효과는 게임이 끝날 때까지 유지됩니다.</p>
     <div id="reward-list" class="reward-list"></div>
   </div>
 </div>
@@ -1380,8 +1524,8 @@ const SAVE_KEY = "chess-defense-v6";
 const INITIAL_COIN = 11;
 const INITIAL_LIFE = 20;
 const INITIAL_PIECE_DRAW_COST = 5;
-const INITIAL_TERRAIN_DRAW_COST = 8;
-const TERRAIN_COST_INCREMENT = 3;
+const INITIAL_TERRAIN_DRAW_COST = 5;
+const TERRAIN_COST_INCREMENT = 2;
 const PIECE_COST_INCREMENT = 1;
 const COMBINE_INPUT = 3;
 
@@ -1397,22 +1541,25 @@ const PIECE_SUPPORT_FACTOR = {
 };
 
 const PIECE_STATS = {
-  pawn:   { atk: 12,  aps: 1.40, range: 2.4, type: "single",   desc: "근거리 속사" },
-  knight: { atk: 26,  aps: 1.10, range: 3.2, type: "jump",     desc: "점프 + 20% 기절" },
-  rook:   { atk: 50,  aps: 0.78, range: 4.4, type: "line",     desc: "직선 관통 포격" },
-  bishop: { atk: 40,  aps: 0.95, range: 3.8, type: "chain",    desc: "연쇄 마법 3회" },
-  queen:  { atk: 78,  aps: 1.00, range: 4.6, type: "multi",    desc: "다중 공격 3명" },
-  king:   { atk: 110, aps: 0.85, range: 3.6, type: "aoe_buff", desc: "광역 + 아군 +15%" }
+  pawn:   { atk: 14,  aps: 1.40, range: 2.4, type: "single",   desc: "근거리 속사",     critBase: 0.05 },
+  knight: { atk: 32,  aps: 1.10, range: 2.6, type: "jump",     desc: "짧은 점프 + 약한 기절", critBase: 0.05 },
+  // 룩 — 상하좌우 관통, 살짝 너프 (비숍보다 낮음)
+  rook:   { atk: 56,  aps: 0.70, range: 4.2, type: "line",     desc: "상하좌우 관통 레이저", critBase: 0.08 },
+  // 비숍 — 연쇄 3회 + 공격력/공속 상향 (진화 순서대로 실제로 더 강함)
+  bishop: { atk: 58,  aps: 1.00, range: 4.0, type: "chain",    desc: "연쇄 감전 (3회)",  critBase: 0.06 },
+  // 퀸 — 파바바박 초고속 광역 (aps 대폭 상향, 데미지 하향으로 밸런스)
+  queen:  { atk: 38,  aps: 1.85, range: 5.8, type: "multi",    desc: "파바바박 광역 (최대 6명)", critBase: 0.02 },
+  king:   { atk: 320, aps: 0.55, range: 1.8, type: "aoe_buff", desc: "초근접 즉사급 + 아군 +15%", critBase: 0.08 }
 };
 
 // 정보 패널에서 보여줄 상세 능력 설명
 const PIECE_ABILITY = {
   pawn:   ["가장 가까운 적 1명 단발 공격", "낮은 비용·빠른 공속, 초반 도배용"],
-  knight: ["가까운 적 1명 단발 공격", "20% 확률로 0.45초 기절", "이펙트: 청록 펄스"],
-  rook:   ["사거리 안의 적을 직선으로 관통", "한 발로 일렬의 모든 적 타격", "이펙트: 두꺼운 오렌지 빔"],
-  bishop: ["주 타겟 + 가까운 적 2명까지 연쇄", "튕길 때마다 데미지 70% 감소", "이펙트: 보라 지그재그"],
-  queen:  ["사거리 안 적 최대 3명 동시 타격", "이펙트: 핑크 3갈래 + 별빛"],
-  king:   ["주 타겟 주변 1.6칸 광역", "주변 2.5칸 아군 공격력 +15% (오라)", "이펙트: 황금 빔 + 확장 링"],
+  knight: ["짧은 사거리 단발 공격", "8% 확률로 0.2초 기절 (약한 CC)", "스플래시: 0.7칸 내 추가 기절 확률 20%"],
+  rook:   ["상하좌우 축 위의 적만 타격 (범위 제한)", "환영이 날아가 축의 모든 적 관통 + 넉백", "느린 공속 · 단발 화력"],
+  bishop: ["주 타겟 → 주변 적 2명까지 연쇄 (총 3타)", "튕길 때마다 70% 감쇠", "진화 순서에서 룩보다 강한 범용 딜러"],
+  queen:  ["사거리 5.8칸 내 적 최대 6명 동시 타격", "aps 1.85로 <b>파바바박</b> 초고속 광역", "치명타 2%로 낮고 단일 피해는 얕음"],
+  king:   ["초근접(1.8칸)에서 거의 즉사급 단일 피해", "느리지만 광역 + 주변 2.5칸 아군 +15%", "좁은 공간을 완전 장악"],
 };
 
 // 말 카드 내부 확률
@@ -1451,21 +1598,27 @@ function networkDecay(d) {
 //  BALANCE
 // =====================================================================
 function roundHpMultiplier(r) {
-  if (r <= 3)  return Math.pow(1.32, r - 1);
-  if (r <= 10) return Math.pow(1.32, 2) * Math.pow(1.24, r - 3);
-  return Math.pow(1.32, 2) * Math.pow(1.24, 7) * Math.pow(1.18, r - 10);
+  // 초반 1~3: 1.30 (운이 살짝 따라줘야)
+  // 중반 4~10: 1.22 안정
+  // 후반 11~18: 1.14 완만
+  // 극후반 19+: 1.10 양학 구간
+  if (r <= 3)  return Math.pow(1.30, r - 1);
+  if (r <= 10) return Math.pow(1.30, 2) * Math.pow(1.22, r - 3);
+  if (r <= 18) return Math.pow(1.30, 2) * Math.pow(1.22, 7) * Math.pow(1.14, r - 10);
+  return Math.pow(1.30, 2) * Math.pow(1.22, 7) * Math.pow(1.14, 8) * Math.pow(1.10, r - 18);
 }
 function roundBaseHP(r) { return 42 * roundHpMultiplier(r); }
 function coinPerKill(type, r) {
-  // 일반/속공 = 1 고정, 탱커 = 2, 보스만 라운드별 스케일링
-  if (type === "boss") return Math.round(8 + r * 1.0);
+  // 일반/속공 = 1 고정, 탱커 = 2, 보스는 후반 더 많이 (양학 구간 지원)
+  if (type === "boss") return Math.round(10 + r * 1.2);
   if (type === "tank") return 2;
   return 1;
 }
-function endOfRoundBonus(r) { return 2 + Math.floor(r * 1.0); } // R1=3, R5=7, R10=12
+function endOfRoundBonus(r) { return 3 + Math.floor(r * 1.3); } // R1=3, R5=7, R10=12
 function monsterCountForRound(r) {
-  const min = Math.min(34, 11 + Math.floor(r * 1.0));
-  const max = Math.min(44, 18 + Math.floor(r * 1.4));
+  // 후반 cap을 살짝 낮춰서 양학 구간에서 DOM 부담 줄이고 체감 속도 향상
+  const min = Math.min(32, 10 + Math.floor(r * 1.0));
+  const max = Math.min(42, 16 + Math.floor(r * 1.3));
   return [min, max];
 }
 
@@ -1597,8 +1750,7 @@ function generateInitialTerrains(seed, pathSet) {
     const k = `${x},${y}`;
     if (pathSet.has(k) || placed.has(k)) continue;
     const terrain = rPick(rand, TERRAIN_ORDER);
-    const stack = rand() < 0.25 ? 2 : 1; // 25% chance for double-stack
-    placed.set(k, { x, y, terrain, stack });
+    placed.set(k, { x, y, terrain, stack: 1 });
   }
   return [...placed.values()];
 }
@@ -1621,12 +1773,12 @@ function newGame(seed = null) {
   for (const t of initTer) {
     tiles[t.y * GRID + t.x].terrains[t.terrain] = t.stack;
   }
-  // 초기 손패: 지형 카드 3장 무료
-  const initialHand = [];
-  for (let i = 0; i < 3; i++) {
-    const cardRand = mulberry32(s ^ (0xDEADBEEF + i));
-    initialHand.push({ kind:"terrain", terrain: weightedPick(cardRand, Object.entries(TERRAIN_WEIGHTS)) });
-  }
+  // 초기 손패: 지형 카드는 각 종류 하나씩 (하늘/지상/지하)
+  const initialHand = [
+    { kind:"terrain", terrain:"sky" },
+    { kind:"terrain", terrain:"ground" },
+    { kind:"terrain", terrain:"underground" },
+  ];
   state = {
     seed: s, path, pathSet, tiles,
     coin: INITIAL_COIN, life: INITIAL_LIFE, round: 1,
@@ -1638,7 +1790,9 @@ function newGame(seed = null) {
     monsters: [], cardRand: makeSeed(),
     lastTick: 0,
     _networks: null, _networksDirty: true,
-    musicOn: false, sfxOn: true,
+    musicOn: true, sfxOn: true,
+    mods: {},
+    bossKillsPending: 0,
   };
   saveGame();
 }
@@ -1652,6 +1806,8 @@ function saveGame() {
       hand: state.hand, cardRand: state.cardRand,
       autoNext: state.autoNext, speed: state.speed,
       musicOn: state.musicOn, sfxOn: state.sfxOn,
+      mods: state.mods || {},
+      bossKillsPending: state.bossKillsPending || 0,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(snap));
   } catch (_) {}
@@ -1673,7 +1829,9 @@ function loadGame() {
       speed: s.speed ?? 1, autoNext: !!s.autoNext, sellMode: false,
       monsters: [], cardRand: s.cardRand ?? makeSeed(),
       lastTick: 0, _networks: null, _networksDirty: true,
-      musicOn: !!s.musicOn, sfxOn: s.sfxOn !== false,
+      musicOn: (s.musicOn === false) ? false : true, sfxOn: s.sfxOn !== false,
+      mods: s.mods || {},
+      bossKillsPending: s.bossKillsPending || 0,
     };
     return true;
   } catch (_) { return false; }
@@ -1788,15 +1946,34 @@ function tryCombine() {
 //  Round Rewards (R3/6/9 roguelike choice)
 // =====================================================================
 const REWARDS = [
-  { id: "knightStunR", name: "나이트 스턴 범위 +20%", desc: "나이트의 스플래시 범위가 넓어집니다", icon: "♞", add: { knightStunR: 0.2 } },
-  { id: "rookKnockback", name: "룩 넉백 +30%", desc: "룩의 넉백 거리가 강해집니다", icon: "♜", add: { rookKnockback: 0.3 } },
-  { id: "terrainBoost", name: "지형 효과 +15%", desc: "모든 지형 보너스가 강화됩니다", icon: "🌍", add: { terrainBoost: 0.15 } },
-  { id: "atkAll", name: "전체 공격력 +10%", desc: "모든 말의 기본 공격력", icon: "⚔", add: { atkAll: 0.10 } },
-  { id: "apsAll", name: "전체 공속 +10%", desc: "모든 말의 공격속도", icon: "⚡", add: { apsAll: 0.10 } },
-  { id: "critAll", name: "전체 치명타 +8%", desc: "모든 말의 치명타 확률", icon: "💥", add: { critAll: 0.08 } },
-  { id: "coin", name: "코인 +15", desc: "즉시 15 코인 획득", icon: "🪙", instant: "coin15" },
-  { id: "life", name: "HP +5", desc: "즉시 체력 5 회복", icon: "❤", instant: "life5" },
-  { id: "support", name: "지원 기여도 +15%", desc: "연결망 지원 피해 증가", icon: "🔗", add: { supportBoost: 0.15 } },
+  // ─── 지형별 세분 강화 ───
+  { id: "skyBoost",    name: "하늘 지형 강화 +10%", desc: "하늘 지형의 공속↑/치명↓ 효과 증폭", icon: "☁", add: { skyBoost: 0.10 } },
+  { id: "groundBoost", name: "지상 지형 강화 +10%", desc: "지상 지형의 치명타 증가 효과 증폭", icon: "⛰", add: { groundBoost: 0.10 } },
+  { id: "ugBoost",     name: "지하 지형 강화 +10%", desc: "지하 지형의 공격력↑/공속↓ 효과 증폭", icon: "⛧", add: { ugBoost: 0.10 } },
+  // ─── 전체 말 버프 (절제된 수치) ───
+  { id: "atkAll",      name: "전체 공격력 +5%",    desc: "모든 말의 공격력", icon: "⚔",  add: { atkAll: 0.05 } },
+  { id: "apsAll",      name: "전체 공속 +5%",      desc: "모든 말의 공격속도", icon: "⚡", add: { apsAll: 0.05 } },
+  { id: "critAll",     name: "전체 치명타 +3%",    desc: "모든 말의 치명타 확률", icon: "💥", add: { critAll: 0.03 } },
+  // ─── 말별 세분 강화 ───
+  { id: "atk_pawn",    name: "폰 공격력 +15%",     desc: "폰 계열 화력 증가", icon: "♟", add: { atk_pawn: 0.15 } },
+  { id: "aps_knight",  name: "나이트 공속 +12%",   desc: "나이트 공격 속도", icon: "♞", add: { aps_knight: 0.12 } },
+  { id: "rng_knight",  name: "나이트 사거리 +15%", desc: "나이트 사거리 확장", icon: "♞", add: { rng_knight: 0.15 } },
+  { id: "atk_rook",    name: "룩 공격력 +12%",     desc: "룩 레이저 데미지 ↑", icon: "♜", add: { atk_rook: 0.12 } },
+  { id: "rng_rook",    name: "룩 사거리 +20%",     desc: "룩 레이저가 더 멀리", icon: "♜", add: { rng_rook: 0.20 } },
+  { id: "atk_bishop",  name: "비숍 공격력 +12%",   desc: "비숍 감전 데미지 ↑", icon: "♝", add: { atk_bishop: 0.12 } },
+  { id: "atk_queen",   name: "퀸 공격력 +10%",     desc: "퀸 광역 데미지 ↑", icon: "♛", add: { atk_queen: 0.10 } },
+  { id: "rng_queen",   name: "퀸 사거리 +15%",     desc: "퀸 파괴 범위 확장", icon: "♛", add: { rng_queen: 0.15 } },
+  { id: "atk_king",    name: "킹 공격력 +8%",      desc: "킹 즉사급 피해 ↑", icon: "♚", add: { atk_king: 0.08 } },
+  // ─── 특수 능력 ───
+  { id: "knightStunR", name: "나이트 스턴 범위 +10%", desc: "스플래시 기절 범위 확장", icon: "♞", add: { knightStunR: 0.10 } },
+  { id: "rookKnockback", name: "룩 넉백 +15%",     desc: "룩 넉백 거리 강화", icon: "♜", add: { rookKnockback: 0.15 } },
+  { id: "support",     name: "지원 기여도 +7%",    desc: "연결망 지원 피해 증가", icon: "🔗", add: { supportBoost: 0.07 } },
+  // ─── 즉시 자원 ───
+  { id: "coin",        name: "코인 +10",           desc: "즉시 10 코인 획득", icon: "🪙", instant: "coin10" },
+  { id: "life",        name: "HP +3",              desc: "즉시 체력 3 회복", icon: "❤",  instant: "life3" },
+  // ─── 판매 환불 증강 (기본 50%에 가산) ───
+  { id: "sellRefund10", name: "판매 환불 +10%",     desc: "판매 시 환불률 +10%p (기본 50%)", icon: "💰", add: { sellRefund: 0.10 } },
+  { id: "sellRefund15", name: "판매 환불 +15%",     desc: "판매 시 환불률 +15%p (기본 50%)", icon: "💰", add: { sellRefund: 0.15 } },
 ];
 function openRewardModal() {
   // 3 random rewards
@@ -1806,6 +1983,9 @@ function openRewardModal() {
   const picks = pool.slice(0, 3);
   const modal = $("#reward-modal");
   const list = $("#reward-list");
+  const titleEl = modal.querySelector("h2");
+  const pending = Math.max(1, state.bossKillsPending || 1);
+  if (titleEl) titleEl.textContent = pending > 1 ? `🎁 증강 선택 (남은 ${pending}회)` : "🎁 증강 선택";
   list.innerHTML = picks.map((r, i) => `
     <div class="reward-card" data-idx="${i}">
       <div class="r-ico">${r.icon}</div>
@@ -1818,8 +1998,15 @@ function openRewardModal() {
       const r = picks[+el.dataset.idx];
       applyReward(r);
       modal.classList.add("hidden");
-      // 자동시작 대기였으면 여기서 재개
-      if (state.autoNext && state.life > 0) startAutoCountdown();
+      // 보스 처치 카운트 감소
+      if ((state.bossKillsPending || 0) > 0) state.bossKillsPending -= 1;
+      saveGame();
+      // 남은 보스 증강이 있으면 다음 모달
+      if ((state.bossKillsPending || 0) > 0) {
+        setTimeout(() => openRewardModal(), 250);
+      } else if (state.autoNext && state.life > 0) {
+        startAutoCountdown();
+      }
     });
   });
   modal.classList.remove("hidden");
@@ -1829,14 +2016,45 @@ function applyReward(r) {
   if (r.add) {
     for (const k in r.add) state.mods[k] = (state.mods[k] || 0) + r.add[k];
   }
-  if (r.instant === "coin15") state.coin += 15;
-  if (r.instant === "life5") state.life = Math.min(999, state.life + 5);
+  if (r.instant === "coin10") state.coin += 10;
+  if (r.instant === "life3") state.life = Math.min(999, state.life + 3);
   sfx("chime");
-  toast(`보상: ${r.name}`, "success");
+  toast(`증강: ${r.name}`, "success");
   saveGame();
   renderStats();
   refreshButtons();
 }
+
+// =====================================================================
+//  Placement 2-tap (mobile) helpers
+// =====================================================================
+const IS_TOUCH = (() => {
+  try {
+    return window.matchMedia("(hover: none) and (pointer: coarse)").matches
+        || ("ontouchstart" in window && navigator.maxTouchPoints > 0);
+  } catch (_) { return false; }
+})();
+function clearPendingPlace() {
+  if (!state || !state.pendingPlace) return;
+  const p = state.pendingPlace;
+  state.pendingPlace = null;
+  const el = tileEls[p.y * GRID + p.x];
+  if (el) el.classList.remove("placement-pending");
+}
+
+// =====================================================================
+//  Stage 2 tutorial trigger (terrain focus, starts on round 2)
+// =====================================================================
+function maybeStartStage2Tutorial() {
+  try {
+    if (tutState) return;
+    if (state.round !== 2) return;
+    if (localStorage.getItem(TUT_KEY_S2) === "1") return;
+    if (localStorage.getItem(TUT_KEY_S1) !== "1") return;
+    startTutorial("stage2");
+  } catch (_) {}
+}
+
 
 let combineCloseTimer = null;
 function showCombineResult(pieceType, text, fail) {
@@ -1871,7 +2089,11 @@ function isPath(x,y) { return state.pathSet.has(`${x},${y}`); }
 function canPlaceCard(card, x, y) {
   if (isPath(x, y)) return false;
   const t = tileAt(x, y);
-  if (card.kind === "terrain") return true;
+  if (card.kind === "terrain") {
+    // 같은 지형이 이미 있으면 배치 불가 (중첩 제거됨)
+    if (t.terrains[card.terrain] > 0) return false;
+    return true;
+  }
   if (card.kind === "piece") {
     if (!t.piece) return true;
     if (t.piece.type !== card.piece) return false;
@@ -1889,13 +2111,16 @@ function placeSelectedCardAt(x, y) {
   let evolved = false;
   if (card.kind === "terrain") {
     const existing = TERRAIN_ORDER.find(t => tile.terrains[t] > 0);
+    if (existing === card.terrain) {
+      // 같은 지형이 이미 있음 — 중첩 불가, 카드만 소비하지 않고 거부
+      toast("같은 지형 — 다른 타일에 깔아 연결망을 늘리세요", "error");
+      return;
+    }
     if (existing && existing !== card.terrain) {
       tile.terrains = { sky:0, ground:0, underground:0 };
-      tile.terrains[card.terrain] = 1;
       toast(`${TERRAIN_NAMES[card.terrain]}로 교체`);
-    } else {
-      tile.terrains[card.terrain] += 1;
     }
+    tile.terrains[card.terrain] = 1;
     terrainChanged = true;
     sfx("place");
   } else {
@@ -1936,6 +2161,9 @@ function placeSelectedCardAt(x, y) {
   refreshButtons();
   if (state.inBattle) refreshBattleState();
   tutorialEvent("placed-piece");
+  if (card.kind === "terrain") tutorialEvent("placed-terrain");
+  // 방금 배치한 타일 기억 → 같은 타일 재탭 시 선택 해제
+  state._lastPlacedTile = { x, y };
 }
 
 function sellTile(x, y) {
@@ -1945,17 +2173,21 @@ function sellTile(x, y) {
   }
   let refund = 0;
   let terrainChanged = false;
+  // 판매 환불률 = 기본 50% + 증강 가산
+  const refundPct = 0.5 + (state.mods?.sellRefund || 0);
   // 1) 캐릭터가 있으면 스택 1개 먼저 감소
   if (t.piece) {
     const tier = PIECE_RARITY[t.piece.type];
     const tierCost = [5, 15, 45, 135, 405, 1215][tier] || 0;
-    refund = Math.max(1, Math.floor(tierCost * 0.5));
+    refund = Math.max(1, Math.floor(tierCost * refundPct));
     t.piece.count -= 1;
     if (t.piece.count <= 0) t.piece = null;
   } else {
     // 2) 캐릭터가 없으면 그 타일의 지형 전부 제거
     const totalTerrain = TERRAIN_ORDER.reduce((s,k)=>s + t.terrains[k], 0);
-    refund = Math.max(1, totalTerrain * 4);
+    // 지형은 환불 비율이 캐릭터의 (refundPct / 0.5) 배만큼 반영됨 — 기본 4코인/장
+    const baseTerrain = totalTerrain * 4;
+    refund = Math.max(1, Math.floor(baseTerrain * (refundPct / 0.5)));
     t.terrains = { sky:0, ground:0, underground:0 };
     terrainChanged = true;
   }
@@ -2057,29 +2289,51 @@ function getUnitStats(x, y) {
   let atk = base.atk * countBonus;
   let aps = base.aps;
   let range = base.range;
-  let crit = 0.05;
+  let crit = (base.critBase != null) ? base.critBase : 0.05;
 
-  const terrainBoost = 1 + (state.mods?.terrainBoost || 0);
-  const sky = tile.terrains.sky;
+  const terrainBoostAll = 1 + (state.mods?.terrainBoost || 0);
+  const skyBoost    = terrainBoostAll * (1 + (state.mods?.skyBoost    || 0));
+  const groundBoost = terrainBoostAll * (1 + (state.mods?.groundBoost || 0));
+  const ugBoost     = terrainBoostAll * (1 + (state.mods?.ugBoost     || 0));
+  // 지형 효과 = 자기 타일이 속한 연결망의 크기 (스택 수 대신 네트워크 크기)
+  ensureNetworks();
+  const ksz = (terrain) => {
+    if (!tile.terrains[terrain]) return 0;
+    const map = state._networks[terrain];
+    if (!map) return 0;
+    const id = map.get(`${x},${y}`);
+    if (id == null) return 0;
+    const grp = state._networkGroups[terrain][id];
+    return grp ? grp.length : 0;
+  };
+  const sky = ksz("sky");
   if (sky > 0) {
-    aps *= 1 + stackBonus(0.18, sky) * terrainBoost;
-    crit -= stackBonus(0.04, sky) * terrainBoost;
+    aps *= 1 + stackBonus(0.18, sky) * skyBoost;
+    crit -= stackBonus(0.04, sky) * skyBoost;
   }
-  const gnd = tile.terrains.ground;
+  const gnd = ksz("ground");
   if (gnd > 0) {
-    crit += stackBonus(0.10, gnd) * terrainBoost;
+    crit += stackBonus(0.10, gnd) * groundBoost;
   }
-  const ug = tile.terrains.underground;
+  const ug = ksz("underground");
   if (ug > 0) {
-    aps *= 1 - stackBonus(0.08, ug) * terrainBoost;
-    atk *= 1 + stackBonus(0.30, ug) * terrainBoost;
+    aps *= 1 - stackBonus(0.08, ug) * ugBoost;
+    atk *= 1 + stackBonus(0.30, ug) * ugBoost;
   }
 
-  // 라운드 보상 전역 수정치
+  // 라운드 보상 전역 + 말별 수정치
   if (state.mods) {
     if (state.mods.atkAll)  atk *= 1 + state.mods.atkAll;
     if (state.mods.apsAll)  aps *= 1 + state.mods.apsAll;
     if (state.mods.critAll) crit += state.mods.critAll;
+    // 말별 강화
+    const p = tile.piece.type;
+    const pAtk = state.mods["atk_" + p];
+    const pAps = state.mods["aps_" + p];
+    const pRng = state.mods["rng_" + p];
+    if (pAtk) atk *= 1 + pAtk;
+    if (pAps) aps *= 1 + pAps;
+    if (pRng) range *= 1 + pRng;
   }
 
   return {
@@ -2159,7 +2413,24 @@ function refreshBattleState() {
   const units = collectUnits();
   for (const u of units) {
     const old = oldMap.get(`${u.tileX},${u.tileY}`);
-    u.cd = old ? old.cd : 0.15 + combatRand() * 0.35;
+    if (old) {
+      // 기존 유닛이 같은 타일에 있었으면 쿨다운 + 누적 카운터 이어받기 (DPS 유지)
+      u.cd = old.cd;
+      u.damageDone    = old.damageDone    || 0;
+      u.killCount     = old.killCount     || 0;
+      u.critCount     = old.critCount     || 0;
+      u.stunCount     = old.stunCount     || 0;
+      u.knockbackCount= old.knockbackCount|| 0;
+      u.track         = old.track !== false;
+    } else {
+      u.cd = 0.15 + combatRand() * 0.35;
+      u.damageDone = 0;
+      u.killCount = 0;
+      u.critCount = 0;
+      u.stunCount = 0;
+      u.knockbackCount = 0;
+      u.track = true;
+    }
   }
   state.unitsCache = units;
   precomputeSupporters();
@@ -2172,6 +2443,8 @@ function startRound() {
   if (state.inBattle) return;
   if (state.life <= 0) return toast("게임 오버! 새 지도로 다시 시작", "error");
   cancelAutoCountdown();
+  clearPendingPlace();
+  state._lastPlacedTile = null;
   ensureNetworks();
   updateFxRect();
   fxDamageBudget = 0; fxSparkBudget = 0;
@@ -2179,22 +2452,30 @@ function startRound() {
   state.paused = false;
 
   const rand = mulberry32(((state.seed + state.round * 7919) >>> 0));
-  const [mnC, mxC] = monsterCountForRound(state.round);
+  // 튜토리얼 중(R1 또는 R2): 연습용 약한 몬스터 (HP 1, 적은 수)
+  const _hasLS = (typeof localStorage !== "undefined");
+  const isTutorialR1 = state.round === 1 && _hasLS && !localStorage.getItem(TUT_KEY_S1);
+  const isTutorialR2 = state.round === 2 && _hasLS && !localStorage.getItem(TUT_KEY_S2);
+  const isTutorialWeak = isTutorialR1 || isTutorialR2;
+  let [mnC, mxC] = monsterCountForRound(state.round);
+  if (isTutorialWeak) { mnC = 5; mxC = 8; }
   const count = rInt(rand, mnC, mxC);
   const monsters = [];
   let bossPlaced = 0;
-  const bossTarget = state.round % 10 === 0 ? 2 : (state.round % 5 === 0 ? 1 : 0);
+  const bossTarget = (isTutorialWeak ? 0 : (state.round % 10 === 0 ? 2 : (state.round % 5 === 0 ? 1 : 0)));
 
   for (let i = 0; i < count; i++) {
     const roll = rand();
     let type = "normal";
-    if (bossTarget > bossPlaced && i >= Math.floor(count * 0.3) &&
+    if (isTutorialWeak) {
+      type = "normal"; // 튜토리얼은 일반만
+    } else if (bossTarget > bossPlaced && i >= Math.floor(count * 0.3) &&
         i <= Math.floor(count * 0.7) && rand() < 0.3) {
       type = "boss"; bossPlaced++;
     } else if (roll < 0.12 && state.round >= 3) type = "tank";
     else if (roll < 0.38) type = "fast";
     const mt = MONSTER_TYPES[type];
-    let hp = roundBaseHP(state.round) * mt.hpMul;
+    let hp = isTutorialWeak ? 1 : roundBaseHP(state.round) * mt.hpMul;
     const monster = {
       id: `m${state.round}_${i}`,
       type, maxHP: hp, hp,
@@ -2227,6 +2508,7 @@ function startRound() {
   }
   precomputeSupporters();
   state.lastTick = performance.now();
+  state.roundStartTime = state.lastTick;
 
   showBanner(`ROUND ${state.round}`);
   sfx("start");
@@ -2239,6 +2521,30 @@ function startRound() {
 function endRound(success) {
   state.inBattle = false;
   state.paused = false;
+  // --- Per-tile stats accumulation (before clearing unitsCache) ---
+  const roundDur = Math.max(0.5, ((performance.now() - (state.roundStartTime || performance.now())) / 1000));
+  for (const u of (state.unitsCache || [])) {
+    const tile = tileAt(u.tileX, u.tileY);
+    if (!tile || !tile.piece) continue;
+    if (!tile.piece.stats) {
+      tile.piece.stats = { totalDamage: 0, totalKills: 0, totalCrits: 0, totalStuns: 0,
+                           totalKnockbacks: 0, roundsActive: 0, totalBattleTime: 0,
+                           lastDamage: 0, lastKills: 0, lastDuration: 0 };
+    }
+    const st = tile.piece.stats;
+    const dmg = Math.round(u.damageDone || 0);
+    const kills = u.killCount || 0;
+    st.totalDamage += dmg;
+    st.totalKills += kills;
+    st.totalCrits += (u.critCount || 0);
+    st.totalStuns += (u.stunCount || 0);
+    st.totalKnockbacks += (u.knockbackCount || 0);
+    st.totalBattleTime += roundDur;
+    if (dmg > 0 || kills > 0) st.roundsActive += 1;
+    st.lastDamage = dmg;
+    st.lastKills = kills;
+    st.lastDuration = roundDur;
+  }
   state.monsters = [];
   state.unitsCache = null;
   if (success) {
@@ -2248,11 +2554,15 @@ function endRound(success) {
     sfx("victory");
     const justCleared = state.round;
     state.round += 1;
-    // R3/6/9: 로그라이크 선택 카드
-    if ([3, 6, 9, 12, 15].includes(justCleared)) {
+    // R1 클리어 직후 → Stage 2 튜토리얼 자동 실행 (시작 버튼 누르기 전)
+    if (justCleared === 1) {
+      setTimeout(() => maybeStartStage2Tutorial(), 500);
+    }
+    // 보스 처치 카운트만큼 증강 선택 모달 순차 오픈
+    if ((state.bossKillsPending || 0) > 0) {
       openRewardModal();
       saveGame();
-      return; // 자동시작 카운트다운 보류 (선택 후 재시작)
+      return;
     }
   } else {
     showBanner("DEFEAT", true);
@@ -2323,8 +2633,17 @@ function simulate(dt) {
       if (m.dead || m.reachedEnd) continue;
       const p = monsterPos(m);
       if (!p.spawned) continue;
-      const d = Math.hypot(p.x - (u.tileX + 0.5), p.y - (u.tileY + 0.5));
-      if (d <= u.range) inRange.push({ m, d, p });
+      const dx = p.x - (u.tileX + 0.5);
+      const dy = p.y - (u.tileY + 0.5);
+      const d = Math.hypot(dx, dy);
+      if (d > u.range) continue;
+      // 룩은 상하좌우(축 정렬) 몬스터만 타겟 — 축과의 수직 편차 ≤ 0.55칸
+      if (u.attackType === "line") {
+        const absDx = Math.abs(dx), absDy = Math.abs(dy);
+        const onAxis = (absDx <= 0.55) || (absDy <= 0.55);
+        if (!onAxis) continue;
+      }
+      inRange.push({ m, d, p });
     }
     if (inRange.length === 0) continue;
     inRange.sort((a, b) => b.m.pathIdx - a.m.pathIdx);
@@ -2350,26 +2669,34 @@ function performAttack(u, targets) {
 
   let hitTargets = [];
   if (u.attackType === "multi") {
-    hitTargets = targets.slice(0, 3);
+    // 퀸: 광범위 파괴 — 사거리 안 최대 6명 동시 타격
+    hitTargets = targets.slice(0, 6);
   } else if (u.attackType === "line") {
-    // 룩: 한 방향 직선 관통 1개만 (넉백 적용)
+    // 룩: 상하좌우 직선만 — primary 축(수평/수직) 결정 후 같은 축의 적 관통
     const primary = targets[0];
     hitTargets.push(primary);
-    const dx = primary.p.x - (u.tileX + 0.5), dy = primary.p.y - (u.tileY + 0.5);
-    const len = Math.hypot(dx, dy) || 1;
-    const nx = dx / len, ny = dy / len;
+    const pdx = primary.p.x - (u.tileX + 0.5);
+    const pdy = primary.p.y - (u.tileY + 0.5);
+    const axis = Math.abs(pdx) >= Math.abs(pdy) ? "x" : "y";
+    const dir = axis === "x" ? Math.sign(pdx) : Math.sign(pdy);
     for (let i = 1; i < targets.length; i++) {
       const t = targets[i];
       const rx = t.p.x - (u.tileX + 0.5), ry = t.p.y - (u.tileY + 0.5);
-      const proj = rx * nx + ry * ny;
-      const perp = Math.abs(rx * -ny + ry * nx);
-      if (proj > 0 && proj < u.range && perp < 0.55) hitTargets.push(t);
+      if (axis === "x") {
+        if (Math.sign(rx) !== dir || Math.abs(ry) > 0.55) continue;
+        if (Math.abs(rx) >= u.range) continue;
+      } else {
+        if (Math.sign(ry) !== dir || Math.abs(rx) > 0.55) continue;
+        if (Math.abs(ry) >= u.range) continue;
+      }
+      hitTargets.push(t);
     }
   } else if (u.attackType === "chain") {
+    // 비숍: 주 타겟 + 2회 연쇄 (총 3타) — 감전처럼 번져가는 느낌
     hitTargets.push(targets[0]);
     let curPos = targets[0].p;
     const used = new Set([targets[0].m.id]);
-    for (let b = 0; b < 2; b++) {
+    for (let step = 0; step < 2; step++) {
       let best = null, bd = Infinity;
       for (const t of targets) {
         if (used.has(t.m.id)) continue;
@@ -2377,7 +2704,7 @@ function performAttack(u, targets) {
         if (d < 3.5 && d < bd) { best = t; bd = d; }
       }
       if (!best) break;
-      hitTargets.push({ ...best, chained: b + 1 });
+      hitTargets.push({ ...best, chained: step + 1 });
       used.add(best.m.id);
       curPos = best.p;
     }
@@ -2394,7 +2721,7 @@ function performAttack(u, targets) {
   }
 
   const dmgPerTarget = baseDmg + supportDmg;
-  const knightStunRadius = 1.0 + (state.mods?.knightStunR || 0);
+  const knightStunRadius = 0.7 + (state.mods?.knightStunR || 0);
   const rookKnockback = 0.45 + (state.mods?.rookKnockback || 0);
 
   for (let i = 0; i < hitTargets.length; i++) {
@@ -2402,16 +2729,18 @@ function performAttack(u, targets) {
     const chainMult = t.chained ? Math.pow(0.7, t.chained) : 1;
     let dmg = dmgPerTarget * chainMult;
 
-    // 나이트: 스플래시 스턴 — 타겟 중심 knightStunRadius 칸 이내 몬스터도 스턴
+    // 나이트: 약한 스턴 (몬스터가 너무 멈추지 않도록)
     if (u.attackType === "jump") {
       const resistMul = (t.m.modifiers && t.m.modifiers.stunResist) ? 0.5 : 1;
-      if (combatRand() < 0.25 * resistMul) t.m.stunTimer = Math.max(t.m.stunTimer, 0.4);
+      // 주 타겟 8% 확률 · 0.2초
+      if (combatRand() < 0.08 * resistMul) t.m.stunTimer = Math.max(t.m.stunTimer, 0.2);
       for (const other of state.monsters) {
         if (other === t.m || other.dead || other.reachedEnd) continue;
         const op = monsterPos(other);
         if (Math.hypot(op.x - t.p.x, op.y - t.p.y) <= knightStunRadius) {
           const rm = (other.modifiers && other.modifiers.stunResist) ? 0.5 : 1;
-          if (combatRand() < 0.5 * rm) other.stunTimer = Math.max(other.stunTimer, 0.3);
+          // 주변 20% 확률 · 0.15초
+          if (combatRand() < 0.20 * rm) other.stunTimer = Math.max(other.stunTimer, 0.15);
           if (u.track) u.stunCount++;
         }
       }
@@ -2428,9 +2757,9 @@ function performAttack(u, targets) {
     if (u.track) {
       u.damageDone += dmg;
       if (isCrit) u.critCount++;
-      if (u.attackType === "jump" && combatRand() < 0.25) u.stunCount++;
     }
-    spawnAttackLine(u, t.p);
+    // 룩/비숍은 per-target 스킵 — 루프 끝나고 한 번에 커스텀으로 그림
+    if (u.attackType !== "line" && u.attackType !== "chain") spawnAttackLine(u, t.p);
     spawnDamageText(t.p, Math.round(dmg), isCrit);
     if (t.m.hp <= 0 && !t.m.dead) {
       t.m.dead = true;
@@ -2439,10 +2768,34 @@ function performAttack(u, targets) {
       state.coin += c;
       spawnCoinText(t.p, c);
       spawnHitSpark(t.p, t.m.type === "boss");
-      if (t.m.type === "boss") sfx("boss");
-      else sfx("kill");
+      if (t.m.type === "boss") {
+        sfx("boss");
+        state.bossKillsPending = (state.bossKillsPending || 0) + 1;
+      } else sfx("kill");
       renderStats();
     }
+  }
+  // 비숍: 체인 감전 — 비숍→target0→target1 처럼 타겟 간 빔이 이어짐
+  if (u.attackType === "chain" && hitTargets.length) {
+    // 첫 번째 빔: 비숍 → 1번 타겟
+    spawnBishopArc(
+      { x: u.tileX + 0.5, y: u.tileY + 0.5 },
+      hitTargets[0].p,
+      0
+    );
+    // 이후 타겟들 사이: target[i-1] → target[i]
+    for (let i = 1; i < hitTargets.length; i++) {
+      spawnBishopArc(hitTargets[i - 1].p, hitTargets[i].p, i);
+    }
+  }
+  // 룩: 환영(ghost rook)이 자기 모습처럼 상하좌우로 날아감
+  if (u.attackType === "line" && hitTargets.length) {
+    const prim = hitTargets[0];
+    const dx = prim.p.x - (u.tileX + 0.5);
+    const dy = prim.p.y - (u.tileY + 0.5);
+    const axis = Math.abs(dx) >= Math.abs(dy) ? "x" : "y";
+    const dir = axis === "x" ? Math.sign(dx) : Math.sign(dy);
+    spawnRookGhost(u, axis, dir);
   }
   for (const s of supHits) flashSupporter(s.v.tileX, s.v.tileY);
 }
@@ -2538,6 +2891,9 @@ function buildBoard() {
       const first = state.path[0], last = state.path[state.path.length - 1];
       if (x === first.x && y === first.y) el.classList.add("path-start");
       if (x === last.x && y === last.y) el.classList.add("path-end");
+      // 빛 반짝임 딜레이 (위치별로 다르게 → 길 전체에서 부드럽게 흐름)
+      const idx = state.path.findIndex(p => p.x === x && p.y === y);
+      el.style.setProperty("--pdelay", (-idx * 0.13).toFixed(2) + "s");
     } else {
       el.addEventListener("click", () => onTileClick(x, y));
       el.addEventListener("mouseenter", () => showRangePreview(x, y));
@@ -2590,14 +2946,69 @@ function renderNetworkDots() {
 
 function onTileClick(x, y) {
   if (state.sellMode) {
+    clearPendingPlace();
     sellTile(x, y);
     state.sellMode = false;
     refreshButtons();
     renderPlacementHints();
     return;
   }
-  if (state.selectedCardKey) placeSelectedCardAt(x, y);
-  else showTileInfo(x, y);
+  if (state.selectedCardKey) {
+    // 방금 배치한 타일을 다시 탭하면: 카드 선택 해제 + 정보창 열기 (DPS 바로 보기)
+    if (state._lastPlacedTile && state._lastPlacedTile.x === x && state._lastPlacedTile.y === y) {
+      state._lastPlacedTile = null;
+      clearPendingPlace();
+      state.selectedCardKey = null;
+      hideRangePreview();
+      hand.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
+      renderPlacementHints();
+      refreshButtons();
+      sfx("click");
+      showTileInfo(x, y);
+      return;
+    }
+    if (IS_TOUCH) {
+      const card = selectedCard();
+      if (!card) { state.selectedCardKey = null; renderHand(); refreshButtons(); return; }
+      if (!canPlaceCard(card, x, y)) {
+        clearPendingPlace();
+        // 말이 있는 타일이면 DPS/정보창을 대신 보여줌
+        const tileAtXY = tileAt(x, y);
+        if (tileAtXY && tileAtXY.piece) { showTileInfo(x, y); return; }
+        return toast("배치 불가", "error");
+      }
+      const p = state.pendingPlace;
+      if (p && p.x === x && p.y === y) {
+        clearPendingPlace();
+        placeSelectedCardAt(x, y);
+      } else {
+        clearPendingPlace();
+        state.pendingPlace = { x, y };
+        const el = tileEls[y * GRID + x];
+        if (el) el.classList.add("placement-pending");
+        showRangePreview(x, y);
+        sfx("click");
+      }
+      return;
+    }
+    // Desktop: 배치 불가한 말 있는 타일이면 정보창을 대신 띄움
+    const card = selectedCard();
+    const tAtXY = tileAt(x, y);
+    if (card && tAtXY && tAtXY.piece && !canPlaceCard(card, x, y)) {
+      showTileInfo(x, y);
+      return;
+    }
+    placeSelectedCardAt(x, y);
+  } else {
+    // 같은 타일 재클릭 시 info panel 닫기 (토글)
+    const panel = $("#info-panel");
+    const isOpen = panel && !panel.classList.contains("hidden");
+    if (isOpen && state._infoTile && state._infoTile.x === x && state._infoTile.y === y) {
+      hideInfo();
+    } else {
+      showTileInfo(x, y);
+    }
+  }
 }
 
 function terrainBgFor(terrains) {
@@ -2633,7 +3044,7 @@ function renderTile(x, y) {
   }
   for (const t of TERRAIN_ORDER) {
     if (tile.terrains[t] > 0) {
-      inner += `<span class="terrain-pip ${t}">${TERRAIN_ICON[t]}${tile.terrains[t]}</span>`;
+      inner += `<span class="terrain-pip ${t}">${TERRAIN_ICON[t]}</span>`;
       break;
     }
   }
@@ -2683,6 +3094,8 @@ function renderHand() {
 // Light-touch selection: just toggle .selected, don't full-rebuild
 function selectCardByKey(key) {
   state.sellMode = false;
+  clearPendingPlace();
+  state._lastPlacedTile = null;
   const before = state.selectedCardKey;
   if (state.selectedCardKey === key) state.selectedCardKey = null;
   else state.selectedCardKey = key;
@@ -2693,7 +3106,12 @@ function selectCardByKey(key) {
   renderPlacementHints();
   refreshButtons();
   sfx("click");
-  if (!before && state.selectedCardKey) tutorialEvent("selected-card");
+  if (!before && state.selectedCardKey) {
+    tutorialEvent("selected-card");
+    const c = selectedCard();
+    if (c && c.kind === "terrain") tutorialEvent("selected-terrain-card");
+    if (c && c.kind === "piece") tutorialEvent("selected-piece-card");
+  }
 }
 
 function renderPlacementHints() {
@@ -2736,8 +3154,8 @@ function renderStats() {
   $("#stat-round").textContent = state.round;
   $("#stat-coin").textContent = state.coin;
   $("#stat-life").textContent = state.life;
-  $("#cost-piece").textContent = state.pieceDrawCost;
-  $("#cost-terrain").textContent = state.terrainDrawCost;
+  $("#cost-piece").textContent = "-" + state.pieceDrawCost;
+  $("#cost-terrain").textContent = "-" + state.terrainDrawCost;
   // 코인이 변하면 뽑기 버튼 활성/비활성 즉시 반영
   const dpEl = $("#btn-draw-piece"); if (dpEl) dpEl.disabled = state.coin < state.pieceDrawCost;
   const dtEl = $("#btn-draw-terrain"); if (dtEl) dtEl.disabled = state.coin < state.terrainDrawCost;
@@ -2864,21 +3282,18 @@ function spawnAttackLine(u, targetPos) {
   const ang = Math.atan2(dy, dx) * 180 / Math.PI;
   const piece = u.piece || "pawn";
 
-  // Queen — 3 fanning beams
+  // Queen — 파바바박: 실제 타겟으로 짧고 빠른 핑크 빔
   if (piece === "queen") {
-    for (const da of [-12, 0, 12]) {
-      const line = document.createElement("div");
-      line.className = "attack-line atk-queen";
-      line.style.cssText = `left:${x1}px;top:${y1}px;width:${len}px;transform:rotate(${ang+da}deg)`;
-      fxLayer.appendChild(line);
-      setTimeout(() => line.remove(), 320);
-    }
-    // sparkle star at target
+    const line = document.createElement("div");
+    line.className = "attack-line atk-queen";
+    line.style.cssText = `left:${x1}px;top:${y1}px;width:${len}px;transform:rotate(${ang}deg)`;
+    fxLayer.appendChild(line);
+    setTimeout(() => line.remove(), 180); // 짧게 (초고속 공격 느낌)
     const star = document.createElement("div");
     star.className = "queen-star";
     star.style.cssText = `left:${x2}px;top:${y2}px`;
     fxLayer.appendChild(star);
-    setTimeout(() => star.remove(), 360);
+    setTimeout(() => star.remove(), 220);
     return;
   }
   // King — beam + radiating ring at target
@@ -2895,16 +3310,7 @@ function spawnAttackLine(u, targetPos) {
     setTimeout(() => ring.remove(), 520);
     return;
   }
-  // Bishop — zigzag (use CSS variable for angle in animation)
-  if (piece === "bishop") {
-    const line = document.createElement("div");
-    line.className = "attack-line atk-bishop";
-    line.style.setProperty("--ang", ang + "deg");
-    line.style.cssText += `left:${x1}px;top:${y1}px;width:${len}px;transform:rotate(${ang}deg)`;
-    fxLayer.appendChild(line);
-    setTimeout(() => line.remove(), 320);
-    return;
-  }
+  // Bishop은 spawnBishopArc로 이미 그려짐 — spawnAttackLine은 호출되지 않아야 함
   // Default (pawn / knight / rook / others)
   const cls = "attack-line atk-" + piece + (u.dominantTerrain ? " " + u.dominantTerrain : "");
   const line = document.createElement("div");
@@ -2913,6 +3319,68 @@ function spawnAttackLine(u, targetPos) {
   fxLayer.appendChild(line);
   const dur = piece === "rook" ? 340 : (piece === "knight" ? 220 : 180);
   setTimeout(() => line.remove(), dur);
+}
+function spawnRookGhost(u, axis, dir) {
+  if (!fxLayer) return;
+  const w = fxRect.w, h = fxRect.h;
+  const cellW = w / GRID, cellH = h / GRID;
+  const startX = ((u.tileX + 0.5) / GRID) * w;
+  const startY = ((u.tileY + 0.5) / GRID) * h;
+  // 이동 거리: 룩의 사거리만큼 (타일 단위 → 픽셀)
+  const travelPx = u.range * cellW; // 정사각 타일 가정
+  const ghost = document.createElement("div");
+  ghost.className = "rook-ghost";
+  // 심볼 크기는 타일 하나 정도로
+  const size = Math.min(cellW, cellH) * 0.9;
+  ghost.style.cssText = `left:${startX}px;top:${startY}px;width:${size}px;height:${size}px;`;
+  ghost.textContent = "♜";
+  // translate 방향 결정
+  let tx = 0, ty = 0;
+  if (axis === "x") tx = dir * travelPx;
+  else               ty = dir * travelPx;
+  ghost.style.setProperty("--tx", tx + "px");
+  ghost.style.setProperty("--ty", ty + "px");
+  fxLayer.appendChild(ghost);
+  setTimeout(() => ghost.remove(), 380);
+}
+function spawnBishopArc(fromP, toP, chainIdx) {
+  if (!fxLayer) return;
+  const w = fxRect.w, h = fxRect.h;
+  const x1 = (fromP.x / GRID) * w;
+  const y1 = (fromP.y / GRID) * h;
+  const x2 = (toP.x / GRID) * w;
+  const y2 = (toP.y / GRID) * h;
+  const len = Math.hypot(x2 - x1, y2 - y1);
+  const ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+  const alpha = Math.max(0.55, 1 - chainIdx * 0.25);
+  // 1) 기본 아크 라인
+  const line = document.createElement("div");
+  line.className = "bishop-arc";
+  line.style.cssText = `left:${x1}px;top:${y1}px;width:${len}px;transform:rotate(${ang}deg);opacity:${alpha};`;
+  fxLayer.appendChild(line);
+  setTimeout(() => line.remove(), 340);
+  // 2) 감전 느낌을 위한 짧은 지글거리는 보조 라인 (살짝 위/아래로 튀는 잔가지)
+  for (const off of [-4, 4]) {
+    const branch = document.createElement("div");
+    branch.className = "bishop-arc";
+    branch.style.cssText = `left:${x1}px;top:${y1 + off}px;width:${len}px;transform:rotate(${ang}deg);opacity:${alpha * 0.45};height:1.5px;`;
+    fxLayer.appendChild(branch);
+    setTimeout(() => branch.remove(), 260);
+  }
+  // 3) 도착 지점 스파크 (감전 타격감)
+  const spark = document.createElement("div");
+  spark.className = "bishop-spark";
+  spark.style.cssText = `left:${x2}px;top:${y2}px;`;
+  fxLayer.appendChild(spark);
+  setTimeout(() => spark.remove(), 300);
+  // 4) 시작 지점 살짝 반짝 (체인 이탈점 강조, 첫 화살만)
+  if (chainIdx === 0) {
+    const start = document.createElement("div");
+    start.className = "bishop-spark";
+    start.style.cssText = `left:${x1}px;top:${y1}px;opacity:0.7;`;
+    fxLayer.appendChild(start);
+    setTimeout(() => start.remove(), 240);
+  }
 }
 function spawnHitSpark(pos, big) {
   if (!fxLayer || fxSparkBudget > 25) return;
@@ -2958,9 +3426,11 @@ function hideInfo() {
   $("#info-panel").classList.add("hidden");
   for (const el of tileEls) el.classList.remove("selected", "network-highlight");
   document.querySelector(".range-circle:not(.preview)")?.remove();
+  if (state) state._infoTile = null;
 }
 function showTileInfo(x, y) {
   hideInfo();
+  if (state) state._infoTile = { x, y };
   const tile = tileAt(x, y);
   const el = tileEls[y * GRID + x];
   el.classList.add("selected");
@@ -2997,13 +3467,89 @@ function showTileInfo(x, y) {
   let html = `<h3>(${x}, ${y})</h3>`;
   if (tile.piece) {
     const u = getUnitStats(x, y);
-    html += `<h4>${PIECE_SYMBOL[tile.piece.type]} ${PIECE_NAMES[tile.piece.type]} × ${tile.piece.count}</h4>`;
-    html += `<div class="row"><span class="k">공격력</span><span class="v">${u.atk.toFixed(1)}</span></div>`;
-    html += `<div class="row"><span class="k">공속</span><span class="v">${u.aps.toFixed(2)}/s</span></div>`;
-    html += `<div class="row"><span class="k">DPS</span><span class="v">${(u.atk*u.aps).toFixed(1)}</span></div>`;
-    html += `<div class="row"><span class="k">사거리</span><span class="v">${u.range.toFixed(2)}</span></div>`;
-    html += `<div class="row"><span class="k">치명타</span><span class="v">${(u.crit*100).toFixed(0)}%</span></div>`;
-    html += `<div class="row"><span class="k">지원 기여도</span><span class="v">+${(PIECE_SUPPORT_FACTOR[tile.piece.type]*100).toFixed(0)}%</span></div>`;
+    const base = PIECE_STATS[tile.piece.type];
+    const countBonus = 1 + (tile.piece.count - 1) * 0.40;
+    const pType = tile.piece.type;
+    // 지형별 Boost 계수
+    const tbAll   = 1 + (state.mods?.terrainBoost || 0);
+    const skyB    = tbAll * (1 + (state.mods?.skyBoost    || 0));
+    const gndB    = tbAll * (1 + (state.mods?.groundBoost || 0));
+    const ugB     = tbAll * (1 + (state.mods?.ugBoost     || 0));
+    // 컨트리뷰션 색
+    const C = {
+      base:    "color:var(--ink)",
+      sky:     "color:var(--sky)",
+      ground:  "color:var(--ground)",
+      ug:      "color:var(--underground)",
+      mod:     "color:var(--gold)",
+      danger:  "color:var(--danger);font-weight:900",
+    };
+    const fmt = (val, style) => `<span style="${style}">${val}</span>`;
+    const signed = (n, d=1) => (n >= 0 ? "+" : "-") + Math.abs(n).toFixed(d);
+
+    // ───── 공격력: base + 지하 + 증강(전체/말별) ─────
+    const atkBase = base.atk * countBonus;
+    const atkUG = (tile.terrains.underground > 0) ? atkBase * stackBonus(0.30, tile.terrains.underground) * ugB : 0;
+    const afterTerrainAtk = atkBase + atkUG;
+    const atkModMul = (1 + (state.mods?.atkAll || 0)) * (1 + (state.mods?.["atk_"+pType] || 0));
+    const atkMod = afterTerrainAtk * (atkModMul - 1);
+    let atkStr = fmt(atkBase.toFixed(1), C.base);
+    if (atkUG > 0)  atkStr += ` ${fmt(signed(atkUG), C.ug)}<small>⛧</small>`;
+    if (atkMod > 0.01) atkStr += ` ${fmt(signed(atkMod), C.mod)}<small>증강</small>`;
+    html += `<div class="row"><span class="k">공격력</span><span class="v">${atkStr} = <b>${u.atk.toFixed(1)}</b></span></div>`;
+
+    // ───── 공속: base + 하늘 − 지하 + 증강 ─────
+    const apsBase = base.aps;
+    const apsSky = (tile.terrains.sky > 0) ? apsBase * stackBonus(0.18, tile.terrains.sky) * skyB : 0;
+    const afterSkyAps = apsBase + apsSky;
+    const apsUG = (tile.terrains.underground > 0) ? afterSkyAps * -stackBonus(0.08, tile.terrains.underground) * ugB : 0;
+    const afterTerrainAps = afterSkyAps + apsUG;
+    const apsModMul = (1 + (state.mods?.apsAll || 0)) * (1 + (state.mods?.["aps_"+pType] || 0));
+    const apsMod = afterTerrainAps * (apsModMul - 1);
+    let apsStr = fmt(apsBase.toFixed(2), C.base);
+    if (apsSky > 0.001) apsStr += ` ${fmt(signed(apsSky,2), C.sky)}<small>☁</small>`;
+    if (apsUG  < -0.001) apsStr += ` ${fmt(signed(apsUG,2), C.danger)}<small>⛧</small>`;
+    if (Math.abs(apsMod) > 0.001) apsStr += ` ${fmt(signed(apsMod,2), C.mod)}<small>증강</small>`;
+    html += `<div class="row"><span class="k">공속</span><span class="v">${apsStr} = <b>${u.aps.toFixed(2)}</b>/s</span></div>`;
+
+    // ───── DPS (이론) ─────
+    html += `<div class="row"><span class="k">DPS (이론)</span><span class="v"><b>${(u.atk*u.aps).toFixed(1)}</b></span></div>`;
+
+    // ───── 사거리: base + 증강 말별 ─────
+    const rngBase = base.range;
+    const rngModMul = (1 + (state.mods?.["rng_"+pType] || 0));
+    const rngMod = rngBase * (rngModMul - 1);
+    let rngStr = fmt(rngBase.toFixed(2), C.base);
+    if (Math.abs(rngMod) > 0.001) rngStr += ` ${fmt(signed(rngMod,2), C.mod)}<small>증강</small>`;
+    html += `<div class="row"><span class="k">사거리</span><span class="v">${rngStr} = <b>${u.range.toFixed(2)}</b></span></div>`;
+
+    // ───── 치명타: base + 지상 − 하늘 + 증강 ─────
+    const critBase = (base.critBase != null) ? base.critBase : 0.05;
+    const critGnd  = (tile.terrains.ground > 0) ? stackBonus(0.10, tile.terrains.ground) * gndB : 0;
+    const critSky  = (tile.terrains.sky > 0)    ? -stackBonus(0.04, tile.terrains.sky) * skyB : 0;
+    const critMod  = state.mods?.critAll || 0;
+    let critStr = fmt((critBase*100).toFixed(0) + "%", C.base);
+    if (critGnd > 0.0001) critStr += ` ${fmt("+" + (critGnd*100).toFixed(0) + "%", C.ground)}<small>⛰</small>`;
+    if (critSky < -0.0001) critStr += ` ${fmt((critSky*100).toFixed(0) + "%", C.danger)}<small>☁</small>`;
+    if (critMod > 0.0001) critStr += ` ${fmt("+" + (critMod*100).toFixed(0) + "%", C.mod)}<small>증강</small>`;
+    html += `<div class="row"><span class="k">치명타</span><span class="v">${critStr} = <b>${(u.crit*100).toFixed(0)}%</b></span></div>`;
+
+    // ───── 지원 기여도 (등급 고정) ─────
+    const suppBase = PIECE_SUPPORT_FACTOR[pType];
+    const suppBoost = state.mods?.supportBoost || 0;
+    const suppFinal = suppBase * (1 + suppBoost);
+    const suppExtra = suppFinal - suppBase;
+    let suppStr = fmt("+" + (suppBase*100).toFixed(0) + "%", C.base);
+    if (suppExtra > 0.0001) suppStr += ` ${fmt("+" + (suppExtra*100).toFixed(0) + "%", C.mod)}<small>증강</small>`;
+    html += `<div class="row"><span class="k">지원 기여도</span><span class="v">${suppStr} = <b>+${(suppFinal*100).toFixed(0)}%</b></span></div>`;
+    // === 직전 라운드 DPS 한 줄만 ===
+    const st = tile.piece.stats;
+    if (!state.inBattle && st && st.lastDuration > 0 && (st.lastDamage || 0) > 0) {
+      html += `<div class="sep"></div><div class="row"><span class="k">직전 DPS</span><span class="v">${(st.lastDamage/st.lastDuration).toFixed(1)}</span></div>`;
+    }
+    if (state.inBattle) {
+      html += `<div class="sep"></div><div class="row" style="color:var(--ink-mute); font-size:10px">전투 종료 후 DPS 표시</div>`;
+    }
     html += `<div class="sep"></div><h4>능력</h4>`;
     const abilities = PIECE_ABILITY[tile.piece.type] || [];
     for (const a of abilities) {
@@ -3015,8 +3561,12 @@ function showTileInfo(x, y) {
   const hasTer = TERRAIN_ORDER.some(t => tile.terrains[t] > 0);
   if (hasTer) {
     html += `<div class="sep"></div><h4>지형</h4>`;
+    ensureNetworks();
     for (const t of TERRAIN_ORDER) if (tile.terrains[t] > 0) {
-      html += `<div class="row"><span class="k">${TERRAIN_NAMES[t]}</span><span class="v">× ${tile.terrains[t]}</span></div>`;
+      const map = state._networks[t];
+      const id = map ? map.get(`${x},${y}`) : null;
+      const sz = (id != null && state._networkGroups[t][id]) ? state._networkGroups[t][id].length : 1;
+      html += `<div class="row"><span class="k">${TERRAIN_NAMES[t]} 연결망</span><span class="v">${sz}칸</span></div>`;
     }
   }
   const nets = [];
@@ -3286,6 +3836,8 @@ function updateSeedDisplay() {
 function toggleSellMode() {
   state.sellMode = !state.sellMode;
   state.selectedCardKey = null;
+  clearPendingPlace();
+  state._lastPlacedTile = null;
   refreshButtons();
   renderPlacementHints();
   hand.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
@@ -3309,6 +3861,8 @@ document.addEventListener("keydown", (e) => {
     if (!$("#combine-modal").classList.contains("hidden")) { $("#combine-modal").classList.add("hidden"); return; }
     state.selectedCardKey = null;
     state.sellMode = false;
+    clearPendingPlace();
+    state._lastPlacedTile = null;
     hideInfo();
     hideRangePreview();
     hand.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
@@ -3343,7 +3897,23 @@ document.addEventListener("keydown", (e) => {
 });
 
 function init() {
-  if (!loadGame()) newGame();
+  let urlSeed = null;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get("seed");
+    if (raw && raw.trim()) urlSeed = parseSeedInput(raw.trim());
+  } catch (_) {}
+  if (urlSeed != null) {
+    newGame(urlSeed);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("seed");
+      window.history.replaceState({}, "", url.pathname + (url.search ? url.search : "") + url.hash);
+    } catch (_) {}
+    setTimeout(() => toast(`공유 시드 ${formatSeed(urlSeed)} 로 시작`, "success"), 250);
+  } else if (!loadGame()) {
+    newGame();
+  }
   buildBoard();
   renderAll();
   updateSeedDisplay();
@@ -3364,18 +3934,43 @@ function init() {
     const seed = parseSeedInput($("#seed-input").value);
     startNewMapWithSeed(seed);
   });
+  // 클립보드 복사 헬퍼 — 여러 폴백 체인 (file:// · HTTP · HTTPS 모두 지원)
+  async function copyToClipboard(text) {
+    // 1순위: navigator.clipboard (HTTPS/보안 컨텍스트)
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (_) {}
+    // 2순위: execCommand('copy') with temp textarea (대부분 브라우저·file:// OK)
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      if (ok) return true;
+    } catch (_) {}
+    // 3순위: 실패 시 프롬프트로 보여주기 (사용자가 수동 복사)
+    try {
+      window.prompt("복사할 텍스트 (Ctrl+C / Cmd+C로 복사)", text);
+      return true;
+    } catch (_) {}
+    return false;
+  }
+
   $("#btn-copy-seed").addEventListener("click", async () => {
     const s = $("#seed-current").textContent;
-    try {
-      await navigator.clipboard.writeText(s);
-      toast(`시드 ${s} 복사됨`, "success");
-    } catch (_) {
-      // fallback: select text
-      const r = document.createRange(); r.selectNode($("#seed-current"));
-      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
-      toast("길게 눌러 복사하세요");
-    }
+    const ok = await copyToClipboard(s);
+    toast(ok ? `시드 ${s} 복사됨` : "복사 실패", ok ? "success" : "error");
   });
+
   $("#seed-modal-close").addEventListener("click", () => $("#seed-modal").classList.add("hidden"));
   $("#seed-modal").addEventListener("click", (e) => {
     if (e.target.id === "seed-modal") e.currentTarget.classList.add("hidden");
@@ -3432,34 +4027,58 @@ function init() {
     // require an explicit selection — don't auto-close on backdrop
   });
 
-  // 첫 실행이면 튜토리얼
-  if (!localStorage.getItem("tutorialSeen")) {
+  // 첫 실행이면 튜토리얼 (버전 업그레이드 시 재실행)
+  if (!localStorage.getItem(TUT_KEY_S1)) {
     setTimeout(() => startTutorial(), 300);
   } else if (state.round === 1 && state.coin === INITIAL_COIN && state.hand.length === 0) {
-    setTimeout(() => toast("💡 D=캐릭터 / T=지형 뽑기 / 🎵 음악", ""), 400);
+    setTimeout(() => toast("카드 뽑고 배치해서 시작하세요", ""), 400);
   }
 }
 
 // =====================================================================
 //  TUTORIAL
 // =====================================================================
-const TUT_STEPS = [
-  { text: "🛡️ 몬스터가 오른쪽 끝에 닿기 전에 막으세요! 여기가 당신의 보드입니다.", target: "#board", wait: "next", delay: 0 },
-  { text: "먼저 <b>캐릭터 뽑기</b>를 눌러 카드를 받으세요. (단축키 D)", target: "#btn-draw-piece", wait: "drew-piece" },
-  { text: "👇 손패에서 카드를 하나 골라 선택하세요. (숫자 키 1~9도 가능)", target: "#hand", wait: "selected-card" },
-  { text: "빈 타일을 눌러 <b>배치</b>하세요. 같은 말을 같은 타일에 3개 쌓으면 진화!", target: "#board", wait: "placed-piece" },
-  { text: "🌍 지형은 같은 종류 3개까지 쌓이면 효과가 커지고, 같은 지형이 붙으면 <b>연결망</b>이 돼요 (점으로 표시).", target: "#btn-draw-terrain", wait: "next" },
-  { text: "준비되면 <b>시작</b>을 눌러 몬스터를 막아보세요! 전투 중에도 카드 뽑고 배치할 수 있어요.", target: "#btn-start-round", wait: "started" },
+// Stage 1 — 간결한 5단계
+const TUT_STEPS_STAGE1 = [
+  { text: "몬스터가 오른쪽 끝에 닿기 전에 막으세요.", target: "#board", wait: "next" },
+  { text: "🃏 <b>캐릭터 뽑기</b> 눌러주세요.", target: "#btn-draw-piece", wait: "drew-piece" },
+  { text: "손패에서 <b>카드 1개</b> 골라 탭하세요.", target: "#hand", wait: "selected-piece-card" },
+  { text: "<b>빈 타일</b>을 탭해 배치. (모바일은 두 번)", target: "#board", wait: "placed-piece" },
+  { text: "<b>▶ 시작</b>! 첫 판은 연습 모드예요.", target: "#btn-start-round", wait: "started" },
 ];
+// Stage 2 — R1 클리어 직후 (5단계)
+const TUT_STEPS_STAGE2 = [
+  { text: "R1 클리어! 이번엔 <b>지형</b>을 배워볼게요.", target: "#board", wait: "next" },
+  { text: "손패의 <b>지형 카드</b> 하나 선택. (🌍 아이콘)", target: "#hand", wait: "selected-terrain-card" },
+  { text: "말이 있는 타일에 <b>지형 배치</b>해보세요.", target: "#board", wait: "placed-terrain" },
+  { text: "같은 지형 타일이 이어지면 <b>연결망</b>이 생기고, 그 위 말들은 <b>연결망 크기만큼</b> 효과가 강해집니다 (3칸 이어지면 ×3 효과).", target: "#board", wait: "next" },
+  { text: "<b>▶ 시작</b>으로 R2 진행!", target: "#btn-start-round", wait: "started" },
+];
+const TUTORIAL_VERSION = "v3";
+const TUT_KEY_S1 = "tutorialSeen_" + TUTORIAL_VERSION;
+const TUT_KEY_S2 = "tutorialStage2Seen_" + TUTORIAL_VERSION;
 let tutState = null;
-function startTutorial(restart) {
-  tutState = { step: 0 };
-  if (restart) localStorage.removeItem("tutorialSeen");
+function startTutorial(modeOrRestart) {
+  const mode = modeOrRestart === "stage2" ? "stage2" : "stage1";
+  if (modeOrRestart === true) {
+    localStorage.removeItem(TUT_KEY_S1);
+    localStorage.removeItem(TUT_KEY_S2);
+    // 구버전 키도 같이 정리
+    localStorage.removeItem("tutorialSeen");
+    localStorage.removeItem("tutorialStage2Seen");
+  }
+  tutState = { step: 0, mode };
   renderTutStep();
 }
+function currentTutSteps() {
+  return tutState && tutState.mode === "stage2" ? TUT_STEPS_STAGE2 : TUT_STEPS_STAGE1;
+}
 function endTutorial() {
+  if (tutState) {
+    if (tutState.mode === "stage2") localStorage.setItem(TUT_KEY_S2, "1");
+    else localStorage.setItem(TUT_KEY_S1, "1");
+  }
   tutState = null;
-  localStorage.setItem("tutorialSeen", "1");
   document.querySelector(".tutorial-overlay")?.remove();
   document.querySelector(".tutorial-bubble")?.remove();
 }
@@ -3467,7 +4086,8 @@ function renderTutStep() {
   document.querySelector(".tutorial-overlay")?.remove();
   document.querySelector(".tutorial-bubble")?.remove();
   if (!tutState) return;
-  const step = TUT_STEPS[tutState.step];
+  const STEPS = currentTutSteps();
+  const step = STEPS[tutState.step];
   if (!step) { endTutorial(); return; }
   const tgt = document.querySelector(step.target);
   const rect = tgt ? tgt.getBoundingClientRect() : { left: 0, top: 0, width: 100, height: 50 };
@@ -3487,7 +4107,7 @@ function renderTutStep() {
     <div class="tut-actions">
       <button class="btn ghost" id="tut-skip">건너뛰기</button>
       ${step.wait === "next" ? '<button class="btn primary" id="tut-next">다음</button>' : '<span class="tut-hint">↑ 직접 눌러보세요</span>'}
-      <span class="tut-step">${tutState.step + 1} / ${TUT_STEPS.length}</span>
+      <span class="tut-step">${tutState.step + 1} / ${currentTutSteps().length}</span>
     </div>`;
   document.body.appendChild(bubble);
   $("#tut-skip").addEventListener("click", endTutorial);
@@ -3496,12 +4116,12 @@ function renderTutStep() {
 function tutorialAdvance() {
   if (!tutState) return;
   tutState.step++;
-  if (tutState.step >= TUT_STEPS.length) { endTutorial(); return; }
+  if (tutState.step >= currentTutSteps().length) { endTutorial(); return; }
   renderTutStep();
 }
 function tutorialEvent(ev) {
   if (!tutState) return;
-  const step = TUT_STEPS[tutState.step];
+  const step = currentTutSteps()[tutState.step];
   if (!step) return;
   if (step.wait === ev) tutorialAdvance();
 }
