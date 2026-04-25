@@ -4,10 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="theme-color" content="#0d0a25" />
-<title>체스 디펜스 · Chess Defense</title>
+<title>체스 디펜스 · Mobile Redesign</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
+html, body { min-height: 100%; height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; }
+html { background: #08061b; }
 
 :root {
   --bg-0: #08061b;
@@ -69,6 +70,8 @@ body {
     radial-gradient(circle at 50% 50%, rgba(0,0,0,0.55), transparent 80%),
     linear-gradient(180deg, #1a0e3d 0%, #06031a 100%);
   background-attachment: fixed;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 body::before {
   content: "";
@@ -90,46 +93,50 @@ body::before {
 #app {
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  /* 모바일 우선 통일 레이아웃: topbar / board / action-bar / hand-bar */
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: 1fr;
+  width: 100%;
+  min-height: 100vh;
   height: 100vh;
+  height: 100svh;
   height: 100dvh;
-  max-width: 540px;
+  max-width: 560px;
   margin: 0 auto;
-  padding: 6px 8px 8px;
-  gap: 6px;
+  padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  gap: clamp(5px, 1.2vmin, 8px);
+  overflow: hidden;
 }
 
 /* ============== TOPBAR ============== */
 .topbar {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px 8px;
-  padding: 7px 12px;
-  background: linear-gradient(135deg, rgba(50,32,100,0.92), rgba(20,12,46,0.88));
+  gap: 8px;
+  padding: 7px 10px;
+  background: linear-gradient(135deg, #2c1c5a, #160a30);
   border: 1px solid var(--panel-edge);
-  border-radius: 16px;
+  border-radius: 14px;
   box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.06);
+  position: relative;
+  z-index: 5;
+  min-width: 0;
+  overflow: hidden;
 }
-.topbar .brand-col { flex: 0 1 auto; min-width: 0; }
-.topbar .stat-row  { flex: 1 1 auto; justify-content: center; }
+.topbar .brand-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.topbar .stat-row  { display: flex; gap: 4px; justify-content: center; min-width: 0; }
 .topbar .ctrl-group {
-  flex: 0 1 auto;
   display: flex;
-  gap: 4px;
+  gap: 3px;
   flex-wrap: nowrap;
-  /* 좁은 화면에서 컨트롤 그룹은 새 줄로 wrap (전체 가로폭 사용) */
-}
-@media (max-width: 520px) {
-  .topbar .ctrl-group { flex-basis: 100%; justify-content: center; }
 }
 .brand-col { display: flex; flex-direction: column; gap: 3px; }
 .brand-tag {
   font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   background: linear-gradient(95deg, var(--gold-2) 0%, var(--rose) 50%, var(--cyan) 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -158,6 +165,7 @@ body::before {
   flex-wrap: nowrap;
   justify-content: center;
   align-items: stretch;
+  min-width: 0;
 }
 .stat {
   display: flex;
@@ -171,6 +179,7 @@ body::before {
   font-variant-numeric: tabular-nums;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.25);
   transition: transform 0.12s, box-shadow 0.15s;
+  min-height: 40px;
 }
 .stat .k {
   font-size: 8.5px;
@@ -193,7 +202,7 @@ body::before {
 .stat.round .v { color: var(--cyan);   text-shadow: 0 0 10px rgba(94,233,213,0.45); }
 
 .icon-btn {
-  width: 34px; height: 34px;
+  width: 36px; height: 36px;
   background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 10px;
@@ -219,26 +228,193 @@ body::before {
 .ctrl-group { display: flex; gap: 4px; }
 
 /* ============== BOARD ============== */
-.board-wrap {
-  flex: 1;
-  position: relative;
+/* === MOBILE-FIRST 레이아웃 === */
+.board-area {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
   min-height: 0;
+  min-width: 0;
+  position: relative;
+  container-type: size;
+  container-name: ba;
+  overflow: hidden;
+}
+.action-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  background: linear-gradient(135deg, #20144c, #100726);
+  border: 1px solid var(--panel-edge);
+  border-radius: 12px;
+  padding: 7px;
+  position: relative;
+  z-index: 4;
+}
+.action-bar .btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 7px 4px;
+  font-size: 11px;
+  flex: 0 0 auto;
+  flex-direction: column;
+  line-height: 1.12;
+}
+.action-bar .btn .ico { font-size: 13px; }
+.action-bar .btn .lbl { font-size: 10.5px; }
+.action-bar .btn .cost { font-size: 10px; opacity: 0.85; margin-left: 2px; }
+.action-bar .btn .kbd { font-size: 8px; bottom: 2px; right: 3px; padding: 0 3px; }
+.hand-bar {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 7px 7px;
+  background: linear-gradient(135deg, #20144c, #100726);
+  border: 1px solid var(--panel-edge);
+  border-radius: 12px;
+  position: relative;
+  z-index: 4;
+  min-height: 0;
+  max-height: min(22dvh, 146px);
+  overflow: hidden;
+}
+.hand-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0 2px;
+}
+.hand {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 4px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 1px 1px 2px;
+  scrollbar-width: thin;
+}
+.hand::-webkit-scrollbar { width: 3px; }
+.hand::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 2px; }
+.hand:empty::before {
+  content: "🂠 카드를 뽑아보세요";
+  color: var(--ink-mute);
+  font-size: 11px;
+  text-align: center;
+  padding: 14px 0;
+  grid-column: 1 / -1;
+}
+.side-rail {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 6px;
+  background: linear-gradient(180deg, rgba(36,22,80,0.7), rgba(14,8,38,0.55));
+  border: 1px solid var(--panel-edge);
+  border-radius: 12px;
+  width: 64px;
+  min-width: 64px;
+  max-width: 64px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  font-size: 10px;
+  text-align: center;
   align-items: center;
+  position: relative;
+  z-index: 2;
+}
+.side-rail::-webkit-scrollbar { width: 3px; }
+.side-rail::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 2px; }
+.side-rail .rail-title {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--ink-mute);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.side-rail .rail-big {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--gold-2);
+  text-shadow: 0 0 10px rgba(255,210,74,0.5);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.side-rail .rail-sub {
+  font-size: 8.5px;
+  color: var(--ink-mute);
+  font-weight: 700;
+}
+.side-rail .rail-divider {
+  width: 70%;
+  height: 1px;
+  background: rgba(255,255,255,0.10);
+  margin: 6px 0;
+}
+.side-rail .rail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  width: 100%;
+}
+.side-rail .rail-list .aug-icon {
+  width: 30px;
+  height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(255,210,74,0.25), rgba(180,90,40,0.15));
+  border: 1px solid rgba(255,210,74,0.4);
+  border-radius: 8px;
+  font-size: 16px;
+  position: relative;
+  cursor: help;
+}
+.side-rail .rail-list .aug-icon .aug-count {
+  position: absolute;
+  bottom: -3px; right: -3px;
+  font-size: 9px;
+  font-weight: 900;
+  color: #1a0e3d;
+  background: var(--gold-2);
+  padding: 0 3px;
+  border-radius: 6px;
+  line-height: 1.4;
+  min-width: 12px;
+  text-align: center;
+}
+.side-rail .rail-list:empty::before {
+  content: "—";
+  color: var(--ink-mute);
+  font-size: 10px;
+  opacity: 0.5;
+}
+@media (min-width: 0px) {
+  .side-rail { display: none; }
+  .board-wrap { grid-template-columns: 1fr; }
 }
 .board {
-  width: min(96vmin, 460px);
-  aspect-ratio: 1;
+  /* board-area 안에서 남은 폭/높이를 넘지 않는 정사각형 */
+  width: min(100%, 100cqh, 700px);
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1 / 1;
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   grid-template-rows: repeat(10, 1fr);
-  gap: 2px;
+  gap: clamp(1px, 0.45vmin, 2px);
   background:
     radial-gradient(circle at center, rgba(120,60,200,0.25), transparent 70%),
     #07051a;
-  padding: 4px;
-  border-radius: 16px;
+  padding: clamp(3px, 0.8vmin, 5px);
+  border-radius: clamp(12px, 3.2vmin, 16px);
   position: relative;
   box-shadow:
     0 0 50px rgba(140,70,210,0.3),
@@ -250,7 +426,7 @@ body::before {
 .tile {
   position: relative;
   background: var(--tile-base);
-  border-radius: 5px;
+  border-radius: clamp(3px, 1vmin, 5px);
   cursor: pointer;
   overflow: hidden;
   display: flex;
@@ -293,6 +469,27 @@ body::before {
 .tile.path-start {
   background: linear-gradient(145deg, #3aa066, #1f5e38) !important;
   box-shadow: inset 0 0 14px rgba(110,255,160,0.4), inset 0 0 0 1px rgba(170,255,200,0.4) !important;
+  overflow: visible;
+}
+.tile.path-start::before {
+  content: "▶";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.9);
+  font-size: 16px;
+  font-weight: 900;
+  text-shadow: 0 0 6px rgba(110,255,160,1), 0 0 12px rgba(80,200,120,0.7);
+  transform: rotate(var(--start-dir, 0deg));
+  pointer-events: none;
+  z-index: 2;
+  animation: startArrowPulse 1.4s ease-in-out infinite;
+}
+@keyframes startArrowPulse {
+  0%, 100% { transform: rotate(var(--start-dir, 0deg)) scale(0.95); opacity: 0.85; }
+  50%      { transform: rotate(var(--start-dir, 0deg)) scale(1.15); opacity: 1; }
 }
 .tile.path-end {
   background: linear-gradient(145deg, #a23a4d, #5a1c2a) !important;
@@ -911,6 +1108,7 @@ body::before {
   backdrop-filter: blur(12px);
   box-shadow: var(--shadow-lg);
   animation: popIn 0.15s ease-out;
+  touch-action: pan-y;
 }
 @keyframes popIn { from { opacity: 0; transform: translateY(-4px) scale(0.97); } }
 .info-panel.hidden { display: none; }
@@ -938,16 +1136,7 @@ body::before {
 .info-panel .actions .btn { padding: 6px 8px; font-size: 11px; }
 
 /* ============== HUD / CARDS ============== */
-.hud {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  padding: 9px;
-  background: linear-gradient(135deg, rgba(36,22,80,0.95), rgba(14,8,38,0.92));
-  border: 1px solid var(--panel-edge);
-  border-radius: 16px;
-  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.06);
-}
+/* .hud removed — content moved to side rails */
 .actions { display: flex; gap: 5px; }
 .btn {
   flex: 1;
@@ -968,6 +1157,8 @@ body::before {
   gap: 4px;
   letter-spacing: -0.005em;
   text-shadow: 0 1px 1px rgba(0,0,0,0.25);
+  min-height: 44px;
+  touch-action: manipulation;
 }
 .btn::before {
   content: "";
@@ -1018,59 +1209,26 @@ body::before {
 .actions-row-2 { display: flex; gap: 5px; }
 .actions-row-2 .btn { flex: 1; padding: 7px 5px; font-size: 11px; }
 
-.hand-wrap { display: flex; flex-direction: column; gap: 4px; }
-.hand-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--ink-mute);
-  padding: 0 4px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-.hand-label .hint {
-  font-size: 9px;
-  color: var(--ink-mute);
-  font-weight: 600;
-  letter-spacing: 0;
-  text-transform: none;
-}
-.hand {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  min-height: 76px;
-  padding: 2px 2px 4px;
-  scrollbar-width: thin;
-}
-.hand::-webkit-scrollbar { height: 4px; }
-.hand::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
-.hand:empty::before {
-  content: "🂠  카드를 뽑아보세요";
-  color: var(--ink-mute);
-  font-size: 11px;
-  align-self: center;
-  margin: auto;
-}
+/* .hand-wrap / .hand-label removed — hand-bar replaces */
+/* .hand 레이아웃은 위에서 정의됨 (grid auto-fill) */
 .card {
-  flex: 0 0 auto;
-  width: 62px;
-  min-height: 74px;
-  padding: 6px 4px 5px;
+  width: auto;
+  min-width: 0;
+  min-height: 72px;
+  padding: 5px 3px 4px;
   border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 10px;
+  border-radius: 9px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   cursor: pointer;
   position: relative;
   transition: transform 0.16s cubic-bezier(0.2,0.9,0.3,1), border-color 0.15s, box-shadow 0.18s;
   overflow: hidden;
   background: linear-gradient(160deg, #2a2358 0%, #1a1340 60%, #100828 100%);
   box-shadow: 0 3px 8px -2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+  touch-action: manipulation;
 }
 .card::after {
   content: attr(data-hotkey);
@@ -1178,14 +1336,17 @@ body::before {
   background: linear-gradient(165deg, #2c2060 0%, #170d36 70%, #0e0825 100%);
   border: 1px solid var(--panel-edge-strong);
   border-radius: 18px;
-  padding: 20px 22px;
+  padding: 18px 20px;
   max-width: 440px;
   max-height: 86vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.10);
   width: 100%;
   animation: modalIn 0.22s cubic-bezier(0.2,0.9,0.3,1);
 }
+.modal p { margin-bottom: 5px; }
 @keyframes modalIn {
   from { transform: translateY(8px) scale(0.97); opacity: 0; }
   to   { transform: translateY(0)    scale(1);    opacity: 1; }
@@ -1201,21 +1362,15 @@ body::before {
   letter-spacing: -0.01em;
 }
 .modal h3 {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--gold-2);
-  margin: 12px 0 5px;
+  margin: 14px 0 6px;
   font-weight: 900;
   letter-spacing: 0.02em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.modal h3::before {
-  content: "";
-  width: 3px;
-  height: 11px;
-  background: linear-gradient(180deg, var(--gold-2), var(--gold-deep));
-  border-radius: 2px;
+  display: block;
+  border-left: 3px solid var(--gold-2);
+  padding-left: 8px;
+  line-height: 1.35;
 }
 .modal .kbd-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; color: var(--ink-dim); }
 .modal .kbd-row kbd {
@@ -1254,6 +1409,7 @@ body::before {
 }
 @keyframes tutPulse { 50% { outline-color: var(--gold-2); box-shadow: 0 0 0 9999px rgba(0,0,0,0.8); } }
 .tutorial-bubble {
+  max-width: min(92vw, 380px);
   position: fixed;
   left: 50%;
   max-width: 340px;
@@ -1368,6 +1524,36 @@ body::before {
 @keyframes bannerIn { from { opacity: 0; transform: translate(-50%, -20px) scale(0.85); } }
 @keyframes bannerOut { to { opacity: 0; transform: translate(-50%, -20px) scale(0.9); } }
 .banner.danger { color: var(--rose); border-color: var(--rose); text-shadow: 0 2px 10px rgba(255,110,156,0.7); box-shadow: 0 0 36px rgba(255,110,156,0.4), var(--shadow-lg); }
+/* 사전 이벤트 배너 — 부드럽고 흐릿한 안내 문구 */
+.pre-event-banner {
+  position: fixed;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  font-size: 15px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: rgba(245, 240, 255, 0.62);
+  text-shadow: 0 0 14px rgba(255, 230, 180, 0.25);
+  background: linear-gradient(135deg, rgba(20,12,46,0.65), rgba(36,24,76,0.55));
+  border: 1px solid rgba(255,255,255,0.10);
+  padding: 7px 16px;
+  border-radius: 22px;
+  pointer-events: none;
+  z-index: 60;
+  white-space: nowrap;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: preEventFade 1.4s ease-out forwards;
+}
+@keyframes preEventFade {
+  0%   { opacity: 0; transform: translate(-50%, 6px); }
+  20%  { opacity: 0.95; transform: translate(-50%, 0); }
+  70%  { opacity: 0.85; }
+  100% { opacity: 0; transform: translate(-50%, -6px); }
+}
 
 /* TOAST */
 .toast {
@@ -1411,29 +1597,719 @@ body::before {
 }
 
 /* responsive */
-@media (max-width: 480px) {
-  #app { padding: 5px 6px 6px; gap: 5px; max-width: 100%; }
-  .topbar { padding: 6px 8px; gap: 6px 4px; }
-  .brand-tag { font-size: 10px; }
-  .stat { min-width: 36px; padding: 2px 5px 3px; }
-  .stat .v { font-size: 13px; }
-  .stat .k { font-size: 7px; }
-  .icon-btn { width: 30px; height: 30px; font-size: 13px; border-radius: 8px; }
-  .topbar .ctrl-group { gap: 3px; flex-wrap: wrap; justify-content: center; }
-  .card { width: 55px; min-height: 66px; }
-  .card .card-icon { font-size: 20px; }
-  .card .card-title { font-size: 10px; }
-  .card .card-desc { font-size: 8px; }
-  .btn { padding: 8px 5px; font-size: 11px; }
-  .info-panel { width: 170px; font-size: 10.5px; }
-  /* 모바일: 강한 외곽 글로우 줄여서 페인팅 비용 감소 */
-  .board { box-shadow: 0 0 24px rgba(140,70,210,0.18), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04), var(--shadow-md); }
+@media (min-width: 0px) {
+  #app { padding: max(5px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); gap: 5px; max-width: 560px; }
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    padding: 5px 7px;
+    gap: 5px;
+    border-radius: 12px;
+  }
+  .topbar .brand-col { grid-column: 1; grid-row: 1; width: 44px; }
+  .topbar .ctrl-group { grid-column: 3; grid-row: 1; justify-self: end; gap: 3px; }
+  .topbar .stat-row { grid-column: 2; grid-row: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; width: 100%; }
+  .brand-col { gap: 1px; }
+  .brand-tag { font-size: 10px; line-height: 1; overflow: hidden; text-overflow: clip; }
+  .seed-chip {
+    width: 44px;
+    height: 16px;
+    padding: 0 3px;
+    font-size: 0;
+    justify-content: center;
+  }
+  .seed-chip::before { content: "🌱"; font-size: 10px; }
+  .seed-chip span { display: none; }
+  .stat { min-width: 0; min-height: 40px; padding: 3px 4px; border-radius: 9px; }
+  .stat .v { font-size: 16px; }
+  .stat .k { font-size: 7.5px; }
+  .stat .hi-best { display: none; }
+  .icon-btn { width: 30px; height: 40px; font-size: 13px; border-radius: 9px; }
+  .action-bar {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    padding: 5px;
+    border-radius: 11px;
+  }
+  .action-bar .btn:nth-child(1),
+  .action-bar .btn:nth-child(2),
+  .action-bar .btn:nth-child(3) { grid-column: span 1; min-height: 50px; }
+  .action-bar .btn:nth-child(4),
+  .action-bar .btn:nth-child(5),
+  .action-bar .btn:nth-child(6) { grid-column: span 1; min-height: 50px; }
+  .action-bar .btn {
+    padding: 5px 2px 4px;
+    gap: 1px;
+    font-size: 10px;
+    line-height: 1.05;
+    min-width: 0;
+  }
+  .action-bar .btn .ico { font-size: 13px; line-height: 1; }
+  .action-bar .btn .lbl { font-size: 9.5px; line-height: 1.05; }
+  .action-bar .btn .cost { font-size: 9px; line-height: 1; margin-left: 0; }
+  .action-bar .btn .kbd { display: none; }
+  .hand-bar { max-height: 104px; padding: 5px 6px 6px; border-radius: 11px; }
+  .hand-bar-label { font-size: 10px; text-transform: none; letter-spacing: 0; }
+  .hand {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 6px;
+    padding: 1px 2px 4px;
+    scroll-snap-type: x proximity;
+  }
+  .card {
+    flex: 0 0 74px;
+    min-height: 68px;
+    padding: 5px 4px 4px;
+    border-radius: 8px;
+    scroll-snap-align: start;
+  }
+  .card .card-icon { font-size: 21px; }
+  .card .card-title { font-size: 10.5px; line-height: 1.12; }
+  .card .card-desc { font-size: 8.5px; line-height: 1.2; }
+  .card::after { display: none; }
+  .info-panel {
+    left: 6px;
+    right: 6px;
+    top: auto;
+    bottom: 6px;
+    width: auto;
+    max-width: none;
+    max-height: 44%;
+    font-size: 11.5px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+  .info-panel h3 { font-size: 13px; }
+  .info-panel .row { font-size: 11.5px; }
+  .board { box-shadow: 0 0 20px rgba(140,70,210,0.18), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04); }
   .modal { box-shadow: var(--shadow-md); }
 }
 @media (max-width: 360px) {
-  .stat { min-width: 30px; padding: 2px 4px; }
-  .stat .v { font-size: 12px; }
-  .icon-btn { width: 28px; height: 28px; font-size: 12px; }
+  #app { padding: 4px 5px 5px; gap: 4px; }
+  .topbar { padding: 5px 6px; gap: 4px 5px; }
+  .stat { min-height: 36px; padding: 2px 3px; }
+  .stat .v { font-size: 14px; }
+  .stat .k { font-size: 7.5px; }
+  .icon-btn { width: 31px; height: 31px; font-size: 12px; }
+  .brand-tag { font-size: 10px; }
+  .seed-chip { font-size: 9px; padding: 1px 5px; }
+  .action-bar { gap: 4px; padding: 5px; }
+  .action-bar .btn:nth-child(1),
+  .action-bar .btn:nth-child(2),
+  .action-bar .btn:nth-child(3) { min-height: 47px; }
+  .action-bar .btn:nth-child(4),
+  .action-bar .btn:nth-child(5),
+  .action-bar .btn:nth-child(6) { min-height: 47px; }
+  .action-bar .btn { font-size: 9px; padding-left: 1px; padding-right: 1px; }
+  .action-bar .btn .ico { font-size: 12px; }
+  .action-bar .btn .lbl { font-size: 8.8px; }
+  .action-bar .btn .cost { font-size: 8px; }
+  .hand-bar { max-height: 98px; }
+  .hand { gap: 5px; }
+  .card { flex-basis: 68px; min-height: 64px; padding: 4px 3px; }
+  .card .card-icon { font-size: 19px; }
+  .card .card-title { font-size: 9.5px; }
+  .card .card-desc { font-size: 8px; -webkit-line-clamp: 1; }
+}
+/* =====================================================================
+   MOBILE REDESIGN
+   기능 로직은 그대로 두고, 모든 화면을 모바일 게임 UI처럼 통일한다.
+   ===================================================================== */
+:root {
+  --ui-bg: #070b13;
+  --ui-surface: rgba(14, 20, 34, 0.92);
+  --ui-surface-2: rgba(22, 30, 48, 0.96);
+  --ui-line: rgba(255,255,255,0.12);
+  --ui-line-strong: rgba(255,255,255,0.22);
+  --ui-text: #f7fbff;
+  --ui-muted: #91a0b8;
+  --ui-teal: #3ddbd9;
+  --ui-lime: #9be35b;
+  --ui-amber: #ffd15c;
+  --ui-rose: #ff6384;
+  --ui-blue: #4da3ff;
+  --ui-violet: #8f72ff;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  background: var(--ui-bg);
+}
+
+body {
+  color: var(--ui-text);
+  background:
+    linear-gradient(180deg, rgba(13, 20, 34, 0.98), rgba(5, 7, 13, 1)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 28px);
+}
+
+body::before {
+  opacity: 0.18;
+  background-image:
+    radial-gradient(1px 1px at 14% 18%, rgba(255,255,255,0.9), transparent 55%),
+    radial-gradient(1px 1px at 72% 28%, rgba(95, 232, 213,0.75), transparent 55%),
+    radial-gradient(1px 1px at 84% 74%, rgba(255,209,92,0.65), transparent 55%);
+}
+
+#app {
+  width: 100%;
+  max-width: 430px;
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
+  min-height: 0;
+  margin: 0 auto;
+  padding: max(7px, env(safe-area-inset-top)) max(7px, env(safe-area-inset-right)) max(7px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left));
+  display: grid;
+  grid-template-rows: 50px minmax(0, 1fr) 58px 84px;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.topbar {
+  height: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 5px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(24, 33, 53, 0.94), rgba(9, 13, 24, 0.94));
+  border: 1px solid var(--ui-line);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.brand-col { display: none; }
+
+.brand-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ui-amber);
+  -webkit-text-fill-color: currentColor;
+  background: none;
+  filter: none;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.seed-chip {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--ui-lime);
+  background: rgba(0,0,0,0.32);
+  border-color: rgba(155,227,91,0.24);
+  font-size: 0;
+}
+.seed-chip::before { content: "🌱"; font-size: 11px; line-height: 1; }
+.seed-chip span { display: none; }
+
+.topbar .stat-row,
+.stat-row {
+  min-width: 0;
+  width: auto;
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+  justify-content: start;
+  margin-right: auto;
+}
+
+.stat {
+  min-width: 0;
+  min-height: 0;
+  width: auto;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: rgba(0,0,0,0.30);
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr;
+  column-gap: 4px;
+  align-items: center;
+}
+.stat .k {
+  font-size: 0;
+  letter-spacing: 0;
+  color: var(--ink-dim);
+  line-height: 1;
+}
+.stat .k::before {
+  font-size: 11px;
+  line-height: 1;
+}
+.stat.round .k::before { content: "R"; font-weight: 900; color: var(--cyan); }
+.stat.gold .k::before { content: "🪙"; }
+.stat.life .k::before { content: "♥"; color: var(--rose); }
+.stat .v {
+  margin-top: 0;
+  font-size: 16px;
+  line-height: 1;
+  text-align: left;
+}
+.stat .hi-best { display: none; }
+.stat.round .v { color: var(--ui-teal); text-shadow: 0 0 12px rgba(61,219,217,0.38); }
+.stat.gold .v { color: var(--ui-amber); text-shadow: 0 0 12px rgba(255,209,92,0.38); }
+.stat.life .v { color: var(--ui-rose); text-shadow: 0 0 12px rgba(255,99,132,0.42); }
+
+.topbar .ctrl-group,
+.ctrl-group {
+  min-width: 0;
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  flex: 0 0 30px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--ui-text);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.icon-btn.active {
+  color: #101419;
+  background: linear-gradient(180deg, #ffe28a, #f4b73e);
+}
+
+.board-area {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.board {
+  width: min(100%, 100cqh, 430px) !important;
+  height: auto !important;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1 / 1;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(16,22,38,0.95), rgba(5,8,16,0.98)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 12px);
+  box-shadow:
+    0 18px 34px rgba(0,0,0,0.42),
+    0 0 0 1px rgba(255,255,255,0.10),
+    0 0 0 4px rgba(0,0,0,0.18);
+}
+
+.tile {
+  border-radius: 5px;
+  background: linear-gradient(160deg, #222c46, #111827);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.055);
+}
+.tile:hover:not(.path) { background: linear-gradient(160deg, #2b3856, #151f32); }
+.tile.path {
+  background: linear-gradient(160deg, #343941, #171c24);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07), inset 0 0 12px rgba(0,0,0,0.34);
+}
+.tile.path-start {
+  background: linear-gradient(160deg, #34c37c, #13794d) !important;
+}
+.tile.path-end {
+  background: linear-gradient(160deg, #e4506b, #742434) !important;
+}
+.tile.selected,
+.tile.placement-pending {
+  outline-color: var(--ui-amber);
+  box-shadow: 0 0 0 2px rgba(255,209,92,0.95), 0 0 22px rgba(255,209,92,0.35);
+}
+.tile.placement-ok {
+  box-shadow: inset 0 0 0 2px rgba(155,227,91,0.95), 0 0 16px rgba(155,227,91,0.28);
+}
+
+.tile .chess-symbol { font-size: clamp(17px, 6.5vw, 28px); }
+.tile .piece-label { display: none; }
+.tile .terrain-pip {
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 999px;
+}
+
+.action-bar {
+  height: 58px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+  padding: 5px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, rgba(20,28,44,0.95), rgba(8,11,20,0.96));
+  border: 1px solid var(--ui-line);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.action-bar .btn,
+.action-bar .btn:nth-child(n) {
+  grid-column: span 1;
+  min-width: 0;
+  min-height: 0;
+  width: auto;
+  height: 100%;
+  padding: 5px 2px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0;
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 10px rgba(0,0,0,0.18);
+}
+.action-bar .btn .ico { font-size: 15px; line-height: 1; }
+.action-bar .btn .lbl { max-width: 100%; font-size: 9.5px; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.action-bar .btn .cost { font-size: 8.5px; line-height: 1; opacity: 0.92; margin: 0; }
+.action-bar .btn .kbd { display: none; }
+.action-bar .btn.primary { background: linear-gradient(180deg, #7f6cff, #5040c9); }
+.action-bar .btn.terrain { background: linear-gradient(180deg, #39a9ff, #146db9); }
+.action-bar .btn.success { background: linear-gradient(180deg, #29d07d, #0c8a52); }
+.action-bar .btn.ghost { background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.035)); }
+.action-bar .btn.combine { background: linear-gradient(180deg, #a663ff, #7130b8); }
+.action-bar .btn.warn { background: linear-gradient(180deg, #273147, #111827); }
+
+.hand-bar {
+  height: 84px;
+  max-height: 84px;
+  min-height: 0;
+  display: block;
+  padding: 6px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, rgba(15,22,36,0.96), rgba(8,10,18,0.96));
+  border: 1px solid var(--ui-line);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.hand-bar-label {
+  display: none;
+}
+.hand {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  height: 100%;
+  padding: 1px 1px 5px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.hand::-webkit-scrollbar { height: 3px; }
+.hand::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.20); border-radius: 999px; }
+.hand:empty::before {
+  align-self: center;
+  content: "카드를 뽑아 배치하세요";
+  padding: 0;
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.card {
+  flex: 0 0 60px;
+  min-width: 60px;
+  min-height: 0;
+  height: 66px;
+  padding: 5px 4px 4px;
+  border-radius: 8px;
+  gap: 2px;
+  scroll-snap-align: start;
+  background: linear-gradient(180deg, #1f2b45, #0f1524);
+  border: 1px solid rgba(255,255,255,0.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 5px 12px rgba(0,0,0,0.26);
+}
+.card::after { display: none !important; content: none !important; }
+.card .card-icon { font-size: 18px; margin-top: 0; }
+.card .card-title {
+  width: 100%;
+  font-size: 9px;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card .card-desc {
+  font-size: 7px;
+  line-height: 1.12;
+  -webkit-line-clamp: 1;
+}
+.card.selected {
+  transform: translateY(-2px);
+  border-color: var(--ui-amber);
+  box-shadow: 0 0 0 2px rgba(255,209,92,0.95), 0 0 18px rgba(255,209,92,0.32);
+}
+.card .card-stack-count {
+  top: 3px;
+  right: 3px;
+  height: 15px;
+  min-width: 17px;
+  font-size: 9px;
+}
+
+.info-panel {
+  left: auto;
+  right: 7px;
+  top: 7px;
+  bottom: auto;
+  width: min(190px, 48vw);
+  max-width: 190px;
+  max-height: calc(100% - 14px);
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(8, 12, 22, 0.97);
+  border: 1px solid var(--ui-line-strong);
+  font-size: 12px;
+}
+.info-panel h3 { font-size: 13px; }
+.info-panel .row { font-size: 12px; }
+
+.modal {
+  max-width: 410px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #172137, #080d18);
+}
+.settings-modal {
+  max-width: 340px;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+.setting-btn {
+  min-height: 74px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+}
+.setting-btn .ico {
+  font-size: 22px;
+  line-height: 1;
+}
+.setting-btn .lbl {
+  font-size: 12px;
+  line-height: 1;
+}
+.setting-btn.active {
+  color: #101419;
+  background: linear-gradient(180deg, #ffe28a, #f4b73e);
+  border-color: rgba(255,226,138,0.9);
+}
+.toast {
+  top: 72px;
+  border-radius: 8px;
+}
+
+.tutorial-overlay::before {
+  border-radius: 10px;
+  outline: 2px solid var(--ui-amber);
+}
+.tutorial-bubble {
+  width: min(88vw, 360px);
+  max-width: 360px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,209,92,0.9);
+  background: rgba(8, 12, 22, 0.97);
+  box-shadow: 0 14px 32px rgba(0,0,0,0.48), 0 0 0 1px rgba(255,255,255,0.08);
+}
+.tutorial-bubble .tut-text {
+  font-size: 12px;
+  line-height: 1.42;
+}
+.tutorial-bubble .tut-actions {
+  gap: 6px;
+  margin-top: 8px;
+}
+.tutorial-bubble .tut-actions .btn {
+  min-height: 36px;
+  border-radius: 8px;
+}
+
+@media (max-width: 380px) {
+  #app {
+    max-width: 100%;
+    padding: 5px;
+    grid-template-rows: 46px minmax(0, 1fr) 54px 78px;
+    gap: 5px;
+  }
+  .topbar {
+    height: 46px;
+    gap: 4px;
+  }
+  .stat { padding: 3px 4px; column-gap: 3px; }
+  .stat .v { font-size: 14px; }
+  .stat .k::before { font-size: 10px; }
+  .icon-btn {
+    width: 26px;
+    height: 28px;
+    min-width: 26px;
+    flex-basis: 26px;
+    font-size: 11px;
+  }
+  .action-bar { height: 54px; gap: 4px; padding: 4px; }
+  .action-bar .btn,
+  .action-bar .btn:nth-child(n) { padding: 4px 1px; border-radius: 7px; }
+  .action-bar .btn .ico { font-size: 13px; }
+  .action-bar .btn .lbl { font-size: 8.4px; }
+  .action-bar .btn .cost { font-size: 7.5px; }
+  .hand-bar { height: 78px; max-height: 78px; padding: 5px; }
+  .card { flex-basis: 56px; min-width: 56px; height: 62px; }
+  .card .card-icon { font-size: 17px; }
+  .card .card-title { font-size: 8px; }
+  .card .card-desc { display: none; }
+}
+
+/* ---------------------------------------------------------------------
+   VISUAL RESTORE
+   모바일 레이아웃은 유지하되, 원본의 색감/그림자/트랙 가독성을 되돌린다.
+   --------------------------------------------------------------------- */
+body {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,100,200,0.18), transparent 50%),
+    radial-gradient(circle at 80% 90%, rgba(80,180,255,0.16), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,0.55), transparent 80%),
+    linear-gradient(180deg, #1a0e3d 0%, #06031a 100%);
+}
+
+.topbar,
+.action-bar,
+.hand-bar {
+  background: linear-gradient(135deg, #20144c, #100726);
+  border-color: var(--panel-edge);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.topbar {
+  background: linear-gradient(135deg, #2c1c5a, #160a30);
+}
+
+.brand-tag {
+  background: linear-gradient(95deg, var(--gold-2) 0%, var(--rose) 50%, var(--cyan) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--gold-2);
+}
+
+.stat {
+  background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.30));
+  border-color: rgba(255,255,255,0.08);
+}
+.stat.round .v { color: var(--cyan); text-shadow: 0 0 10px rgba(94,233,213,0.45); }
+.stat.gold .v { color: var(--gold-2); text-shadow: 0 0 10px rgba(255,210,74,0.55); }
+.stat.life .v { color: var(--rose); text-shadow: 0 0 10px rgba(255,110,156,0.55); }
+
+.icon-btn {
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  border-color: rgba(255,255,255,0.12);
+  color: var(--ink);
+}
+
+.board {
+  background:
+    radial-gradient(circle at center, rgba(120,60,200,0.25), transparent 70%),
+    #07051a;
+  box-shadow:
+    0 0 50px rgba(140,70,210,0.3),
+    0 0 0 1px rgba(255,255,255,0.06),
+    inset 0 0 0 1px rgba(255,255,255,0.04),
+    var(--shadow-lg);
+}
+
+.tile {
+  background: var(--tile-base);
+  box-shadow: none;
+}
+.tile:hover:not(.path) { background: var(--tile-hover); }
+
+.tile.path {
+  background: linear-gradient(145deg, #4a4a55, #2c2c33);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    inset 0 0 10px rgba(0,0,0,0.35);
+}
+.tile.path::after {
+  opacity: 0.78;
+}
+.tile.path-start {
+  background: linear-gradient(145deg, #3aa066, #1f5e38) !important;
+  box-shadow: inset 0 0 14px rgba(110,255,160,0.4), inset 0 0 0 1px rgba(170,255,200,0.4) !important;
+}
+.tile.path-end {
+  background: linear-gradient(145deg, #a23a4d, #5a1c2a) !important;
+  box-shadow: inset 0 0 14px rgba(255,110,140,0.5), inset 0 0 0 1px rgba(255,170,190,0.4) !important;
+}
+
+.action-bar .btn.primary { background: linear-gradient(160deg, #7a6cff 0%, #4d3dc8 60%, #2f1f9c 100%); }
+.action-bar .btn.terrain { background: linear-gradient(160deg, #5cb3f4 0%, #1e6fc6 60%, #14488e 100%); }
+.action-bar .btn.success { background: linear-gradient(160deg, #2bd88a 0%, #14a85a 60%, #0c7038 100%); }
+.action-bar .btn.combine {
+  background: linear-gradient(160deg, #8f59b8 0%, #65328f 62%, #3f1d5f 100%);
+  box-shadow: 0 4px 10px -3px rgba(140,80,190,0.38), inset 0 1px 0 rgba(255,255,255,0.14);
+}
+.action-bar .btn.ghost { background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04)); }
+.action-bar .btn.warn {
+  background: linear-gradient(160deg, #bd7441 0%, #8f4a25 62%, #5c2c17 100%);
+  box-shadow: 0 4px 10px -3px rgba(200,105,45,0.35), inset 0 1px 0 rgba(255,255,255,0.13);
+}
+
+.card {
+  background: linear-gradient(160deg, #2a2358 0%, #1a1340 60%, #100828 100%);
+  border-color: rgba(255,255,255,0.10);
+  box-shadow: 0 3px 8px -2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.tutorial-bubble {
+  width: min(92vw, 390px);
+  max-width: 390px;
+  background: linear-gradient(165deg, rgba(44,28,90,0.98), rgba(18,10,42,0.98));
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 0 16px rgba(255,210,74,0.35);
+}
+.tutorial-bubble .tut-actions {
+  display: flex;
+  flex-wrap: wrap;
+}
+.tutorial-bubble .tut-actions .btn {
+  min-height: 34px;
 }
 </style>
 </head>
@@ -1526,71 +2402,53 @@ body::before {
 
 <div id="app">
   <header class="topbar">
-    <div class="brand-col">
-      <span class="brand-tag">♛ CHESS DEFENSE</span>
-      <button class="seed-chip" id="btn-seed-chip" title="시드 보기/공유 (친구와 같은 맵)">🌱 <span id="seed-display">—</span></button>
-    </div>
     <div class="stat-row">
-      <div class="stat round" title="현재 라운드 / 최고 기록"><span class="k">R</span><span class="v" id="stat-round">1</span><span id="stat-best" class="hi-best" title="최고 라운드">최고 -</span></div>
+      <div class="stat round" title="현재 라운드 / 최고 기록"><span class="k">R</span><span class="v" id="stat-round">1</span><span id="stat-best" class="hi-best">최고 -</span></div>
       <div class="stat gold"><span class="k">코인</span><span class="v" id="stat-coin">11</span></div>
       <div class="stat life"><span class="k">HP</span><span class="v" id="stat-life">20</span></div>
     </div>
     <div class="ctrl-group">
-      <button class="icon-btn" id="btn-music" title="음악 (M)">🎵</button>
-      <button class="icon-btn" id="btn-sfx" title="효과음">🔊</button>
       <button class="icon-btn" id="btn-speed" title="속도 (S)">1×</button>
       <button class="icon-btn" id="btn-pause" title="일시정지 (P)">⏸</button>
-      <button class="icon-btn" id="btn-meta" title="통계 / 영구 업그레이드">📈</button>
-      <button class="icon-btn" id="btn-help" title="도움말 (?)">?</button>
+      <button class="icon-btn" id="btn-help" title="도움말">?</button>
+      <button class="icon-btn" id="btn-settings" title="설정">⚙</button>
       <button class="icon-btn" id="btn-new-map" title="새 지도 (N)">↻</button>
     </div>
   </header>
 
-  <main class="board-wrap">
+  <div class="board-area">
     <div id="board" class="board">
       <div class="speed-chip" id="speed-chip" style="display:none"></div>
     </div>
     <aside id="info-panel" class="info-panel hidden">
       <div id="info-content"></div>
     </aside>
-  </main>
-
-  <footer class="hud">
-    <div class="actions">
-      <button class="btn primary" id="btn-draw-piece">
-        <span class="ico">🃏</span><span class="lbl">캐릭터</span>
-        <span class="cost" id="cost-piece">-5</span>
-        <span class="kbd">D</span>
-      </button>
-      <button class="btn terrain" id="btn-draw-terrain">
-        <span class="ico">🌍</span><span class="lbl">지형</span>
-        <span class="cost" id="cost-terrain">-8</span>
-        <span class="kbd">T</span>
-      </button>
-      <button class="btn success" id="btn-start-round">
-        <span class="ico">▶</span><span class="lbl" id="start-label">시작</span>
-        <span class="kbd">SPC</span>
-      </button>
-      <button class="btn ghost" id="btn-auto-start" title="자동 시작 (A)" style="flex:0 0 auto; padding: 9px 8px; min-width: 44px;">
-        <span class="ico">⏭</span><span class="lbl" style="font-size:9px">자동</span>
-      </button>
-    </div>
-    <div class="actions-row-2">
-      <button class="btn combine" id="btn-combine">
-        🎰 합성 (3장→상위)
-      </button>
-      <button class="btn warn ghost" id="btn-sell">
-        💰 판매 모드
-      </button>
-    </div>
-    <div class="hand-wrap">
-      <div class="hand-label">
-        <span>손패 <span id="hand-count">0</span>장</span>
-        <span class="hint">숫자키 1~9 빠른 선택</span>
-      </div>
-      <div id="hand" class="hand"></div>
-    </div>
-  </footer>
+  </div>
+  <section class="action-bar" id="action-bar">
+    <button class="btn primary" id="btn-draw-piece">
+      <span class="ico">🃏</span><span class="lbl">캐릭터</span>
+      <span class="cost" id="cost-piece">-5</span>
+      <span class="kbd">D</span>
+    </button>
+    <button class="btn terrain" id="btn-draw-terrain">
+      <span class="ico">🌍</span><span class="lbl">지형</span>
+      <span class="cost" id="cost-terrain">-8</span>
+      <span class="kbd">T</span>
+    </button>
+    <button class="btn combine" id="btn-combine">🎰 합성</button>
+    <button class="btn warn ghost" id="btn-sell" title="선택 카드 판매 50% (X)">💰 판매</button>
+    <button class="btn ghost" id="btn-auto-start" title="자동 시작 (A)">
+      <span class="ico">⏭</span><span class="lbl" style="font-size:9.5px">자동</span>
+    </button>
+    <button class="btn success" id="btn-start-round">
+      <span class="ico">▶</span><span class="lbl" id="start-label">시작</span>
+      <span class="kbd">SPC</span>
+    </button>
+  </section>
+  <section class="hand-bar" id="hand-bar">
+    <div class="hand-bar-label"><span id="hand-count">0</span></div>
+    <div id="hand" class="hand"></div>
+  </section>
 
   <div id="toast" class="toast"></div>
 </div>
@@ -1598,52 +2456,101 @@ body::before {
 <div class="modal-backdrop hidden" id="help-modal">
   <div class="modal">
     <h2>도움말 · How to Play</h2>
-    <p>왼쪽 녹색 시작점에서 출발한 몬스터가 오른쪽 붉은 도착점에 닿기 전에 모두 잡으세요. 카드를 뽑아 체스 말과 지형을 배치하고, 같은 말을 한 타일에 3개 쌓으면 진화합니다.</p>
+    <p style="color:var(--ink); font-size:13px; margin-bottom:12px">
+      <b>몬스터를 막는 체스 타워디펜스.</b> 카드를 뽑고 → 빈 타일에 배치하고 → 라운드 시작.
+      체스 말은 자동으로 적을 공격하고, 지형은 능력을 강화해요.
+    </p>
 
-    <h3>지형 효과 (한 타일 = 1지형, 중첩 없음)</h3>
-    <p>• <b>지상</b> 🟢 — 치명타 확률 증가</p>
-    <p>• <b>하늘</b> 🔵 — 공격속도 증가, 치명타 <span style="color:var(--danger);font-weight:900">감소</span></p>
-    <p>• <b>지하</b> 🟣 — 공격속도 <span style="color:var(--danger);font-weight:900">감소</span>, 공격력 크게 증가</p>
-    <p>같은 지형을 한 타일에 또 놓을 수 없어요. 대신 <b>인접한 같은 지형 타일끼리 자동으로 연결망</b>이 되고, 연결망 위의 모든 말은 <b>연결망 크기만큼 강한 효과</b>를 받습니다 (예: 하늘 3칸이 이어지면 = 하늘×3 효과).</p>
+    <h3>🎯 기본 흐름</h3>
+    <p>① 카드 뽑기 (캐릭터 / 지형) · ② 손패에서 카드 선택 · ③ 빈 타일을 탭해 배치 · ④ <b>R{n} 시작</b> 버튼.</p>
+    <p>같은 말을 한 타일에 <b>3개 쌓으면 진화</b>: 폰 → 나이트 → 룩 → 비숍 → 퀸 → 킹.</p>
 
-    <h3>지형 연결망</h3>
-    <p>같은 지형이 상하좌우로 이어지면 연결망이 됩니다. 연결만으로는 효과가 없고, <b>그 위에 놓인 말의 등급에 따라</b> 공격 시 지원 피해를 보내줘요. 더 강한 말을 네트워크에 넣을수록 지원도 강해집니다.</p>
+    <h3>♟ 체스 말 6종</h3>
+    <p>• <b>폰</b> — 빠른 단발, 초반 도배용</p>
+    <p>• <b>나이트</b> — 약한 스턴 + 스플래시</p>
+    <p>• <b>룩</b> — 상하좌우 직선 관통 (환영 돌격)</p>
+    <p>• <b>비숍</b> — 적 → 적으로 감전 연쇄 (3타)</p>
+    <p>• <b>퀸</b> — 광역 5명 동시 (낮은 치명)</p>
+    <p>• <b>킹</b> — 회전 칼날 + 광역 + 주변 아군 오라(공격·공속·치명 강화)</p>
 
-    <h3>카드 합성 🎰</h3>
-    <p><b>가장 낮은 등급의 캐릭터 카드부터</b> 3장이 자동으로 합성 재료로 들어가요 (폰 3장 우선, 폰이 없으면 나이트 3장 …). 3장 → 1단계 상승 <b>확정</b> (실패 없음). 킹 카드는 재료 제외. 단축키 C 또는 ㅊ.</p>
+    <h3>🌍 지형 (한 타일 = 1지형)</h3>
+    <p>• <b>지상</b> ⛰ — 치명타 ↑</p>
+    <p>• <b>하늘</b> ☁ — 공속 ↑ · 치명 <span style="color:var(--danger)">↓</span></p>
+    <p>• <b>지하</b> ⛧ — 공격력 ↑↑ · 공속 <span style="color:var(--danger)">↓</span></p>
+    <p>같은 지형이 상하좌우로 <b>이어지면 연결망</b>이 되고, 그 위 말은 <b>연결망 크기만큼</b> 효과가 강해집니다 (3칸 이어지면 ×3).</p>
+    <p>또한 같은 망의 다른 말이 공격할 때 <b>지원 피해</b>를 함께 더해줍니다 (말 등급이 높을수록 큼).</p>
 
-    <h3>자동 시작 ⏭</h3>
-    <p>시작 버튼 옆 ⏭ 버튼을 켜두면 라운드가 끝난 뒤 5·4·3·2·1 카운트(실시간, 배속 무관) 후 자동으로 다음 라운드가 시작됩니다. 카운트 중에 다시 누르면 취소.</p>
+    <h3>🎰 합성</h3>
+    <p>같은 등급 카드 <b>3장 → 한 단계 상승 1장</b> 확정 (실패 없음). 가장 낮은 등급부터 자동. 킹은 재료 X. 단축키 <kbd>C</kbd>.</p>
 
-    <h3>👑 보스 패턴 (라운드별 변형)</h3>
-    <p>R5+ 표준 / <b>R10+ 텔레포트</b> (HP 50% 시 길 앞으로 점프) / <b>R15+ 소환</b> (6초마다 미니언 1마리 스폰) / <b>R20+ 실드</b> (8초마다 3초간 90% 데미지 감소) / <b>R25+</b> 이후 랜덤 패턴.</p>
-    <h3>👑 보스 CC 면역</h3>
-    <p>보스가 등장한 지 <b>1분(60초)이 지나면</b> 스턴/넉백 효과가 점점 줄어들고, <b>2분(120초) 후 완전 면역</b>이 됩니다. 빠르게 처치하세요!</p>
+    <h3>💰 판매</h3>
+    <p>손패 카드 선택 → 판매 버튼 → <b>50% 환불</b> (sellRefund 증강 시 더 많음). 단축키 <kbd>X</kbd>.</p>
 
-    <h3>📊 개별 말 DPS 보기</h3>
-    <p>보드 위 <b>체스 말을 탭(클릭)하면</b> 해당 타일의 <b>직전 라운드 DPS</b>를 볼 수 있어요. <b>같은 타일 재탭하면 창이 닫힘</b>. 전투 중에는 표시되지 않고 라운드 종료 후에만 표시.</p>
+    <h3>👑 보스 — 라운드별 패턴</h3>
+    <p>R5+ <b>표준</b> · R10+ <b>텔레포트</b> (HP 50%에 길 앞으로 점프) · R15+ <b>소환</b> (8초마다 미니언) · R20+ <b>실드</b> (8초마다 3초간 90% 감소) · R25+ 랜덤.</p>
+    <p>등장 1분 후부터 스턴·넉백 효과가 점점 약해지고 <b>2분 후 완전 면역</b>. 빠르게 처치하세요.</p>
 
-    <h3>📱 모바일 배치 (2탭 확정)</h3>
-    <p>터치 기기에선 카드를 고른 뒤 <b>첫 탭으로 미리보기</b>, <b>같은 타일 다시 탭하면 확정</b>됩니다. 다른 타일을 탭하면 미리보기가 옮겨가고, Esc / 다른 카드 선택으로 취소할 수 있어요. (PC는 기존대로 클릭 즉시 배치)</p>
+    <h3>🎁 증강 (보스 처치 후)</h3>
+    <p>보스 라운드 클리어 시 보스 마릿수만큼 <b>증강 카드 3개 중 1개 선택</b>. 효과는 게임 종료까지 영구 적용. 마음에 안 들면 <b>🎲 다시 뽑기</b> (코인 소모).</p>
+
+    <h3>✨ 특별 이벤트 (R3 / R7 / R12)</h3>
+    <p>R3 <b>보물 상자</b> · R7 <b>떠돌이 상인</b> · R12 <b>차원의 균열</b> — 라운드 클리어 후 한 번 발동되며 보상/도박 선택지 등장.</p>
+
+    <h3>🌪 카오스 (R30+)</h3>
+    <p>R30 이후 5라운드마다 50/50으로 <b>랜덤 기물 1개 소실</b> 또는 <b>지형 7개 랜덤 교체</b>.</p>
+
+    <h3>💫 스턴 감쇠</h3>
+    <p>같은 몬스터에게 스턴이 누적되면 효과가 <b>0.65×씩 감소</b> → 4~5번 후엔 거의 0. 영구 락 방지.</p>
+
+    <h3>📊 정보창 보기</h3>
+    <p>배치된 말을 <b>탭</b>하면 능력치 / DPS(직전 라운드) / 지형 연결망 정보가 보입니다. <b>같은 타일 재탭 = 닫기</b>.</p>
+
+    <h3>📱 모바일 — 2탭 배치 확정</h3>
+    <p>카드 선택 후 첫 탭은 <b>미리보기</b>, 같은 타일 다시 탭하면 <b>확정</b>. 다른 타일 탭 = 미리보기 이동, Esc로 취소.</p>
 
     <h3>🔗 시드 공유</h3>
-    <p>🌱 시드 창에서 <b>📋 복사</b>로 시드를 복사해 친구에게 공유하세요. 상대는 같은 시드를 입력해서 같은 맵을 플레이할 수 있어요. URL에 <code>?seed=ABC123</code> 형태로 직접 입력해도 됩니다.</p>
+    <p>🌱 → 📋 복사 / 친구는 그 시드로 같은 맵 플레이. URL에 <code>?seed=ABC123</code>로도 가능.</p>
 
-    <h3>단축키 (한영 무관)</h3>
-    <div class="kbd-row"><span>카드 1~9번 묶음 선택</span><kbd>1 … 9</kbd></div>
+    <h3>🗺 좌표</h3>
+    <p>타일 좌표는 <b>(1, 1)부터 (10, 10)</b>까지. 정보창 헤더에 표시됨.</p>
+
+    <h3>📈 메타 진행</h3>
+    <p>게임 오버 시 도달 라운드의 1/3만큼 <b>👑 왕관</b> 획득. 탑바 📈 버튼에서 통계와 영구 업그레이드 (시작 코인 / HP / 카드) 구매 가능.</p>
+
+    <h3>⌨ 단축키 (한영 무관)</h3>
+    <div class="kbd-row"><span>카드 1~9 묶음 선택</span><kbd>1 … 9</kbd></div>
     <div class="kbd-row"><span>캐릭터 카드 뽑기</span><kbd>D / ㅇ</kbd></div>
     <div class="kbd-row"><span>지형 카드 뽑기</span><kbd>T / ㅅ</kbd></div>
     <div class="kbd-row"><span>합성</span><kbd>C / ㅊ</kbd></div>
-    <div class="kbd-row"><span>판매 모드 (켜고 타일 탭)</span><kbd>X / ㅌ</kbd></div>
+    <div class="kbd-row"><span>선택 카드 판매</span><kbd>X / ㅌ</kbd></div>
     <div class="kbd-row"><span>라운드 시작 / 일시정지</span><kbd>Space</kbd></div>
-    <div class="kbd-row"><span>속도 1×→2×→3×</span><kbd>S / ㄴ</kbd></div>
+    <div class="kbd-row"><span>속도 1× → 2× → 3×</span><kbd>S / ㄴ</kbd></div>
     <div class="kbd-row"><span>일시정지</span><kbd>P / ㅔ</kbd></div>
-    <div class="kbd-row"><span>음악 켜기/끄기</span><kbd>M / ㅡ</kbd></div>
+    <div class="kbd-row"><span>자동 다음 라운드</span><kbd>A / ㅁ</kbd></div>
+    <div class="kbd-row"><span>음악 ON/OFF</span><kbd>M / ㅡ</kbd></div>
     <div class="kbd-row"><span>새 지도</span><kbd>N / ㅜ</kbd></div>
     <div class="kbd-row"><span>도움말 / 닫기</span><kbd>? / Esc</kbd></div>
 
-    <button class="btn ghost" id="btn-replay-tut" style="width:100%; margin-top:10px">🎓 튜토리얼 다시보기</button>
+    <button class="btn ghost" id="btn-replay-tut" style="width:100%; margin-top:12px">🎓 튜토리얼 다시보기</button>
     <button class="btn primary modal-close-btn" id="modal-close-btn" style="margin-top:6px">닫기</button>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="settings-modal">
+  <div class="modal settings-modal">
+    <h2>설정</h2>
+    <div class="settings-grid">
+      <button class="btn ghost setting-btn" id="btn-music" title="음악 ON/OFF">
+        <span class="ico">🎵</span><span class="lbl">음악</span>
+      </button>
+      <button class="btn ghost setting-btn" id="btn-sfx" title="효과음 ON/OFF">
+        <span class="ico">🔊</span><span class="lbl">효과음</span>
+      </button>
+      <button class="btn ghost setting-btn" id="btn-meta" title="통계·왕관·영구 업그레이드">
+        <span class="ico">📈</span><span class="lbl">통계</span>
+      </button>
+    </div>
+    <button class="btn primary modal-close-btn" id="settings-close-btn">닫기</button>
   </div>
 </div>
 
@@ -1969,12 +2876,8 @@ function newGame(seed = null) {
   for (const t of initTer) {
     tiles[t.y * GRID + t.x].terrains[t.terrain] = t.stack;
   }
-  // 초기 손패: 지형 카드는 각 종류 하나씩 (하늘/지상/지하)
-  const initialHand = [
-    { kind:"terrain", terrain:"sky" },
-    { kind:"terrain", terrain:"ground" },
-    { kind:"terrain", terrain:"underground" },
-  ];
+  // 초기 손패는 비워둔다. 지형은 Stage 2 튜토리얼에서 직접 구매해 배우게 한다.
+  const initialHand = [];
   // 메타 업그레이드: 시작 카드 +N
   try {
     const _meta = loadMeta();
@@ -1998,6 +2901,12 @@ function newGame(seed = null) {
     musicOn: true, sfxOn: true,
     mods: {},
     bossKillsPending: 0,
+    eventDoneFor: {},
+    gambit_extraBoss: 0,
+    gambit_doubleHalf: false,
+    acquiredAugments: [],
+    roundKills: 0,
+    roundCoinGain: 0,
   };
   // 캐시: 최고 라운드 (renderStats가 매번 localStorage 안 읽도록)
   try { state._cachedBestRound = parseInt(localStorage.getItem("chess-defense-best-round") || "0", 10); } catch (_) { state._cachedBestRound = 0; }
@@ -2015,6 +2924,10 @@ function saveGame() {
       musicOn: state.musicOn, sfxOn: state.sfxOn,
       mods: state.mods || {},
       bossKillsPending: state.bossKillsPending || 0,
+      eventDoneFor: state.eventDoneFor || {},
+      gambit_extraBoss: state.gambit_extraBoss || 0,
+      gambit_doubleHalf: !!state.gambit_doubleHalf,
+      acquiredAugments: state.acquiredAugments || [],
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(snap));
   } catch (_) {}
@@ -2039,6 +2952,12 @@ function loadGame() {
       musicOn: (s.musicOn === false) ? false : true, sfxOn: s.sfxOn !== false,
       mods: s.mods || {},
       bossKillsPending: s.bossKillsPending || 0,
+      eventDoneFor: s.eventDoneFor || {},
+      gambit_extraBoss: s.gambit_extraBoss || 0,
+      gambit_doubleHalf: !!s.gambit_doubleHalf,
+      acquiredAugments: Array.isArray(s.acquiredAugments) ? s.acquiredAugments : [],
+      roundKills: 0,
+      roundCoinGain: 0,
     };
     try { state._cachedBestRound = parseInt(localStorage.getItem("chess-defense-best-round") || "0", 10); } catch (_) { state._cachedBestRound = 0; }
     return true;
@@ -2058,6 +2977,9 @@ function makeTerrainCard() {
   const rand = mulberry32(state.cardRand);
   return { kind:"terrain", terrain: weightedPick(rand, Object.entries(TERRAIN_WEIGHTS)) };
 }
+function makeTerrainCardSet() {
+  return TERRAIN_ORDER.map(terrain => ({ kind:"terrain", terrain }));
+}
 function drawPieceCards() {
   if (state.coin < state.pieceDrawCost) return toast("코인 부족", "error");
   state.coin -= state.pieceDrawCost;
@@ -2074,12 +2996,13 @@ function drawTerrainCards() {
   if (state.coin < state.terrainDrawCost) return toast("코인 부족", "error");
   state.coin -= state.terrainDrawCost;
   state.terrainDrawCost += TERRAIN_COST_INCREMENT;
-  for (let i = 0; i < 3; i++) state.hand.push(makeTerrainCard());
+  state.hand.push(...makeTerrainCardSet());
   sfx("draw");
   saveGame();
   renderHand();
   renderStats();
   refreshButtons();
+  tutorialEvent("drew-terrain");
 }
 
 function cardKey(c) {
@@ -2183,14 +3106,36 @@ const EVENTS = {
   },
   gambit: {
     title: "🎲 차원의 균열",
-    desc: "다음 라운드의 운명을 바꿀 수 있다. 위험과 보상.",
+    desc: "다음 라운드의 운명을 바꿀 수 있다. 위험과 보상 중 하나를 선택.",
     options: [
-      { name: "다음 라운드 보스 추가 (+큰 보상)", desc: "다음 라운드에 보스 1마리 추가 → 처치 시 증강 +1, 보너스 코인 +30", icon: "👹",
-        apply: () => { state.gambit_extraBoss = (state.gambit_extraBoss||0) + 1; toast("균열: 다음 라운드 보스 +1", "success"); } },
-      { name: "다음 라운드 몬스터 2배 / HP 절반", desc: "수는 많지만 약한 적", icon: "⚡",
-        apply: () => { state.gambit_doubleHalf = true; toast("균열: 몬스터 2배수, HP 절반", "success"); } },
-      { name: "코인 +25 + HP -3", desc: "체력을 약간 잃고 코인 획득", icon: "🩸",
-        apply: () => { state.coin += 25; state.life = Math.max(1, state.life - 3); toast("균열: +25 코인, -3 HP", "success"); } },
+      {
+        name: "보스 한 마리 더 (다음 보스 라운드 적용)",
+        desc: "다음 보스 라운드에 보스 +1, 즉시 보너스 코인 +30",
+        icon: "👹",
+        apply: () => {
+          state.gambit_extraBoss = (state.gambit_extraBoss||0) + 1;
+          toast("다음 보스 라운드 보스 +1", "success");
+        }
+      },
+      {
+        name: "몬스터 2배 · HP 절반 (다음 라운드)",
+        desc: "수는 많지만 체력이 약한 적이 몰려옴",
+        icon: "⚡",
+        apply: () => {
+          state.gambit_doubleHalf = true;
+          toast("다음 라운드: 몬스터 2배 / HP 절반", "success");
+        }
+      },
+      {
+        name: "코인 +25",
+        desc: "체력 -3을 대가로 즉시 25 코인",
+        icon: "🪙",
+        apply: () => {
+          state.coin += 25;
+          state.life = Math.max(1, state.life - 3);
+          toast("코인 +25 / HP -3", "success");
+        }
+      },
     ]
   }
 };
@@ -2401,17 +3346,20 @@ function openRewardModal() {
       saveGame();
       // 남은 보스 증강이 있으면 다음 모달
       if ((state.bossKillsPending || 0) > 0) {
-        setTimeout(() => openRewardModal(), 280);
+        showPreEventBanner("다음 증강이 옵니다…");
+        setTimeout(() => openRewardModal(), 700);
       } else {
         // 보스 증강 모두 끝났으면 → 이벤트 라운드 트리거 체크
-        const justCleared = state.round - 1; // round was incremented in endRound
+        const justCleared = state.round - 1;
         if (EVENT_TRIGGERS.includes(justCleared) && !state.eventDoneFor?.[justCleared]) {
           if (!state.eventDoneFor) state.eventDoneFor = {};
           state.eventDoneFor[justCleared] = true;
           const evKey = rollEventForRound(justCleared);
+          const evTitle = (EVENTS[evKey] && EVENTS[evKey].title) || "특별 이벤트";
+          showPreEventBanner(`${evTitle}가 시작됩니다…`);
           setTimeout(() => openEventModal(evKey, () => {
             if (state.autoNext && state.life > 0) setTimeout(() => startAutoCountdown(), 350);
-          }), 350);
+          }), 1100);
         } else if (state.autoNext && state.life > 0) {
           setTimeout(() => { if (!state.inBattle && state.life > 0) startAutoCountdown(); }, 350);
         }
@@ -2427,12 +3375,21 @@ function applyReward(r) {
   }
   if (r.instant === "coin10") state.coin += 10;
   if (r.instant === "life3") state.life = Math.min(999, state.life + 3);
+  // 획득 증강 기록 (즉시 효과는 일회성이라 제외)
+  if (r.add) {
+    if (!state.acquiredAugments) state.acquiredAugments = [];
+    state.acquiredAugments.push({ id: r.id, name: r.name, icon: r.icon });
+    renderAugmentRail();
+  }
   sfx("chime");
   toast(`증강: ${r.name}`, "success");
   saveGame();
   renderStats();
   refreshButtons();
 }
+
+function renderAugmentRail() { /* noop — rail 제거됨 */ }
+function renderCombatRail() { /* noop — rail 제거됨 */ }
 
 // =====================================================================
 //  Placement 2-tap (mobile) helpers
@@ -2871,7 +3828,7 @@ function startRound() {
   const isTutorialR2 = state.round === 2 && _hasLS && !localStorage.getItem(TUT_KEY_S2);
   const isTutorialWeak = isTutorialR1 || isTutorialR2;
   let [mnC, mxC] = monsterCountForRound(state.round);
-  if (isTutorialWeak) { mnC = 5; mxC = 8; }
+  if (isTutorialWeak) { mnC = 5; mxC = 6; }
   // 균열: 다음 라운드 몬스터 2배 / HP 절반 (this round)
   let gambitDoubleHalf = false;
   if (state.gambit_doubleHalf) {
@@ -2884,13 +3841,70 @@ function startRound() {
   const monsters = [];
   let bossPlaced = 0;
   let bossTarget = (isTutorialWeak ? 0 : (state.round % 15 === 0 ? 2 : (state.round % 5 === 0 ? 1 : 0)));
-  // 균열 이벤트: 보스 추가
-  if (state.gambit_extraBoss) {
+  // 균열 이벤트: 보스 추가 (저장된 카운트 적용)
+  if (state.gambit_extraBoss && bossTarget > 0) {
     bossTarget += state.gambit_extraBoss;
-    state.coin += 30 * state.gambit_extraBoss; // 즉시 보너스 (개당)
+    setTimeout(() => toast(`💥 균열 효과: 보스 +${state.gambit_extraBoss} 마리, +${30 * state.gambit_extraBoss} 코인`, "success"), 200);
+    state.coin += 30 * state.gambit_extraBoss;
     state.gambit_extraBoss = 0;
   }
   state.bossesSpawnedThisRound = 0;
+  state._bossBannerShown = false;
+  state.cleanCleared = true;
+  state.roundKills = 0;
+  state.roundCoinGain = 0;
+  renderCombatRail();
+  // ===== 카오스 이벤트: R30+ 5라운드마다 50/50 확률 =====
+  if (state.round >= 30 && state.round % 5 === 0) {
+    state.cardRand = (state.cardRand * 1664525 + 1013904223) >>> 0;
+    const rand = mulberry32(state.cardRand);
+    if (rand() < 0.5) {
+      // 카오스 A: 랜덤 기물 1개 사라짐
+      const piecedTiles = [];
+      for (let yy = 0; yy < GRID; yy++)
+        for (let xx = 0; xx < GRID; xx++) {
+          const t = tileAt(xx, yy);
+          if (t.piece) piecedTiles.push({ x: xx, y: yy });
+        }
+      if (piecedTiles.length > 0) {
+        const pick = piecedTiles[Math.floor(rand() * piecedTiles.length)];
+        const t = tileAt(pick.x, pick.y);
+        const lostName = PIECE_NAMES[t.piece.type] || "기물";
+        t.piece = null;
+        markNetworksDirty();
+        renderTile(pick.x, pick.y);
+        showBanner(`💥 카오스: ${lostName} 사라짐`, true);
+        toast(`카오스: (${pick.x+1},${pick.y+1}) ${lostName} 1개 사라짐`, "error");
+      }
+    } else {
+      // 카오스 B: 랜덤 비-경로 타일 7개의 지형을 랜덤 교체
+      const candidates = [];
+      for (let yy = 0; yy < GRID; yy++)
+        for (let xx = 0; xx < GRID; xx++) {
+          if (isPath(xx, yy)) continue;
+          candidates.push({ x: xx, y: yy });
+        }
+      // shuffle
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+      }
+      const pickN = Math.min(7, candidates.length);
+      for (let i = 0; i < pickN; i++) {
+        const c = candidates[i];
+        const t = tileAt(c.x, c.y);
+        // 새 랜덤 지형으로 교체 (기존 지형 제거)
+        t.terrains = { sky:0, ground:0, underground:0 };
+        const newT = TERRAIN_ORDER[Math.floor(rand() * TERRAIN_ORDER.length)];
+        t.terrains[newT] = 1;
+        renderTile(c.x, c.y);
+      }
+      markNetworksDirty();
+      renderNetworkDots();
+      showBanner("🌪 카오스: 지형 7곳 변화", true);
+      toast("카오스: 지형 7개 랜덤 교체", "error");
+    }
+  }
 
   for (let i = 0; i < count; i++) {
     const roll = rand();
@@ -2963,10 +3977,17 @@ function startRound() {
 function endRound(success) {
   state.inBattle = false;
   state.paused = false;
-  // 최고 라운드 갱신 + 메타 통계 업데이트
+  // 최고 라운드 갱신 (도망 없이 모두 처치한 라운드만 인정)
   try {
     const meta = loadMeta();
-    if (state.round > meta.bestRound) meta.bestRound = state.round;
+    if (success && state.cleanCleared) {
+      // state.round는 endRound 안에서 +1 되기 전이라 = 클리어된 라운드 번호
+      if (state.round > meta.bestRound) meta.bestRound = state.round;
+    } else if (!success) {
+      // 패배 시: 마지막으로 클린 클리어한 라운드 = state.round - 1 (현재 라운드 실패)
+      const lastClean = Math.max(0, state.round - 1);
+      if (lastClean > meta.bestRound) meta.bestRound = lastClean;
+    }
     localStorage.setItem("chess-defense-best-round", String(meta.bestRound));
     state._cachedBestRound = meta.bestRound;
     // 처치/보스 통계
@@ -3033,7 +4054,8 @@ function endRound(success) {
     }
     // 보스 처치 카운트만큼 증강 선택 모달 순차 오픈
     if ((state.bossKillsPending || 0) > 0) {
-      openRewardModal();
+      showPreEventBanner("증강 선택이 시작됩니다…");
+      setTimeout(() => openRewardModal(), 900);
       saveGame();
       return;
     }
@@ -3042,10 +4064,12 @@ function endRound(success) {
       if (!state.eventDoneFor) state.eventDoneFor = {};
       state.eventDoneFor[justCleared] = true;
       const evKey = rollEventForRound(justCleared);
+      const evTitle = (EVENTS[evKey] && EVENTS[evKey].title) || "특별 이벤트";
+      showPreEventBanner(`${evTitle}가 시작됩니다…`);
       setTimeout(() => openEventModal(evKey, () => {
         saveGame(); renderStats(); refreshButtons();
         if (state.autoNext && state.life > 0) setTimeout(() => startAutoCountdown(), 350);
-      }), 400);
+      }), 1100);
       saveGame();
       return;
     }
@@ -3100,10 +4124,11 @@ function simulate(dt) {
       m.speed = m.baseSpeed * 1.4;
       m._enraged = true;
     }
-    // 보스 패턴: 텔레포트 — HP 50% 이하 시 1회만 길 1/4 앞으로 점프
+    // 보스 패턴: 텔레포트 — HP 50% 이하 시 1회만 약 2-3.5칸 앞으로 점프
     if (m.bossPattern === "teleport" && m.hp / m.maxHP <= 0.5 && !m.usedTeleport) {
       m.usedTeleport = true;
-      const jump = (state.path.length - 1) * 0.25;
+      // 길 길이의 10%, 최소 2칸, 최대 3.5칸
+      const jump = Math.max(2, Math.min(3.5, (state.path.length - 1) * 0.10));
       m.pathIdx = Math.min(state.path.length - 1.1, m.pathIdx + jump);
       m.stunTimer = 0;
       // 텔레포트 비주얼
@@ -3157,6 +4182,7 @@ function simulate(dt) {
     if (m.pathIdx >= state.path.length - 1) {
       m.reachedEnd = true;
       state.life -= (m.type === "boss" ? 5 : 1);
+      state.cleanCleared = false; // 한 마리라도 도망가면 클린 클리어 X
       sfx("hurt");
       // 도망 즉시 DOM 엘리먼트 제거 (오른쪽 끝에 잔상으로 남는 버그 수정)
       if (m._el) { m._el.remove(); m._el = null; }
@@ -3288,7 +4314,14 @@ function performAttack(u, targets) {
       const resistMul = (t.m.modifiers && t.m.modifiers.stunResist) ? 0.5 : 1;
       const ccMul = bossCCMul(t.m);
       // 주 타겟: 15% 확률 · 0.25초
-      if (combatRand() < 0.15 * resistMul * ccMul) t.m.stunTimer = Math.max(t.m.stunTimer, 0.25 * ccMul);
+      if (combatRand() < 0.15 * resistMul * ccMul) {
+        const dr = Math.pow(0.65, t.m.stunsReceived || 0);
+        const dur = 0.25 * ccMul * dr;
+        if (dur > 0.03) {
+          t.m.stunTimer = Math.max(t.m.stunTimer, dur);
+          t.m.stunsReceived = (t.m.stunsReceived || 0) + 1;
+        }
+      }
       for (const other of state.monsters) {
         if (other === t.m || other.dead || other.reachedEnd) continue;
         const op = monsterPos(other);
@@ -3296,7 +4329,14 @@ function performAttack(u, targets) {
           const rm = (other.modifiers && other.modifiers.stunResist) ? 0.5 : 1;
           const otherCC = bossCCMul(other);
           // 스플래시: 30% 확률 · 0.2초
-          if (combatRand() < 0.30 * rm * otherCC) other.stunTimer = Math.max(other.stunTimer, 0.2 * otherCC);
+          if (combatRand() < 0.30 * rm * otherCC) {
+            const dr2 = Math.pow(0.65, other.stunsReceived || 0);
+            const dur2 = 0.2 * otherCC * dr2;
+            if (dur2 > 0.03) {
+              other.stunTimer = Math.max(other.stunTimer, dur2);
+              other.stunsReceived = (other.stunsReceived || 0) + 1;
+            }
+          }
           if (u.track) u.stunCount++;
         }
       }
@@ -3306,8 +4346,13 @@ function performAttack(u, targets) {
       const ccMul = bossCCMul(t.m);
       const resistMul = (t.m.modifiers && t.m.modifiers.stunResist) ? 0.5 : 1;
       if (combatRand() < 0.20 * resistMul * ccMul) {
-        t.m.stunTimer = Math.max(t.m.stunTimer, 0.5 * ccMul);
-        if (u.track) u.stunCount++;
+        const drK = Math.pow(0.65, t.m.stunsReceived || 0);
+        const durK = 0.5 * ccMul * drK;
+        if (durK > 0.05) {
+          t.m.stunTimer = Math.max(t.m.stunTimer, durK);
+          t.m.stunsReceived = (t.m.stunsReceived || 0) + 1;
+          if (u.track) u.stunCount++;
+        }
       }
     }
     // 룩: 넉백 — 증강(rookKnockback)이 있을 때만 발동
@@ -3349,6 +4394,9 @@ function performAttack(u, targets) {
       if (u.track) u.killCount++;
       const c = coinPerKill(t.m.type, state.round);
       state.coin += c;
+      state.roundKills = (state.roundKills || 0) + 1;
+      state.roundCoinGain = (state.roundCoinGain || 0) + c;
+      renderCombatRail();
       spawnCoinText(t.p, c);
       spawnHitSpark(t.p, t.m.type === "boss");
       if (t.m.type === "boss") {
@@ -3402,6 +4450,7 @@ let fxRect = { w: 460, h: 460 };
 let fxDamageBudget = 0;
 let fxSparkBudget = 0;
 
+// fitBoard 제거됨 — CSS aspect-ratio가 처리
 function updateFxRect() {
   if (fxLayer) {
     const r = fxLayer.getBoundingClientRect();
@@ -3481,6 +4530,17 @@ function buildBoard() {
       // 빛 반짝임 딜레이 (위치별로 다르게 → 길 전체에서 부드럽게 흐름)
       const idx = state.path.findIndex(p => p.x === x && p.y === y);
       el.style.setProperty("--pdelay", (-idx * 0.13).toFixed(2) + "s");
+      // 시작 타일에 진행 방향 화살표
+      if (idx === 0 && state.path.length > 1) {
+        const next = state.path[1];
+        const dx = next.x - x, dy = next.y - y;
+        let rot = 0;
+        if (dx === 1) rot = 0;
+        else if (dx === -1) rot = 180;
+        else if (dy === 1) rot = 90;
+        else if (dy === -1) rot = -90;
+        el.style.setProperty("--start-dir", rot + "deg");
+      }
     } else {
       el.addEventListener("click", () => onTileClick(x, y));
       el.addEventListener("mouseenter", () => showRangePreview(x, y));
@@ -3532,14 +4592,6 @@ function renderNetworkDots() {
 }
 
 function onTileClick(x, y) {
-  if (state.sellMode) {
-    clearPendingPlace();
-    sellTile(x, y);
-    state.sellMode = false;
-    refreshButtons();
-    renderPlacementHints();
-    return;
-  }
   if (state.selectedCardKey) {
     // 방금 배치한 타일을 다시 탭하면: 카드 선택 해제 + 정보창 열기 (DPS 바로 보기)
     if (state._lastPlacedTile && state._lastPlacedTile.x === x && state._lastPlacedTile.y === y) {
@@ -3693,7 +4745,7 @@ function selectCardByKey(key) {
   renderPlacementHints();
   refreshButtons();
   sfx("click");
-  if (!before && state.selectedCardKey) {
+  if (state.selectedCardKey) {
     tutorialEvent("selected-card");
     const c = selectedCard();
     if (c && c.kind === "terrain") tutorialEvent("selected-terrain-card");
@@ -3702,6 +4754,7 @@ function selectCardByKey(key) {
 }
 
 function renderPlacementHints() {
+  if (state) state.sellMode = false;
   // Only update tiles that need to change
   const newOk = new Set();
   if (state.sellMode) {
@@ -3787,16 +4840,17 @@ function refreshButtons() {
   const startLbl = $("#start-label");
   if (autoStartCountdown > 0) startLbl.textContent = `${autoStartCountdown}초`;
   else if (inB) startLbl.textContent = state.paused ? "계속" : "전투중";
-  else startLbl.textContent = "시작";
+  else startLbl.textContent = `R${state.round} 시작`;
   $("#btn-auto-start")?.classList.toggle("active-auto", state.autoNext);
-  $("#btn-sell").style.outline = state.sellMode ? "2px solid var(--gold)" : "";
+  // sellMode 제거됨 — sell 버튼은 항상 동일한 모양
   $("#btn-pause").textContent = state.paused ? "▶" : "⏸";
   $("#btn-pause").style.opacity = inB ? "1" : "0.5";
   $("#btn-speed").textContent = state.speed + "×";
   $("#speed-chip").style.display = (inB && state.speed !== 1) ? "block" : "none";
   $("#speed-chip").textContent = `${state.speed}× speed`;
   $("#btn-music").classList.toggle("active", state.musicOn);
-  $("#btn-sfx").textContent = state.sfxOn ? "🔊" : "🔇";
+  $("#btn-sfx").classList.toggle("active", state.sfxOn);
+  $("#btn-sfx .ico").textContent = state.sfxOn ? "🔊" : "🔇";
   $("#btn-combine").disabled =
     state.hand.filter(c => c.kind === "piece" && c.piece !== "king").length < COMBINE_INPUT;
 }
@@ -3845,7 +4899,20 @@ function renderMonsters() {
     // 위치를 먼저 세팅 → 그 다음 보이게 (반대 순서면 좌상단에 잠깐 보임)
     m._el.style.left = `${(p.x / GRID) * 100}%`;
     m._el.style.top  = `${(p.y / GRID) * 100}%`;
-    if (!m._visible) { m._el.style.display = ""; m._visible = true; }
+    if (!m._visible) {
+      m._el.style.display = "";
+      m._visible = true;
+      // 보스가 처음 등장할 때 배너 알림 (라운드당 1회)
+      if (m.type === "boss" && !state._bossBannerShown) {
+        state._bossBannerShown = true;
+        const ptName = m.bossPattern === "teleport" ? " · 텔레포트"
+                     : m.bossPattern === "summoner" ? " · 소환사"
+                     : m.bossPattern === "shielded" ? " · 실드"
+                     : "";
+        showBanner(`👹 보스 등장${ptName}`, true);
+        sfx("boss");
+      }
+    }
     const pct = Math.max(0, m.hp / m.maxHP);
     if (Math.abs(pct - m._hpPctLast) > 0.01) {
       m._fill.style.width = (pct * 100) + "%";
@@ -4085,7 +5152,8 @@ function showTileInfo(x, y) {
   }
   const panel = $("#info-panel");
   const content = $("#info-content");
-  let html = `<h3>(${x}, ${y})</h3>`;
+  // 사용자에게 보이는 좌표는 1부터 시작 (내부 인덱스는 그대로 0)
+  let html = `<h3>(${x + 1}, ${y + 1})</h3>`;
   if (tile.piece) {
     const u = getUnitStats(x, y);
     const base = PIECE_STATS[tile.piece.type];
@@ -4225,6 +5293,15 @@ window.sellAt = (x, y) => { sellTile(x, y); hideInfo(); };
 // =====================================================================
 //  BANNER / TOAST
 // =====================================================================
+function showPreEventBanner(text) {
+  // 부드러운 사전 안내 문구
+  document.querySelector(".pre-event-banner")?.remove();
+  const b = document.createElement("div");
+  b.className = "pre-event-banner";
+  b.textContent = text;
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), 1500);
+}
 function showBanner(text, danger=false) {
   document.querySelector(".banner")?.remove();
   const b = document.createElement("div");
@@ -4468,16 +5545,49 @@ function updateSeedDisplay() {
   const el = $("#seed-display");
   if (el && state) el.textContent = formatSeed(state.seed);
 }
-function toggleSellMode() {
-  state.sellMode = !state.sellMode;
-  state.selectedCardKey = null;
-  clearPendingPlace();
-  state._lastPlacedTile = null;
-  refreshButtons();
+function sellSelectedCard() {
+  if (!state.selectedCardKey) {
+    return toast("먼저 카드를 선택하세요", "error");
+  }
+  const card = selectedCard();
+  if (!card) {
+    state.selectedCardKey = null;
+    renderHand();
+    refreshButtons();
+    return;
+  }
+  // 환불가 계산 (등급 기반)
+  let price = 0;
+  if (card.kind === "piece") {
+    const tier = PIECE_RARITY[card.piece];
+    const tierCost = [5, 15, 45, 135, 405, 1215][tier] || 5;
+    const refundPct = 0.5 + (state.mods?.sellRefund || 0);
+    price = Math.max(1, Math.floor(tierCost * refundPct));
+  } else if (card.kind === "terrain") {
+    // 지형 카드는 정가 5코인, 50% 환불 = 2~3코인
+    const refundPct = 0.5 + (state.mods?.sellRefund || 0);
+    price = Math.max(1, Math.floor(5 * refundPct));
+  }
+  // 손패에서 1장 제거
+  const idx = state.hand.findIndex(c => cardKey(c) === state.selectedCardKey);
+  if (idx < 0) return;
+  state.hand.splice(idx, 1);
+  state.coin += price;
+  sfx("coin");
+  toast(`💰 판매 +${price} 코인`, "success");
+  // 같은 카드가 남아있지 않으면 선택 해제
+  if (!state.hand.some(c => cardKey(c) === state.selectedCardKey)) {
+    state.selectedCardKey = null;
+    hand.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
+  }
+  saveGame();
+  renderHand();
+  renderStats();
   renderPlacementHints();
-  hand.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
-  if (state.sellMode) toast("판매 모드 · 타일 클릭 시 50% 환불");
+  refreshButtons();
 }
+// 호환용 (예전 호출 잔존 시 안전)
+function toggleSellMode() { sellSelectedCard(); }
 
 document.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
@@ -4493,9 +5603,9 @@ document.addEventListener("keydown", (e) => {
   }
   if (k === "Escape") {
     if (!$("#help-modal").classList.contains("hidden")) { $("#help-modal").classList.add("hidden"); return; }
+    if (!$("#settings-modal").classList.contains("hidden")) { $("#settings-modal").classList.add("hidden"); return; }
     if (!$("#combine-modal").classList.contains("hidden")) { $("#combine-modal").classList.add("hidden"); return; }
     state.selectedCardKey = null;
-    state.sellMode = false;
     clearPendingPlace();
     state._lastPlacedTile = null;
     hideInfo();
@@ -4519,7 +5629,7 @@ document.addEventListener("keydown", (e) => {
     case "KeyD": drawPieceCards(); e.preventDefault(); break;
     case "KeyT": drawTerrainCards(); e.preventDefault(); break;
     case "KeyC": tryCombine(); e.preventDefault(); break;
-    case "KeyX": toggleSellMode(); e.preventDefault(); break;
+    case "KeyX": sellSelectedCard(); e.preventDefault(); break;
     case "KeyS": cycleSpeed(); e.preventDefault(); break;
     case "KeyP": togglePause(); e.preventDefault(); break;
     case "KeyA": toggleAuto(); e.preventDefault(); break;
@@ -4552,6 +5662,29 @@ function init() {
   buildBoard();
   renderAll();
   updateSeedDisplay();
+  renderAugmentRail();
+  renderCombatRail();
+
+  // Container query 폴백 — board-area 기준
+  try {
+    const area = document.querySelector(".board-area");
+    const board = document.querySelector("#board");
+    if (area && board) {
+      const fit = () => {
+        const w = area.clientWidth, h = area.clientHeight;
+        const sz = Math.min(w, h, 700);
+        if (sz > 100) {
+          board.style.width = sz + "px";
+          board.style.height = sz + "px";
+        }
+      };
+      fit();
+      if (typeof ResizeObserver !== "undefined") {
+        new ResizeObserver(fit).observe(area);
+      }
+      window.addEventListener("orientationchange", () => setTimeout(fit, 100));
+    }
+  } catch (_) {}
 
   $("#btn-draw-piece").addEventListener("click", () => drawPieceCards());
   $("#btn-draw-terrain").addEventListener("click", () => drawTerrainCards());
@@ -4559,9 +5692,9 @@ function init() {
     if (!state.inBattle) startRound(); else togglePause();
   });
   $("#btn-combine").addEventListener("click", () => tryCombine());
-  $("#btn-sell").addEventListener("click", () => toggleSellMode());
+  $("#btn-sell").addEventListener("click", () => sellSelectedCard());
   $("#btn-new-map").addEventListener("click", () => openSeedModal());
-  $("#btn-seed-chip").addEventListener("click", () => openSeedModal());
+  $("#btn-seed-chip")?.addEventListener("click", () => openSeedModal());
   $("#btn-random-seed").addEventListener("click", () => {
     $("#seed-input").value = formatSeed(makeSeed());
   });
@@ -4621,6 +5754,11 @@ function init() {
   $("#btn-speed").addEventListener("click", () => cycleSpeed());
   $("#btn-pause").addEventListener("click", () => togglePause());
   $("#btn-help").addEventListener("click", () => $("#help-modal").classList.toggle("hidden"));
+  $("#btn-settings")?.addEventListener("click", () => $("#settings-modal").classList.toggle("hidden"));
+  $("#settings-close-btn")?.addEventListener("click", () => $("#settings-modal").classList.add("hidden"));
+  $("#settings-modal")?.addEventListener("click", (e) => {
+    if (e.target.id === "settings-modal") e.currentTarget.classList.add("hidden");
+  });
   $("#modal-close-btn").addEventListener("click", () => $("#help-modal").classList.add("hidden"));
   $("#btn-replay-tut").addEventListener("click", () => {
     $("#help-modal").classList.add("hidden");
@@ -4701,10 +5839,11 @@ const TUT_STEPS_STAGE1 = [
 // Stage 2 — R1 클리어 직후 (5단계)
 const TUT_STEPS_STAGE2 = [
   { text: "R1 클리어! 이번엔 <b>지형</b>을 배워볼게요.", target: "#board", wait: "next" },
+  { text: "🌍 <b>지형</b> 버튼을 눌러 지형 카드를 사보세요.", target: "#btn-draw-terrain", wait: "drew-terrain" },
   { text: "손패의 <b>지형 카드</b> 하나 선택. (🌍 아이콘)", target: "#hand", wait: "selected-terrain-card" },
   { text: "말이 있는 타일에 <b>지형 배치</b>해보세요.", target: "#board", wait: "placed-terrain" },
   { text: "같은 지형 타일이 이어지면 <b>연결망</b>이 생기고, 그 위 말들은 <b>연결망 크기만큼</b> 효과가 강해집니다 (3칸 이어지면 ×3 효과).", target: "#board", wait: "next" },
-  { text: "<b>▶ 시작</b>으로 R2 진행!", target: "#btn-start-round", wait: "started" },
+  { text: "<b>튜토리얼은 여기까지예요.</b><br>안내를 닫고 직접 R2를 시작해보세요.", target: "#btn-start-round", wait: "next" },
 ];
 const TUTORIAL_VERSION = "v3";
 const TUT_KEY_S1 = "tutorialSeen_" + TUTORIAL_VERSION;
