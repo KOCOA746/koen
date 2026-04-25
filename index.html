@@ -1768,7 +1768,7 @@ body::before {
   margin: 0 auto;
   padding: max(7px, env(safe-area-inset-top)) max(7px, env(safe-area-inset-right)) max(7px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left));
   display: grid;
-  grid-template-rows: 50px minmax(0, 1fr) 58px 84px;
+  grid-template-rows: 50px minmax(0, 1fr) 82px 58px 84px;
   gap: 6px;
   overflow: hidden;
 }
@@ -1969,6 +1969,130 @@ body::before {
   border: 1px solid var(--ui-line);
   box-shadow: 0 10px 22px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.08);
 }
+.detail-panel {
+  min-height: 0;
+  height: 82px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #20144c, #100726);
+  border: 1px solid var(--panel-edge);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.06);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.detail-panel::-webkit-scrollbar { width: 3px; }
+.detail-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 2px; }
+.detail-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  color: var(--ink-mute);
+  font-size: 12px;
+  font-weight: 700;
+}
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  margin-bottom: 4px;
+  color: var(--gold-2);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+.detail-title .detail-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.detail-desc {
+  color: var(--ink-dim);
+  font-size: 10.5px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 5px;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.detail-stat {
+  min-width: 0;
+  padding: 4px 5px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-variant-numeric: tabular-nums;
+}
+.detail-stat .k {
+  display: block;
+  color: var(--ink-mute);
+  font-size: 8px;
+  line-height: 1;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+.detail-stat .v {
+  display: block;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.detail-stat .v.gold { color: var(--gold-2); }
+.detail-stat .v.cyan { color: var(--cyan); }
+.detail-stat .v.rose { color: var(--rose); }
+.detail-panel h3 {
+  margin: 0 0 4px;
+  color: var(--gold-2);
+  font-size: 12px;
+  line-height: 1.15;
+}
+.detail-panel h4 {
+  margin: 5px 0 3px;
+  color: var(--cyan);
+  font-size: 10.5px;
+  line-height: 1.1;
+}
+.detail-panel .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 1px 0;
+  color: var(--ink);
+  font-size: 10px;
+  line-height: 1.2;
+}
+.detail-panel .row .k {
+  color: var(--ink-mute);
+  white-space: nowrap;
+}
+.detail-panel .row .v {
+  min-width: 0;
+  text-align: right;
+  font-weight: 800;
+}
+.detail-panel .sep {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 4px 0;
+}
+.detail-panel .actions { display: flex; gap: 5px; margin-top: 5px; }
+.detail-panel .actions .btn { min-height: 28px; padding: 5px 8px; font-size: 10px; }
+.setting-btn#btn-meta {
+  background: linear-gradient(160deg, #8f59b8 0%, #65328f 62%, #3f1d5f 100%);
+  border-color: rgba(255,210,74,0.28);
+  box-shadow: 0 4px 10px -3px rgba(140,80,190,0.38), inset 0 1px 0 rgba(255,255,255,0.14);
+}
 .action-bar .btn,
 .action-bar .btn:nth-child(n) {
   grid-column: span 1;
@@ -2030,11 +2154,8 @@ body::before {
 .hand::-webkit-scrollbar { height: 3px; }
 .hand::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.20); border-radius: 999px; }
 .hand:empty::before {
-  align-self: center;
-  content: "카드를 뽑아 배치하세요";
-  padding: 0;
-  font-size: 12px;
-  color: var(--ui-muted);
+  content: "";
+  display: none;
 }
 .card {
   flex: 0 0 60px;
@@ -2060,9 +2181,7 @@ body::before {
   text-overflow: ellipsis;
 }
 .card .card-desc {
-  font-size: 7px;
-  line-height: 1.12;
-  -webkit-line-clamp: 1;
+  display: none;
 }
 .card.selected {
   transform: translateY(-2px);
@@ -2165,7 +2284,7 @@ body::before {
   #app {
     max-width: 100%;
     padding: 5px;
-    grid-template-rows: 46px minmax(0, 1fr) 54px 78px;
+    grid-template-rows: 46px minmax(0, 1fr) 76px 54px 78px;
     gap: 5px;
   }
   .topbar {
@@ -2183,6 +2302,13 @@ body::before {
     font-size: 11px;
   }
   .action-bar { height: 54px; gap: 4px; padding: 4px; }
+  .detail-panel { height: 76px; padding: 6px 7px; }
+  .detail-title { font-size: 11px; margin-bottom: 3px; }
+  .detail-desc { font-size: 9.5px; margin-bottom: 4px; }
+  .detail-grid { gap: 3px; }
+  .detail-stat { padding: 3px 4px; }
+  .detail-stat .k { font-size: 7px; }
+  .detail-stat .v { font-size: 9px; }
   .action-bar .btn,
   .action-bar .btn:nth-child(n) { padding: 4px 1px; border-radius: 7px; }
   .action-bar .btn .ico { font-size: 13px; }
@@ -2424,6 +2550,9 @@ body {
       <div id="info-content"></div>
     </aside>
   </div>
+  <section class="detail-panel" id="detail-panel">
+    <div id="detail-content" class="detail-empty">카드를 뽑아 배치하세요</div>
+  </section>
   <section class="action-bar" id="action-bar">
     <button class="btn primary" id="btn-draw-piece">
       <span class="ico">🃏</span><span class="lbl">캐릭터</span>
@@ -3526,6 +3655,7 @@ function placeSelectedCardAt(x, y) {
   renderPlacementHints();
   refreshButtons();
   if (state.inBattle) refreshBattleState();
+  showTileInfo(x, y);
   tutorialEvent("placed-piece");
   if (card.kind === "terrain") tutorialEvent("placed-terrain");
   // 방금 배치한 타일 기억 → 같은 타일 재탭 시 선택 해제
@@ -4746,10 +4876,13 @@ function selectCardByKey(key) {
   refreshButtons();
   sfx("click");
   if (state.selectedCardKey) {
+    renderCardDetail(selectedCard());
     tutorialEvent("selected-card");
     const c = selectedCard();
     if (c && c.kind === "terrain") tutorialEvent("selected-terrain-card");
     if (c && c.kind === "piece") tutorialEvent("selected-piece-card");
+  } else {
+    setDetailEmpty();
   }
 }
 
@@ -5116,6 +5249,49 @@ function hideInfo() {
   document.querySelector(".range-circle:not(.preview)")?.remove();
   if (state) state._infoTile = null;
 }
+function setDetailEmpty(text = "카드를 뽑아 배치하세요") {
+  const content = $("#detail-content");
+  if (!content) return;
+  content.className = "detail-empty";
+  content.textContent = text;
+}
+function renderCardDetail(card) {
+  const content = $("#detail-content");
+  if (!content || !card) return;
+  content.className = "";
+  if (card.kind === "piece") {
+    const base = PIECE_STATS[card.piece];
+    const crit = base.critBase ?? 0.05;
+    const dps = base.atk * base.aps;
+    content.innerHTML = `
+      <div class="detail-title"><span>${PIECE_SYMBOL[card.piece]}</span><span class="detail-name">${PIECE_NAMES[card.piece]}</span></div>
+      <div class="detail-desc">${base.desc}</div>
+      <div class="detail-grid">
+        <div class="detail-stat"><span class="k">공격</span><span class="v">${base.atk}</span></div>
+        <div class="detail-stat"><span class="k">공속</span><span class="v cyan">${base.aps.toFixed(2)}</span></div>
+        <div class="detail-stat"><span class="k">DPS</span><span class="v gold">${dps.toFixed(1)}</span></div>
+        <div class="detail-stat"><span class="k">사거리</span><span class="v">${base.range.toFixed(1)}</span></div>
+        <div class="detail-stat"><span class="k">치명</span><span class="v rose">${Math.round(crit * 100)}%</span></div>
+      </div>
+    `;
+  } else {
+    const data = {
+      sky: ["공속 증가, 치명타 감소", "공속", "치명↓"],
+      ground: ["치명타 확률 증가", "치명", "공격 보조"],
+      underground: ["공격력 증가, 공속 감소", "공격", "공속↓"],
+    }[card.terrain];
+    content.innerHTML = `
+      <div class="detail-title"><span>${TERRAIN_ICON[card.terrain]}</span><span class="detail-name">${TERRAIN_NAMES[card.terrain]} 지형</span></div>
+      <div class="detail-desc">${data[0]}</div>
+      <div class="detail-grid">
+        <div class="detail-stat"><span class="k">분류</span><span class="v">${TERRAIN_NAMES[card.terrain]}</span></div>
+        <div class="detail-stat"><span class="k">주효과</span><span class="v cyan">${data[1]}</span></div>
+        <div class="detail-stat"><span class="k">보정</span><span class="v gold">${data[2]}</span></div>
+        <div class="detail-stat"><span class="k">연결</span><span class="v">인접</span></div>
+      </div>
+    `;
+  }
+}
 function showTileInfo(x, y) {
   hideInfo();
   if (state) state._infoTile = { x, y };
@@ -5151,7 +5327,8 @@ function showTileInfo(x, y) {
     board.appendChild(circle);
   }
   const panel = $("#info-panel");
-  const content = $("#info-content");
+  const content = $("#detail-content");
+  if (content) content.className = "";
   // 사용자에게 보이는 좌표는 1부터 시작 (내부 인덱스는 그대로 0)
   let html = `<h3>(${x + 1}, ${y + 1})</h3>`;
   if (tile.piece) {
@@ -5286,7 +5463,7 @@ function showTileInfo(x, y) {
     html += `<div class="actions"><button class="btn warn" onclick="window.sellAt(${x},${y})">💰 판매</button></div>`;
   }
   content.innerHTML = html;
-  panel.classList.remove("hidden");
+  panel.classList.add("hidden");
 }
 window.sellAt = (x, y) => { sellTile(x, y); hideInfo(); };
 
