@@ -1768,7 +1768,7 @@ body::before {
   margin: 0 auto;
   padding: max(7px, env(safe-area-inset-top)) max(7px, env(safe-area-inset-right)) max(7px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left));
   display: grid;
-  grid-template-rows: 50px minmax(0, 1fr) 82px 58px 84px;
+  grid-template-rows: 50px minmax(0, 1fr) auto 58px 84px;
   gap: 6px;
   overflow: hidden;
 }
@@ -1971,7 +1971,8 @@ body::before {
 }
 .detail-panel {
   min-height: 0;
-  height: 82px;
+  height: 48px;
+  max-height: 48px;
   padding: 7px 9px;
   border-radius: 9px;
   background: linear-gradient(135deg, #20144c, #100726);
@@ -1981,6 +1982,10 @@ body::before {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+}
+.detail-panel.is-expanded {
+  height: min(172px, 24dvh);
+  max-height: min(172px, 24dvh);
 }
 .detail-panel::-webkit-scrollbar { width: 3px; }
 .detail-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 2px; }
@@ -2011,15 +2016,19 @@ body::before {
 .detail-desc {
   color: var(--ink-dim);
   font-size: 10.5px;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  white-space: normal;
+  overflow: visible;
   margin-bottom: 5px;
+}
+.detail-desc.fit-long,
+.detail-desc.fit-xlong {
+  font-size: 10.5px;
+  letter-spacing: 0;
 }
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
 }
 .detail-stat {
@@ -2284,7 +2293,7 @@ body::before {
   #app {
     max-width: 100%;
     padding: 5px;
-    grid-template-rows: 46px minmax(0, 1fr) 76px 54px 78px;
+    grid-template-rows: 46px minmax(0, 1fr) auto 54px 78px;
     gap: 5px;
   }
   .topbar {
@@ -2302,10 +2311,11 @@ body::before {
     font-size: 11px;
   }
   .action-bar { height: 54px; gap: 4px; padding: 4px; }
-  .detail-panel { height: 76px; padding: 6px 7px; }
+  .detail-panel { height: 44px; max-height: 44px; padding: 6px 7px; }
+  .detail-panel.is-expanded { height: min(150px, 24dvh); max-height: min(150px, 24dvh); }
   .detail-title { font-size: 11px; margin-bottom: 3px; }
   .detail-desc { font-size: 9.5px; margin-bottom: 4px; }
-  .detail-grid { gap: 3px; }
+  .detail-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
   .detail-stat { padding: 3px 4px; }
   .detail-stat .k { font-size: 7px; }
   .detail-stat .v { font-size: 9px; }
@@ -5252,20 +5262,24 @@ function hideInfo() {
 function setDetailEmpty(text = "카드를 뽑아 배치하세요") {
   const content = $("#detail-content");
   if (!content) return;
+  $("#detail-panel")?.classList.remove("is-expanded");
   content.className = "detail-empty";
   content.textContent = text;
 }
 function renderCardDetail(card) {
   const content = $("#detail-content");
   if (!content || !card) return;
+  $("#detail-panel")?.classList.add("is-expanded");
   content.className = "";
+  const descClass = (text) => text.length >= 18 ? "fit-xlong" : (text.length >= 12 ? "fit-long" : "");
   if (card.kind === "piece") {
     const base = PIECE_STATS[card.piece];
     const crit = base.critBase ?? 0.05;
     const dps = base.atk * base.aps;
+    const descCls = descClass(base.desc);
     content.innerHTML = `
       <div class="detail-title"><span>${PIECE_SYMBOL[card.piece]}</span><span class="detail-name">${PIECE_NAMES[card.piece]}</span></div>
-      <div class="detail-desc">${base.desc}</div>
+      <div class="detail-desc ${descCls}">${base.desc}</div>
       <div class="detail-grid">
         <div class="detail-stat"><span class="k">공격</span><span class="v">${base.atk}</span></div>
         <div class="detail-stat"><span class="k">공속</span><span class="v cyan">${base.aps.toFixed(2)}</span></div>
@@ -5280,9 +5294,10 @@ function renderCardDetail(card) {
       ground: ["치명타 확률 증가", "치명", "공격 보조"],
       underground: ["공격력 증가, 공속 감소", "공격", "공속↓"],
     }[card.terrain];
+    const descCls = descClass(data[0]);
     content.innerHTML = `
       <div class="detail-title"><span>${TERRAIN_ICON[card.terrain]}</span><span class="detail-name">${TERRAIN_NAMES[card.terrain]} 지형</span></div>
-      <div class="detail-desc">${data[0]}</div>
+      <div class="detail-desc ${descCls}">${data[0]}</div>
       <div class="detail-grid">
         <div class="detail-stat"><span class="k">분류</span><span class="v">${TERRAIN_NAMES[card.terrain]}</span></div>
         <div class="detail-stat"><span class="k">주효과</span><span class="v cyan">${data[1]}</span></div>
@@ -5295,6 +5310,7 @@ function renderCardDetail(card) {
 function showTileInfo(x, y) {
   hideInfo();
   if (state) state._infoTile = { x, y };
+  $("#detail-panel")?.classList.add("is-expanded");
   const tile = tileAt(x, y);
   const el = tileEls[y * GRID + x];
   el.classList.add("selected");
