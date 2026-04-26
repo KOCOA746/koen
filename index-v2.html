@@ -1568,7 +1568,11 @@ body::before {
   margin-top: 8px;
 }
 .reward-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-areas:
+    "ico name"
+    "ico desc";
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -1584,14 +1588,32 @@ body::before {
   box-shadow: 0 0 14px rgba(255,210,74,0.3);
 }
 .reward-card .r-ico {
+  grid-area: ico;
   font-size: 26px;
-  flex: 0 0 auto;
   width: 38px;
   text-align: center;
 }
-.reward-card .r-name { font-size: 13px; font-weight: 900; color: var(--gold-2); }
-.reward-card .r-desc { font-size: 11px; color: var(--ink-dim); line-height: 1.35; }
-.reward-card > div:nth-child(2) { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.reward-card .r-name {
+  grid-area: name;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--gold-2);
+  line-height: 1.25;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.reward-card .r-desc {
+  grid-area: desc;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--ink-dim);
+  line-height: 1.35;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 
 /* combine modal */
 .combine-result {
@@ -3415,6 +3437,9 @@ function makeTerrainCard() {
 function makeTerrainCardSet() {
   return TERRAIN_ORDER.map(terrain => ({ kind:"terrain", terrain }));
 }
+function makeRandomTerrainCardSet(count = 3) {
+  return Array.from({ length: count }, () => makeTerrainCard());
+}
 function drawPieceCards() {
   if (state.coin < state.pieceDrawCost) return toast("코인 부족", "error");
   state.coin -= state.pieceDrawCost;
@@ -3431,7 +3456,12 @@ function drawTerrainCards() {
   if (state.coin < state.terrainDrawCost) return toast("코인 부족", "error");
   state.coin -= state.terrainDrawCost;
   state.terrainDrawCost += TERRAIN_COST_INCREMENT;
-  state.hand.push(...makeTerrainCardSet());
+  const isStage2TerrainTutorial =
+    tutState?.mode === "stage2" &&
+    currentTutSteps()?.[tutState.step]?.wait === "drew-terrain" &&
+    typeof localStorage !== "undefined" &&
+    localStorage.getItem(TUT_KEY_S2) !== "1";
+  state.hand.push(...(isStage2TerrainTutorial ? makeTerrainCardSet() : makeRandomTerrainCardSet()));
   sfx("draw");
   saveGame();
   renderHand();
@@ -4453,7 +4483,11 @@ function startRound() {
   if (state.life <= 0) return toast("게임 오버! 새 지도로 다시 시작", "error");
   cancelAutoCountdown();
   clearPendingPlace();
+  state.selectedCardKey = null;
   state._lastPlacedTile = null;
+  hideRangePreview();
+  hideInfo();
+  hand.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
   ensureNetworks();
   updateFxRect();
   fxDamageBudget = 0; fxSparkBudget = 0;
@@ -5884,11 +5918,14 @@ function flashSupporter(tx, ty) {
 // =====================================================================
 function hideInfo() {
   $("#info-panel").classList.add("hidden");
+  $("#detail-panel")?.classList.add("detail-hidden");
+  $("#detail-panel")?.classList.remove("is-expanded", "is-unit-summary", "is-unit-full", "is-collapsed");
   for (const el of tileEls) el.classList.remove("selected", "network-highlight");
   document.querySelector(".range-circle:not(.preview)")?.remove();
   if (state) {
     state._infoTile = null;
     state._detailHiddenByUser = false;
+    state._detailCollapsed = false;
   }
 }
 function clearClickFocus() {
