@@ -3644,12 +3644,26 @@ function newGame(seed = null, options = {}) {
     roundCoinGain: 0,
     cleanCleared: true,
     gameStartedAt: Date.now(),
+    _monsterSpatial: null,
+    _aliveTargets: [],
   };
   // 캐시: 최고 라운드 (renderStats가 매번 localStorage 안 읽도록)
   try { state._cachedBestRound = parseInt(localStorage.getItem("chess-defense-best-round") || "0", 10); } catch (_) { state._cachedBestRound = 0; }
   saveGame();
 }
+let saveGameTimer = null;
 function saveGame() {
+  if (state?.inBattle) {
+    clearTimeout(saveGameTimer);
+    saveGameTimer = setTimeout(() => {
+      saveGameTimer = null;
+      saveGameNow();
+    }, 1200);
+    return;
+  }
+  saveGameNow();
+}
+function saveGameNow() {
   try {
     const snap = {
       seed: state.seed, dailySeedKey: state.dailySeedKey || null, path: state.path, tiles: state.tiles,
@@ -3698,6 +3712,8 @@ function loadGame() {
       roundCoinGain: 0,
       cleanCleared: true,
       gameStartedAt: s.gameStartedAt || Date.now(),
+      _monsterSpatial: null,
+      _aliveTargets: [],
     };
     try { state._cachedBestRound = parseInt(localStorage.getItem("chess-defense-best-round") || "0", 10); } catch (_) { state._cachedBestRound = 0; }
     return true;
@@ -4321,10 +4337,9 @@ function placeSelectedCardAt(x, y) {
   saveGame();
   hideRangePreview();
   if (terrainChanged) ensureNetworks();
-  renderTile(x, y);
+  renderTilesAround(x, y, terrainChanged ? 1 : 0);
   if (terrainChanged) {
-    renderBoard();
-    renderNetworkDots();
+    scheduleTerrainVisualRefresh();
     announceNewBiomeTags(biomeTagsBefore);
   }
   renderHand();
@@ -4957,6 +4972,7 @@ function startRound() {
 }
 
 function endRound(success) {
+  if (saveGameTimer) { clearTimeout(saveGameTimer); saveGameTimer = null; }
   state.inBattle = false;
   state.paused = false;
   // 최고 라운드 갱신 (도망 없이 모두 처치한 라운드만 인정)
@@ -5080,7 +5096,8 @@ function tickLoop(now) {
   const dt = rawDt * state.speed;
   simulate(dt);
   renderMonsters();
-  if (state._infoTile && !state._detailHiddenByUser && now - (state._detailRefreshAt || 0) > 250) {
+  const detailInterval = state.inBattle ? 700 : 350;
+  if (state._infoTile && !state._detailHiddenByUser && now - (state._detailRefreshAt || 0) > detailInterval) {
     state._detailRefreshAt = now;
     const t = tileAt(state._infoTile.x, state._infoTile.y);
     if (t?.piece) showTileInfo(state._infoTile.x, state._infoTile.y, true);
@@ -5219,14 +5236,17 @@ function simulate(dt) {
     }
   }
   const units = state.unitsCache || [];
+  rebuildMonsterSpatial();
   for (const u of units) {
     u.cd -= dt;
     if (u.cd > 0) continue;
     const inRange = [];
-    for (const m of state.monsters) {
+    const ux = u.tileX + 0.5;
+    const uy = u.tileY + 0.5;
+    for (const target of queryMonsterTargets(ux, uy, u.range)) {
+      const m = target.m;
       if (m.dead || m.reachedEnd) continue;
-      const p = monsterPos(m);
-      if (!p.spawned) continue;
+      const p = target.p;
       const dx = p.x - (u.tileX + 0.5);
       const dy = p.y - (u.tileY + 0.5);
       const d = Math.hypot(dx, dy);
@@ -5258,6 +5278,47 @@ function bossCCMul(m) {
   if (elapsed <= 60) return 1;
   if (elapsed >= 120) return 0;
   return 1 - (elapsed - 60) / 60;
+}
+function rebuildMonsterSpatial() {
+  const cells = new Map();
+  const alive = [];
+  const key = (x, y) => `${x},${y}`;
+  for (const m of state.monsters || []) {
+    if (m.dead || m.reachedEnd) continue;
+    const p = monsterPos(m);
+    if (!p.spawned) continue;
+    const target = { m, p, cellX: Math.max(0, Math.min(GRID - 1, Math.floor(p.x))), cellY: Math.max(0, Math.min(GRID - 1, Math.floor(p.y))) };
+    alive.push(target);
+    const k = key(target.cellX, target.cellY);
+    let bucket = cells.get(k);
+    if (!bucket) cells.set(k, bucket = []);
+    bucket.push(target);
+  }
+  state._aliveTargets = alive;
+  state._monsterSpatial = cells;
+}
+function queryMonsterTargets(cx, cy, range) {
+  const spatial = state._monsterSpatial;
+  if (!spatial) return state._aliveTargets || [];
+  const r = Math.ceil(range);
+  const minX = Math.max(0, Math.floor(cx - r));
+  const maxX = Math.min(GRID - 1, Math.floor(cx + r));
+  const minY = Math.max(0, Math.floor(cy - r));
+  const maxY = Math.min(GRID - 1, Math.floor(cy + r));
+  const out = [];
+  const seen = new Set();
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      const bucket = spatial.get(`${x},${y}`);
+      if (!bucket) continue;
+      for (const t of bucket) {
+        if (seen.has(t.m.id)) continue;
+        seen.add(t.m.id);
+        out.push(t);
+      }
+    }
+  }
+  return out;
 }
 function performAttack(u, targets) {
   // 치명타 2배 (기존 1.8 → 2.0)
@@ -5350,9 +5411,10 @@ function performAttack(u, targets) {
           t.m.stunsReceived = (t.m.stunsReceived || 0) + 1;
         }
       }
-      for (const other of state.monsters) {
+      for (const splash of queryMonsterTargets(t.p.x, t.p.y, knightStunRadius)) {
+        const other = splash.m;
         if (other === t.m || other.dead || other.reachedEnd) continue;
-        const op = monsterPos(other);
+        const op = splash.p;
         if (Math.hypot(op.x - t.p.x, op.y - t.p.y) <= knightStunRadius) {
           const rm = (other.modifiers && other.modifiers.stunResist) ? 0.5 : 1;
           const otherCC = bossCCMul(other);
@@ -5480,6 +5542,9 @@ let biomeBorderLayer = null;
 let fxRect = { w: 460, h: 460 };
 let fxDamageBudget = 0;
 let fxSparkBudget = 0;
+let fxSecondStart = 0;
+let fxSecondCount = 0;
+let terrainVisualRaf = 0;
 
 // fitBoard 제거됨 — CSS aspect-ratio가 처리
 function updateFxRect() {
@@ -5487,6 +5552,29 @@ function updateFxRect() {
     const r = fxLayer.getBoundingClientRect();
     fxRect = { w: r.width, h: r.height };
   }
+}
+function isMobilePerfMode() {
+  return window.matchMedia?.("(pointer: coarse), (max-width: 760px)")?.matches || false;
+}
+function canSpawnFx(kind = "normal", important = false) {
+  if (!fxLayer) return false;
+  const now = performance.now();
+  if (now - fxSecondStart > 1000) {
+    fxSecondStart = now;
+    fxSecondCount = 0;
+  }
+  const limit = isMobilePerfMode() ? 34 : 64;
+  if (!important && fxSecondCount >= limit) return false;
+  fxSecondCount++;
+  return true;
+}
+function scheduleTerrainVisualRefresh() {
+  if (terrainVisualRaf) return;
+  terrainVisualRaf = requestAnimationFrame(() => {
+    terrainVisualRaf = 0;
+    ensureNetworks();
+    renderNetworkDots();
+  });
 }
 
 // Hover preview
@@ -5809,6 +5897,13 @@ function renderBoard() {
     for (let x = 0; x < GRID; x++)
       if (!isPath(x, y)) renderTile(x, y);
 }
+function renderTilesAround(x, y, radius = 1) {
+  for (let yy = Math.max(0, y - radius); yy <= Math.min(GRID - 1, y + radius); yy++) {
+    for (let xx = Math.max(0, x - radius); xx <= Math.min(GRID - 1, x + radius); xx++) {
+      if (!isPath(xx, yy)) renderTile(xx, yy);
+    }
+  }
+}
 
 function renderHand() {
   hand.innerHTML = "";
@@ -6070,7 +6165,7 @@ function renderMonsters() {
 }
 
 function spawnAttackLine(u, targetPos) {
-  if (!fxLayer) return;
+  if (!canSpawnFx("attack", u.piece === "king" || u.piece === "queen")) return;
   const w = fxRect.w, h = fxRect.h;
   const x1 = ((u.tileX + 0.5) / GRID) * w;
   const y1 = ((u.tileY + 0.5) / GRID) * h;
@@ -6121,7 +6216,7 @@ function spawnAttackLine(u, targetPos) {
 }
 function spawnKingBladeStorm(u) {
   try {
-  if (!fxLayer) return;
+  if (!canSpawnFx("king", true)) return;
   const w = fxRect.w, h = fxRect.h;
   const cellW = w / GRID, cellH = h / GRID;
   const cx = ((u.tileX + 0.5) / GRID) * w;
@@ -6144,7 +6239,7 @@ function spawnKingBladeStorm(u) {
   } catch (err) { console.warn("spawnKingBladeStorm 오류:", err); }
 }
 function spawnRookGhost(u, axis, dir) {
-  if (!fxLayer) return;
+  if (!canSpawnFx("rook", false)) return;
   const w = fxRect.w, h = fxRect.h;
   const cellW = w / GRID, cellH = h / GRID;
   const startX = ((u.tileX + 0.5) / GRID) * w;
@@ -6167,7 +6262,7 @@ function spawnRookGhost(u, axis, dir) {
   setTimeout(() => ghost.remove(), 380);
 }
 function spawnBishopArc(fromP, toP, chainIdx) {
-  if (!fxLayer) return;
+  if (!canSpawnFx("bishop", chainIdx === 0)) return;
   const w = fxRect.w, h = fxRect.h;
   const x1 = (fromP.x / GRID) * w;
   const y1 = (fromP.y / GRID) * h;
@@ -6206,7 +6301,7 @@ function spawnBishopArc(fromP, toP, chainIdx) {
   }
 }
 function spawnHitSpark(pos, big) {
-  if (!fxLayer || fxSparkBudget > 25) return;
+  if (!canSpawnFx("spark", big) || fxSparkBudget > (isMobilePerfMode() ? 14 : 25)) return;
   fxSparkBudget++;
   const el = document.createElement("div");
   el.className = "hit-spark" + (big ? " big" : "");
@@ -6215,8 +6310,8 @@ function spawnHitSpark(pos, big) {
   setTimeout(() => { el.remove(); fxSparkBudget--; }, 320);
 }
 function spawnDamageText(pos, dmg, crit) {
-  if (!fxLayer) return;
-  if (!crit && fxDamageBudget > 16) return;
+  if (!canSpawnFx("damage", crit)) return;
+  if (!crit && fxDamageBudget > (isMobilePerfMode() ? 8 : 16)) return;
   fxDamageBudget++;
   const el = document.createElement("div");
   el.className = "dmg-text" + (crit ? " crit" : "");
@@ -6226,7 +6321,7 @@ function spawnDamageText(pos, dmg, crit) {
   setTimeout(() => { el.remove(); fxDamageBudget--; }, 720);
 }
 function spawnCoinText(pos, coin) {
-  if (!fxLayer || fxDamageBudget > 22) return;
+  if (!canSpawnFx("coin", true) || fxDamageBudget > (isMobilePerfMode() ? 12 : 22)) return;
   fxDamageBudget++;
   const el = document.createElement("div");
   el.className = "dmg-text coin";
@@ -7390,10 +7485,22 @@ function init() {
 
   // Auto-pause when tab becomes hidden (mobile browsers, alt-tab on PC)
   document.addEventListener("visibilitychange", () => {
+    if (document.hidden && saveGameTimer) {
+      clearTimeout(saveGameTimer);
+      saveGameTimer = null;
+      saveGameNow();
+    }
     if (document.hidden && state.inBattle && !state.paused) {
       state.paused = true;
       refreshButtons();
       toast("자동 일시정지 (탭 숨김)");
+    }
+  });
+  window.addEventListener("beforeunload", () => {
+    if (saveGameTimer) {
+      clearTimeout(saveGameTimer);
+      saveGameTimer = null;
+      saveGameNow();
     }
   });
 
