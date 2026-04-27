@@ -2433,7 +2433,10 @@ body::before {
 .card.selected {
   transform: translateY(-2px);
   border-color: var(--ui-amber);
-  box-shadow: 0 0 0 2px rgba(255,209,92,0.95), 0 0 18px rgba(255,209,92,0.32);
+  box-shadow:
+    inset 0 0 0 2px rgba(255,209,92,0.98),
+    inset 0 0 12px rgba(255,209,92,0.22),
+    0 3px 8px -2px rgba(0,0,0,0.5);
 }
 .card .card-stack-count {
   top: 3px;
@@ -2676,6 +2679,13 @@ body {
   background: linear-gradient(160deg, #2a2358 0%, #1a1340 60%, #100828 100%);
   border-color: rgba(255,255,255,0.10);
   box-shadow: 0 3px 8px -2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.card.selected {
+  border-color: var(--gold);
+  box-shadow:
+    inset 0 0 0 2px rgba(255,210,74,0.98),
+    inset 0 0 14px rgba(255,210,74,0.24),
+    0 3px 8px -2px rgba(0,0,0,0.5);
 }
 
 .tutorial-bubble {
@@ -3418,6 +3428,18 @@ let state = null;
 function blankTile() {
   return { piece:null, terrains:{ sky:0, ground:0, underground:0 } };
 }
+function isInitialTerrainTile(x, y) {
+  const tile = tileAt(x, y);
+  if (!tile) return false;
+  if (tile.initialTerrain) return true;
+  try {
+    if (!state?.seed || !state?.pathSet) return false;
+    const generated = generateInitialTerrains(state.seed, state.pathSet);
+    return generated.some(t => t.x === x && t.y === y);
+  } catch (_) {
+    return false;
+  }
+}
 function newGame(seed = null, options = {}) {
   const s = seed == null ? makeSeed() : seed;
   const dailySeedKey = options?.dailySeedKey || null;
@@ -3428,6 +3450,7 @@ function newGame(seed = null, options = {}) {
   const initTer = generateInitialTerrains(s, pathSet);
   for (const t of initTer) {
     tiles[t.y * GRID + t.x].terrains[t.terrain] = t.stack;
+    tiles[t.y * GRID + t.x].initialTerrain = true;
   }
   // 초기 손패는 비워둔다. 지형은 Stage 2 튜토리얼에서 직접 구매해 배우게 한다.
   const initialHand = [];
@@ -4170,6 +4193,9 @@ function sellTile(x, y) {
   } else {
     // 2) 캐릭터가 없으면 그 타일의 지형 전부 제거
     const totalTerrain = TERRAIN_ORDER.reduce((s,k)=>s + t.terrains[k], 0);
+    if (totalTerrain > 0 && isInitialTerrainTile(x, y)) {
+      return toast("처음 깔린 기본 지형은 판매할 수 없어요", "error");
+    }
     // 지형은 환불 비율이 캐릭터의 (refundPct / 0.5) 배만큼 반영됨 — 기본 4코인/장
     const baseTerrain = totalTerrain * 4;
     refund = Math.max(1, Math.floor(baseTerrain * (refundPct / 0.5)));
