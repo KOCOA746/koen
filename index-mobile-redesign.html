@@ -570,10 +570,6 @@ body::before {
   z-index: 0;
   opacity: 0.9;
 }
-.tile.terrain-half::before {
-  clip-path: inset(0 50% 0 0 round 5px 0 0 5px);
-  opacity: 0.95;
-}
 
 /* PIECES */
 .tile .piece {
@@ -599,6 +595,10 @@ body::before {
   pointer-events: none;
   opacity: 0.96;
   transition: opacity 0.14s ease, filter 0.14s ease;
+}
+.detail-panel.is-faded {
+  opacity: 0.24;
+  filter: saturate(0.7);
 }
 .tile .chess-symbol {
   font-size: clamp(18px, 4.2vmin, 32px);
@@ -656,28 +656,6 @@ body::before {
 .terrain-pip.sky         { background: linear-gradient(90deg, var(--sky), var(--sky-deep)); }
 .terrain-pip.ground      { background: linear-gradient(90deg, var(--ground), var(--ground-deep)); }
 .terrain-pip.underground { background: linear-gradient(90deg, var(--underground), var(--underground-deep)); }
-.biome-border-layer {
-  position: absolute;
-  inset: 4px;
-  pointer-events: none;
-  z-index: 5;
-  border-radius: 12px;
-  overflow: visible;
-}
-.biome-border-svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-.biome-border-path {
-  fill: none;
-  stroke: var(--biome-color, #fff4be);
-  stroke-width: 1.35;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.9;
-  filter: drop-shadow(0 0 2px var(--biome-color-soft, rgba(255,244,190,0.45)));
-}
 
 /* network connection dots */
 .network-layer {
@@ -699,16 +677,6 @@ body::before {
 .network-dot.sky         { background: var(--sky);         color: var(--sky); }
 .network-dot.ground      { background: var(--ground);      color: var(--ground); }
 .network-dot.underground { background: var(--underground); color: var(--underground); }
-.network-dot.mixed {
-  width: 4px;
-  height: 4px;
-  background: #ffffff;
-  color: #fff4be;
-  border: 0;
-  box-shadow:
-    0 0 4px rgba(255,255,255,0.95),
-    0 0 6px rgba(242,201,76,0.42);
-}
 @keyframes dotGlow {
   0%, 100% { opacity: 0.7; }
   50%      { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
@@ -1568,11 +1536,7 @@ body::before {
   margin-top: 8px;
 }
 .reward-card {
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  grid-template-areas:
-    "ico name"
-    "ico desc";
+  display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -1588,32 +1552,14 @@ body::before {
   box-shadow: 0 0 14px rgba(255,210,74,0.3);
 }
 .reward-card .r-ico {
-  grid-area: ico;
   font-size: 26px;
+  flex: 0 0 auto;
   width: 38px;
   text-align: center;
 }
-.reward-card .r-name {
-  grid-area: name;
-  min-width: 0;
-  font-size: 13px;
-  font-weight: 900;
-  color: var(--gold-2);
-  line-height: 1.25;
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-}
-.reward-card .r-desc {
-  grid-area: desc;
-  min-width: 0;
-  font-size: 11px;
-  color: var(--ink-dim);
-  line-height: 1.35;
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-}
+.reward-card .r-name { font-size: 13px; font-weight: 900; color: var(--gold-2); }
+.reward-card .r-desc { font-size: 11px; color: var(--ink-dim); line-height: 1.35; }
+.reward-card > div:nth-child(2) { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 
 /* combine modal */
 .combine-result {
@@ -1666,28 +1612,6 @@ body::before {
 @keyframes bannerIn { from { opacity: 0; transform: translate(-50%, -20px) scale(0.85); } }
 @keyframes bannerOut { to { opacity: 0; transform: translate(-50%, -20px) scale(0.9); } }
 .banner.danger { color: var(--rose); border-color: var(--rose); text-shadow: 0 2px 10px rgba(255,110,156,0.7); box-shadow: 0 0 36px rgba(255,110,156,0.4), var(--shadow-lg); }
-.banner.boss-warning-banner {
-  width: min(82vw, 330px);
-  padding: 12px 18px;
-  font-size: 0;
-  line-height: 1.1;
-  white-space: normal;
-  text-align: center;
-}
-.boss-warning-title {
-  display: block;
-  font-size: clamp(20px, 5.2vw, 28px);
-  font-weight: 1000;
-  letter-spacing: 0;
-}
-.boss-warning-sub {
-  display: block;
-  margin-top: 5px;
-  font-size: clamp(12px, 3.2vw, 15px);
-  font-weight: 900;
-  color: rgba(255,230,245,0.92);
-  text-shadow: 0 1px 8px rgba(255,110,156,0.45);
-}
 /* 사전 이벤트 배너 — 부드럽고 흐릿한 안내 문구 */
 .pre-event-banner {
   position: fixed;
@@ -2168,17 +2092,6 @@ body::before {
   max-height: min(56vh, 520px);
   overflow-y: auto;
 }
-.detail-panel.is-collapsed {
-  right: auto;
-  width: min(72vw, 320px);
-  height: 34px;
-  max-height: 34px;
-  padding: 5px 7px;
-  overflow: hidden;
-}
-.detail-panel.detail-hidden {
-  display: none;
-}
 .detail-panel::-webkit-scrollbar { width: 3px; }
 .detail-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 2px; }
 .detail-empty {
@@ -2210,11 +2123,6 @@ body::before {
 .detail-head .detail-title {
   margin-bottom: 0;
 }
-.detail-head-actions {
-  display: flex;
-  gap: 4px;
-  flex: 0 0 auto;
-}
 .detail-more {
   flex: 0 0 auto;
   min-height: 24px;
@@ -2228,33 +2136,6 @@ body::before {
   line-height: 1;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
   pointer-events: auto;
-}
-.detail-chip {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 900;
-  pointer-events: auto;
-}
-.detail-chip .chip-main {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.detail-chip .chip-action {
-  color: var(--gold-2);
-  font-size: 10px;
-  flex: 0 0 auto;
 }
 .detail-more:active {
   transform: translateY(1px);
@@ -2455,10 +2336,7 @@ body::before {
 .card.selected {
   transform: translateY(-2px);
   border-color: var(--ui-amber);
-  box-shadow:
-    inset 0 0 0 2px rgba(255,209,92,0.98),
-    inset 0 0 12px rgba(255,209,92,0.22),
-    0 3px 8px -2px rgba(0,0,0,0.5);
+  box-shadow: 0 0 0 2px rgba(255,209,92,0.95), 0 0 18px rgba(255,209,92,0.32);
 }
 .card .card-stack-count {
   top: 3px;
@@ -2583,7 +2461,6 @@ body::before {
   .detail-panel.is-expanded { height: auto; max-height: none; overflow: visible; }
   .detail-panel.is-unit-summary { height: auto; max-height: 124px; overflow: visible; }
   .detail-panel.is-unit-full { height: auto; max-height: min(58vh, 500px); overflow-y: auto; }
-  .detail-panel.is-collapsed { width: min(76vw, 300px); height: 32px; max-height: 32px; }
   .detail-title { font-size: 11px; margin-bottom: 3px; }
   .detail-desc { font-size: 9.5px; margin-bottom: 4px; }
   .detail-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
@@ -2687,14 +2564,6 @@ body {
 .action-bar .btn.primary { background: linear-gradient(160deg, #7a6cff 0%, #4d3dc8 60%, #2f1f9c 100%); }
 .action-bar .btn.terrain { background: linear-gradient(160deg, #5cb3f4 0%, #1e6fc6 60%, #14488e 100%); }
 .action-bar .btn.success { background: linear-gradient(160deg, #2bd88a 0%, #14a85a 60%, #0c7038 100%); }
-.action-bar .btn.success.battle-state {
-  background: linear-gradient(160deg, #f0b357 0%, #b86b2f 60%, #6d341d 100%);
-  box-shadow: 0 4px 10px -3px rgba(240,150,70,0.42), inset 0 1px 0 rgba(255,255,255,0.16);
-}
-.action-bar .btn.success.paused-state {
-  background: linear-gradient(160deg, #33d98f 0%, #129c5a 62%, #096637 100%);
-  box-shadow: 0 4px 10px -3px rgba(50,220,140,0.42), inset 0 1px 0 rgba(255,255,255,0.16);
-}
 .action-bar .btn.combine {
   background: linear-gradient(160deg, #8f59b8 0%, #65328f 62%, #3f1d5f 100%);
   box-shadow: 0 4px 10px -3px rgba(140,80,190,0.38), inset 0 1px 0 rgba(255,255,255,0.14);
@@ -2709,13 +2578,6 @@ body {
   background: linear-gradient(160deg, #2a2358 0%, #1a1340 60%, #100828 100%);
   border-color: rgba(255,255,255,0.10);
   box-shadow: 0 3px 8px -2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
-}
-.card.selected {
-  border-color: var(--gold);
-  box-shadow:
-    inset 0 0 0 2px rgba(255,210,74,0.98),
-    inset 0 0 14px rgba(255,210,74,0.24),
-    0 3px 8px -2px rgba(0,0,0,0.5);
 }
 
 .tutorial-bubble {
@@ -2732,122 +2594,6 @@ body {
 }
 .tutorial-bubble .tut-actions .btn {
   min-height: 34px;
-}
-
-.stat.round {
-  min-width: 42px;
-  padding: 3px 7px 4px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 1px;
-  text-align: center;
-}
-
-.stat.round .k {
-  font-size: 7px;
-  line-height: 1;
-  color: var(--ink-mute);
-  font-weight: 900;
-  letter-spacing: 0;
-  text-transform: none;
-  text-align: center;
-}
-
-.stat.round .k::before {
-  content: none;
-}
-
-.stat.round .v {
-  margin-top: 1px;
-  font-size: 15px;
-  line-height: 1;
-  text-align: center;
-}
-
-#help-modal .modal {
-  max-width: min(92vw, 420px);
-  max-height: min(82vh, 680px);
-  overflow: auto;
-}
-
-#help-modal h3 {
-  margin: 0 0 7px;
-  padding-top: 0;
-  border-top: 0;
-  color: var(--gold-2);
-}
-
-#help-modal h3:first-of-type {
-  border-top: 0;
-  padding-top: 0;
-}
-
-#help-modal p {
-  margin: 5px 0;
-  color: rgba(238,235,255,0.78);
-  line-height: 1.52;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-}
-
-#help-modal p b {
-  color: rgba(255,235,158,0.96);
-}
-
-#help-modal .guide-card {
-  margin-top: 9px;
-  padding: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025));
-}
-
-#help-modal .guide-flow {
-  color: var(--cyan);
-  font-weight: 900;
-}
-
-#help-modal .terrain-guide-row {
-  display: grid;
-  grid-template-columns: 24px 42px minmax(0, 1fr);
-  gap: 7px;
-  align-items: center;
-  padding: 5px 0;
-  color: rgba(238,235,255,0.82);
-  font-size: 12px;
-  line-height: 1.35;
-  word-break: keep-all;
-}
-
-#help-modal .terrain-mark {
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  border: 1px solid rgba(255,255,255,0.12);
-}
-
-#help-modal .terrain-mark.sky { background: rgba(41,148,224,0.55); }
-#help-modal .terrain-mark.ground { background: rgba(92,170,42,0.55); }
-#help-modal .terrain-mark.underground { background: rgba(134,35,180,0.55); }
-
-@media (max-width: 380px) {
-  .stat.round {
-    min-width: 39px;
-    padding: 2px 5px 3px;
-  }
-
-  .stat.round .k {
-    font-size: 6.5px;
-  }
-
-  .stat.round .v {
-    font-size: 14px;
-  }
 }
 </style>
 </head>
@@ -2980,12 +2726,13 @@ body {
 <div id="app">
   <header class="topbar">
     <div class="stat-row">
-      <div class="stat round" title="현재 라운드 / 최고 기록"><span class="k">라운드</span><span class="v" id="stat-round">1</span><span id="stat-best" class="hi-best">최고 -</span></div>
+      <div class="stat round" title="현재 라운드 / 최고 기록"><span class="k">R</span><span class="v" id="stat-round">1</span><span id="stat-best" class="hi-best">최고 -</span></div>
       <div class="stat gold"><span class="k">코인</span><span class="v" id="stat-coin">11</span></div>
       <div class="stat life"><span class="k">HP</span><span class="v" id="stat-life">20</span></div>
     </div>
     <div class="ctrl-group">
       <button class="icon-btn" id="btn-speed" title="속도 (S)">1×</button>
+      <button class="icon-btn" id="btn-pause" title="일시정지 (P)">⏸</button>
       <button class="icon-btn" id="btn-help" title="도움말">?</button>
       <button class="icon-btn" id="btn-settings" title="설정">⚙</button>
       <button class="icon-btn" id="btn-new-map" title="새 지도 (N)">↻</button>
@@ -3034,42 +2781,80 @@ body {
 
 <div class="modal-backdrop hidden" id="help-modal">
   <div class="modal">
-    <h2>게임 가이드</h2>
+    <h2>도움말 · How to Play</h2>
     <p style="color:var(--ink); font-size:13px; margin-bottom:12px">
-      말을 키우고, 지형을 이어서, 몰려오는 몬스터를 녹이는 게임입니다.
+      <b>몬스터를 막는 체스 타워디펜스.</b> 카드를 뽑고 → 빈 타일에 배치하고 → 라운드 시작.
+      체스 말은 자동으로 적을 공격하고, 지형은 능력을 강화해요.
     </p>
 
-    <div class="guide-card">
-      <h3>말 성장</h3>
-      <p>같은 말을 겹치면 강해지고, 3개가 모이면 다음 말로 진화합니다.</p>
-      <p class="guide-flow">폰 → 나이트 → 룩 → 비숍 → 퀸 → 킹</p>
-      <p>킹은 최종 말입니다. 같은 칸에 3개까지 겹쳐 왕의 화력을 끌어올릴 수 있습니다.</p>
-    </div>
+    <h3>🎯 기본 흐름</h3>
+    <p>① 카드 뽑기 (캐릭터 / 지형) · ② 손패에서 카드 선택 · ③ 빈 타일을 탭해 배치 · ④ <b>R{n} 시작</b> 버튼.</p>
+    <p>같은 말을 한 타일에 <b>3개 쌓으면 진화</b>: 폰 → 나이트 → 룩 → 비숍 → 퀸 → 킹.</p>
 
-    <div class="guide-card terrain-info">
-      <h3>지형 정보</h3>
-      <div class="terrain-guide-row"><span class="terrain-mark sky">☁</span><b>하늘</b><span>공속이 오릅니다. 대신 치명타가 조금 낮아집니다.</span></div>
-      <div class="terrain-guide-row"><span class="terrain-mark ground">⛰</span><b>지상</b><span>치명타와 치명 피해를 키웁니다.</span></div>
-      <div class="terrain-guide-row"><span class="terrain-mark underground">⛧</span><b>지하</b><span>공격력이 크게 오릅니다. 대신 공속이 조금 낮아집니다.</span></div>
-      <p>같은 지형을 한 칸에 두 번 놓으면 완성됩니다. 완성 지형이 이어질수록 말이 훨씬 강해집니다.</p>
-    </div>
+    <h3>♟ 체스 말 6종</h3>
+    <p>• <b>폰</b> — 빠른 단발, 초반 도배용</p>
+    <p>• <b>나이트</b> — 약한 스턴 + 스플래시</p>
+    <p>• <b>룩</b> — 상하좌우 직선 관통 (환영 돌격)</p>
+    <p>• <b>비숍</b> — 적 → 적으로 감전 연쇄 (3타)</p>
+    <p>• <b>퀸</b> — 광역 5명 동시 (낮은 치명)</p>
+    <p>• <b>킹</b> — 회전 칼날 + 광역 + 주변 아군 오라(공격·공속·치명 강화)</p>
 
-    <div class="guide-card">
-      <h3>진화 지형</h3>
-      <p><b>천공</b> 하늘 20+ · 공속과 사거리 강화</p>
-      <p><b>가이아</b> 지상 20+ · 치명타 강화</p>
-      <p><b>하데스</b> 지하 20+ · 공격력 강화와 화상</p>
-      <p><b>성역</b> 하늘 10+ 지상 10+ · 빠르고 강한 치명 빌드</p>
-      <p><b>맨틀</b> 지상 10+ 지하 10+ · 치명 피해와 화상</p>
-      <p><b>폭풍심연</b> 하늘 10+ 지하 10+ · 공속과 공격력</p>
-      <p><b>삼위지맥</b> 세 지형 7+씩 · 전체 공격 능력 강화</p>
-    </div>
+    <h3>🌍 지형 (한 타일 = 1지형)</h3>
+    <p>• <b>지상</b> ⛰ — 치명타 ↑</p>
+    <p>• <b>하늘</b> ☁ — 공속 ↑ · 치명 <span style="color:var(--danger)">↓</span></p>
+    <p>• <b>지하</b> ⛧ — 공격력 ↑↑ · 공속 <span style="color:var(--danger)">↓</span></p>
+    <p>같은 지형이 상하좌우로 <b>이어지면 연결망</b>이 되고, 그 위 말은 <b>연결망 크기만큼</b> 효과가 강해집니다 (3칸 이어지면 ×3).</p>
+    <p>또한 같은 망의 다른 말이 공격할 때 <b>지원 피해</b>를 함께 더해줍니다 (말 등급이 높을수록 큼).</p>
 
-    <div class="guide-card">
-      <h3>전투 흐름</h3>
-      <p>보스와 이벤트는 판의 흐름을 바꿉니다. 증강을 잘 고르면 뒤 라운드가 훨씬 빨라집니다.</p>
-      <p>모바일에서는 카드 선택 후 타일을 한 번 더 눌러 배치를 확정합니다.</p>
-    </div>
+    <h3>🎰 합성</h3>
+    <p>같은 등급 카드 <b>3장 → 한 단계 상승 1장</b> 확정 (실패 없음). 가장 낮은 등급부터 자동. 킹은 재료 X. 단축키 <kbd>C</kbd>.</p>
+
+    <h3>💰 판매</h3>
+    <p>판매 버튼을 먼저 누른 뒤 손패 카드나 보드 위 말/지형을 선택하면 <b>50% 환불</b>됩니다. sellRefund 증강 시 더 많아집니다.</p>
+
+    <h3>👑 보스 — 라운드별 패턴</h3>
+    <p>R5+ <b>표준</b> · R10+ <b>텔레포트</b> (HP 50%에 길 앞으로 점프) · R15+ <b>소환</b> (8초마다 미니언) · R20+ <b>지형 붕괴</b> (등장 시 이미 깔린 지형 최대 5칸 삭제) · R25+ 랜덤.</p>
+    <p>등장 1분 후부터 스턴·넉백 효과가 점점 약해지고 <b>2분 후 완전 면역</b>. 빠르게 처치하세요.</p>
+
+    <h3>🎁 증강 (보스 처치 후)</h3>
+    <p>보스 라운드 클리어 시 보스 마릿수만큼 <b>증강 카드 3개 중 1개 선택</b>. 효과는 게임 종료까지 영구 적용. 마음에 안 들면 <b>🎲 다시 뽑기</b> (코인 소모).</p>
+
+    <h3>✨ 특별 이벤트 (R3 / R7 / R12)</h3>
+    <p>R3 <b>보물 상자</b> · R7 <b>떠돌이 상인</b> · R12 <b>차원의 균열</b> — 라운드 클리어 후 한 번 발동되며 보상/도박 선택지 등장.</p>
+
+    <h3>🌪 카오스 (R30+)</h3>
+    <p>R30 이후 5라운드마다 50/50으로 <b>랜덤 기물 1개 소실</b> 또는 <b>지형 7개 랜덤 교체</b>.</p>
+
+    <h3>💫 스턴 감쇠</h3>
+    <p>같은 몬스터에게 스턴이 누적되면 효과가 <b>0.65×씩 감소</b> → 4~5번 후엔 거의 0. 영구 락 방지.</p>
+
+    <h3>📊 정보창 보기</h3>
+    <p>배치된 말을 <b>탭</b>하면 능력치 / DPS(직전 라운드) / 지형 연결망 정보가 보입니다. <b>같은 타일 재탭 = 닫기</b>.</p>
+
+    <h3>📱 모바일 — 2탭 배치 확정</h3>
+    <p>카드 선택 후 첫 탭은 <b>미리보기</b>, 같은 타일 다시 탭하면 <b>확정</b>. 다른 타일 탭 = 미리보기 이동, Esc로 취소.</p>
+
+    <h3>🔗 시드 공유</h3>
+    <p>🌱 → 📋 복사 / 친구는 그 시드로 같은 맵 플레이. URL에 <code>?seed=ABC123</code>로도 가능.</p>
+
+    <h3>🗺 좌표</h3>
+    <p>타일 좌표는 <b>(1, 1)부터 (10, 10)</b>까지. 정보창 헤더에 표시됨.</p>
+
+    <h3>📈 메타 진행</h3>
+    <p>게임 오버 시 도달 라운드의 1/3만큼 <b>👑 왕관</b> 획득. 탑바 📈 버튼에서 통계와 영구 업그레이드 (시작 코인 / HP / 카드) 구매 가능.</p>
+
+    <h3>⌨ 단축키 (한영 무관)</h3>
+    <div class="kbd-row"><span>카드 1~9 묶음 선택</span><kbd>1 … 9</kbd></div>
+    <div class="kbd-row"><span>캐릭터 카드 뽑기</span><kbd>D / ㅇ</kbd></div>
+    <div class="kbd-row"><span>지형 카드 뽑기</span><kbd>T / ㅅ</kbd></div>
+    <div class="kbd-row"><span>합성</span><kbd>C / ㅊ</kbd></div>
+    <div class="kbd-row"><span>라운드 시작 / 일시정지</span><kbd>Space</kbd></div>
+    <div class="kbd-row"><span>속도 1× → 2× → 3×</span><kbd>S / ㄴ</kbd></div>
+    <div class="kbd-row"><span>일시정지</span><kbd>P / ㅔ</kbd></div>
+    <div class="kbd-row"><span>자동 다음 라운드</span><kbd>A / ㅁ</kbd></div>
+    <div class="kbd-row"><span>음악 ON/OFF</span><kbd>M / ㅡ</kbd></div>
+    <div class="kbd-row"><span>새 지도</span><kbd>N / ㅜ</kbd></div>
+    <div class="kbd-row"><span>도움말 / 닫기</span><kbd>? / Esc</kbd></div>
 
     <button class="btn ghost" id="btn-replay-tut" style="width:100%; margin-top:12px">🎓 튜토리얼 다시보기</button>
     <button class="btn primary modal-close-btn" id="modal-close-btn" style="margin-top:6px">닫기</button>
@@ -3111,10 +2896,8 @@ body {
 
     <div style="display:flex; gap:6px;">
       <button class="btn ghost" id="btn-random-seed" style="flex:1">🎲 랜덤</button>
-      <button class="btn ghost" id="btn-daily-seed" style="flex:1">☀ 일일</button>
       <button class="btn primary" id="btn-start-with-seed" style="flex:2">▶ 이 시드로 시작</button>
     </div>
-    <div id="daily-seed-hint" style="margin-top:7px; font-size:10.5px; color:var(--ink-mute); text-align:center;"></div>
     <button class="btn ghost" id="seed-modal-close" style="width:100%; margin-top:8px; font-size:11px;">취소</button>
   </div>
 </div>
@@ -3164,10 +2947,6 @@ body {
 const GRID = 10;
 const TOTAL_TILES = GRID * GRID;
 const SAVE_KEY = "chess-defense-v6";
-const DAILY_SEED_PREFIX = "chess-defense-daily-v1";
-const DAILY_RANK_LOCAL_PREFIX = "chess-defense-daily-rank-";
-const PLAYER_ID_KEY = "chess-defense-player-id";
-const LEADERBOARD_ENDPOINT = window.CHESS_DEFENSE_LEADERBOARD_ENDPOINT || "";
 
 const INITIAL_COIN = 11;
 const INITIAL_LIFE = 20;
@@ -3185,20 +2964,20 @@ const PIECE_NEXT  = { pawn:"knight", knight:"rook", rook:"bishop", bishop:"queen
 
 // Tier-based support contribution (the higher the piece, the more it boosts allies)
 const PIECE_SUPPORT_FACTOR = {
-  pawn: 0.06, knight: 0.12, rook: 0.18, bishop: 0.27, queen: 0.40, king: 0.60
+  pawn: 0.05, knight: 0.10, rook: 0.15, bishop: 0.22, queen: 0.32, king: 0.50
 };
 
 const PIECE_STATS = {
-  pawn:   { atk: 15,  aps: 1.45, range: 2.4, type: "single",   desc: "근거리 속사",     critBase: 0.05 },
-  knight: { atk: 42,  aps: 1.15, range: 2.9, type: "jump",     desc: "점프 + 스플래시 기절", critBase: 0.07 },
+  pawn:   { atk: 14,  aps: 1.40, range: 2.4, type: "single",   desc: "근거리 속사",     critBase: 0.05 },
+  knight: { atk: 38,  aps: 1.10, range: 2.8, type: "jump",     desc: "점프 + 스플래시 기절", critBase: 0.07 },
   // 룩 — 상하좌우 관통, 살짝 너프 (비숍보다 낮음)
-  rook:   { atk: 64,  aps: 0.75, range: 4.3, type: "line",     desc: "상하좌우 관통 레이저", critBase: 0.08 },
+  rook:   { atk: 56,  aps: 0.70, range: 4.2, type: "line",     desc: "상하좌우 관통 레이저", critBase: 0.08 },
   // 비숍 — 연쇄 3회 + 공격력/공속 상향 (진화 순서대로 실제로 더 강함)
-  bishop: { atk: 68,  aps: 1.05, range: 4.1, type: "chain",    desc: "연쇄 감전 (3회)",  critBase: 0.06 },
+  bishop: { atk: 58,  aps: 1.00, range: 4.0, type: "chain",    desc: "연쇄 감전 (3회)",  critBase: 0.06 },
   // 퀸 — 파바바박 초고속 광역 (aps 대폭 상향, 데미지 하향으로 밸런스)
-  queen:  { atk: 52,  aps: 1.55, range: 5.6, type: "multi",    desc: "광역 파괴 (최대 5명)", critBase: 0.04 },
+  queen:  { atk: 42,  aps: 1.45, range: 5.5, type: "multi",    desc: "광역 파괴 (최대 5명)", critBase: 0.03 },
   // 킹 — 중간 사거리 + 빠른 공속 + 강력한 광역, 광범위 오라, "왕의 명령" 짧은 스턴
-  king:   { atk: 220, aps: 0.85, range: 3.2, type: "aoe_buff", desc: "광역 + 강한 오라 + 왕의 명령(스턴)", critBase: 0.10 }
+  king:   { atk: 200, aps: 0.80, range: 3.0, type: "aoe_buff", desc: "광역 + 강한 오라 + 왕의 명령(스턴)", critBase: 0.10 }
 };
 
 // 정보 패널에서 보여줄 상세 능력 설명
@@ -3218,44 +2997,10 @@ const TERRAIN_ORDER = ["sky", "ground", "underground"];
 const TERRAIN_NAMES = { sky:"하늘", ground:"지상", underground:"지하" };
 const TERRAIN_ICON  = { sky:"☁", ground:"⛰", underground:"⛧" };
 const TERRAIN_DESC  = {
-  sky:         "공속↑ 치명↓ · 2장 완성",
-  ground:      "치명타↑ · 2장 완성",
-  underground: "공격력↑ 공속↓ · 2장 완성"
+  sky:         "공속↑ 치명↓",
+  ground:      "치명타 ↑",
+  underground: "공속↓ 공격력↑"
 };
-const TERRAIN_FULL_STACK = 2;
-const TERRAIN_EFFECT = {
-  sky:         { aps: 0.115, critDown: 0.012 },
-  ground:      { crit: 0.08, critMul: 0.04 },
-  underground: { atk: 0.22, apsDown: 0.04 },
-};
-const TERRAIN_SET_NAMES = {
-  sky30: "천공",
-  ground30: "가이아",
-  underground30: "하데스",
-  skyGround15: "성역",
-  groundUnderground15: "맨틀",
-  skyUnderground15: "폭풍심연",
-  tri10: "삼위지맥",
-};
-const TERRAIN_SET_INFO = {
-  sky30: "치명 감소 삭제 / 공속 강화 / 사거리 강화",
-  ground30: "치명타 강화 / 치명 피해 강화",
-  underground30: "지하 공속 감소 삭제 / 공격력 강화 / 화상 부여",
-  skyGround15: "하늘 치명 감소 삭제 / 공속 강화 / 치명 피해 강화",
-  groundUnderground15: "지하 공속 감소 삭제 / 치명 피해 강화 / 화상 부여",
-  skyUnderground15: "하늘 치명 감소 삭제 / 공속 강화 / 공격력 강화",
-  tri10: "공속 강화 / 공격력 강화 / 치명타 강화 / 치명 피해 강화",
-};
-const TERRAIN_SET_COLORS = {
-  sky30: "#8fd8ff",
-  ground30: "#baff66",
-  underground30: "#d49aff",
-  skyGround15: "#fff0a8",
-  groundUnderground15: "#ff9f4f",
-  skyUnderground15: "#f5fbff",
-  tri10: "#ffd24a",
-};
-const TERRAIN_CONNECT_DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
 
 // 지형 풀에서 균등
 const TERRAIN_WEIGHTS = { sky: 1, ground: 1, underground: 1 };
@@ -3270,11 +3015,10 @@ const MONSTER_TYPES = {
 
 function networkDecay(d) {
   if (d <= 2) return 1.0;
-  if (d <= 4) return 0.84;
-  if (d <= 6) return 0.68;
-  if (d <= 9) return 0.52;
-  if (d <= 12) return 0.38;
-  return 0.28;
+  if (d <= 4) return 0.78;
+  if (d <= 6) return 0.58;
+  if (d <= 9) return 0.42;
+  return 0.30;
 }
 // 제한 없음 — 몬스터 스케일링으로 균형
 
@@ -3282,11 +3026,14 @@ function networkDecay(d) {
 //  BALANCE
 // =====================================================================
 function roundHpMultiplier(r) {
-  // 후반에는 잘 키운 기물과 지형 연결망이 몬스터를 빠르게 정리하도록 성장 곡선을 완만하게 둔다.
-  if (r <= 3)  return Math.pow(1.26, r - 1);
-  if (r <= 10) return Math.pow(1.26, 2) * Math.pow(1.19, r - 3);
-  if (r <= 18) return Math.pow(1.26, 2) * Math.pow(1.19, 7) * Math.pow(1.12, r - 10);
-  return Math.pow(1.26, 2) * Math.pow(1.19, 7) * Math.pow(1.12, 8) * Math.pow(1.085, r - 18);
+  // 초반 1~3: 1.30 (운이 살짝 따라줘야)
+  // 중반 4~10: 1.22 안정
+  // 후반 11~18: 1.14 완만
+  // 극후반 19+: 1.10 양학 구간
+  if (r <= 3)  return Math.pow(1.30, r - 1);
+  if (r <= 10) return Math.pow(1.30, 2) * Math.pow(1.22, r - 3);
+  if (r <= 18) return Math.pow(1.30, 2) * Math.pow(1.22, 7) * Math.pow(1.14, r - 10);
+  return Math.pow(1.30, 2) * Math.pow(1.22, 7) * Math.pow(1.14, 8) * Math.pow(1.10, r - 18);
 }
 function roundBaseHP(r) { return 42 * roundHpMultiplier(r); }
 function coinPerKill(type, r) {
@@ -3318,19 +3065,6 @@ function mulberry32(seed) {
 function makeSeed() { return Math.floor(Math.random() * 0xFFFFFFFF); }
 // 전투 루프용 결정론적 RNG (round마다 재시드)
 function combatRand() { return state.combatRand ? state.combatRand() : Math.random(); }
-function getKstDateKey(date = new Date()) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const byType = Object.fromEntries(parts.map(p => [p.type, p.value]));
-  return `${byType.year}-${byType.month}-${byType.day}`;
-}
-function dailySeedForDate(dateKey = getKstDateKey()) {
-  return parseSeedInput(`${DAILY_SEED_PREFIX}:${dateKey}`);
-}
 function formatSeed(s) {
   return (s >>> 0).toString(16).toUpperCase().padStart(6, "0").slice(-6);
 }
@@ -3457,21 +3191,8 @@ let state = null;
 function blankTile() {
   return { piece:null, terrains:{ sky:0, ground:0, underground:0 } };
 }
-function isInitialTerrainTile(x, y) {
-  const tile = tileAt(x, y);
-  if (!tile) return false;
-  if (tile.initialTerrain) return true;
-  try {
-    if (!state?.seed || !state?.pathSet) return false;
-    const generated = generateInitialTerrains(state.seed, state.pathSet);
-    return generated.some(t => t.x === x && t.y === y);
-  } catch (_) {
-    return false;
-  }
-}
-function newGame(seed = null, options = {}) {
+function newGame(seed = null) {
   const s = seed == null ? makeSeed() : seed;
-  const dailySeedKey = options?.dailySeedKey || null;
   const path = generatePath(s);
   const pathSet = new Set(path.map(p => `${p.x},${p.y}`));
   const tiles = Array.from({ length: TOTAL_TILES }, () => blankTile());
@@ -3479,7 +3200,6 @@ function newGame(seed = null, options = {}) {
   const initTer = generateInitialTerrains(s, pathSet);
   for (const t of initTer) {
     tiles[t.y * GRID + t.x].terrains[t.terrain] = t.stack;
-    tiles[t.y * GRID + t.x].initialTerrain = true;
   }
   // 초기 손패는 비워둔다. 지형은 Stage 2 튜토리얼에서 직접 구매해 배우게 한다.
   const initialHand = [];
@@ -3493,7 +3213,7 @@ function newGame(seed = null, options = {}) {
     }
   } catch (_) {}
   state = {
-    seed: s, dailySeedKey, path, pathSet, tiles,
+    seed: s, path, pathSet, tiles,
     coin: metaStartingCoin(), life: metaStartingLife(), round: 1,
     pieceDrawCost: INITIAL_PIECE_DRAW_COST,
     terrainDrawCost: INITIAL_TERRAIN_DRAW_COST,
@@ -3520,7 +3240,7 @@ function newGame(seed = null, options = {}) {
 function saveGame() {
   try {
     const snap = {
-      seed: state.seed, dailySeedKey: state.dailySeedKey || null, path: state.path, tiles: state.tiles,
+      seed: state.seed, path: state.path, tiles: state.tiles,
       coin: state.coin, life: state.life, round: state.round,
       pieceDrawCost: state.pieceDrawCost,
       terrainDrawCost: state.terrainDrawCost,
@@ -3543,7 +3263,7 @@ function loadGame() {
     if (!raw) return false;
     const s = JSON.parse(raw);
     state = {
-      seed: s.seed, dailySeedKey: s.dailySeedKey || null, path: s.path,
+      seed: s.seed, path: s.path,
       pathSet: new Set(s.path.map(p => `${p.x},${p.y}`)),
       tiles: s.tiles,
       coin: s.coin, life: s.life, round: s.round,
@@ -3585,9 +3305,6 @@ function makeTerrainCard() {
 function makeTerrainCardSet() {
   return TERRAIN_ORDER.map(terrain => ({ kind:"terrain", terrain }));
 }
-function makeRandomTerrainCardSet(count = 3) {
-  return Array.from({ length: count }, () => makeTerrainCard());
-}
 function drawPieceCards() {
   if (state.coin < state.pieceDrawCost) return toast("코인 부족", "error");
   state.coin -= state.pieceDrawCost;
@@ -3604,12 +3321,7 @@ function drawTerrainCards() {
   if (state.coin < state.terrainDrawCost) return toast("코인 부족", "error");
   state.coin -= state.terrainDrawCost;
   state.terrainDrawCost += TERRAIN_COST_INCREMENT;
-  const isStage2TerrainTutorial =
-    tutState?.mode === "stage2" &&
-    currentTutSteps()?.[tutState.step]?.wait === "drew-terrain" &&
-    typeof localStorage !== "undefined" &&
-    localStorage.getItem(TUT_KEY_S2) !== "1";
-  state.hand.push(...(isStage2TerrainTutorial ? makeTerrainCardSet() : makeRandomTerrainCardSet()));
+  state.hand.push(...makeTerrainCardSet());
   sfx("draw");
   saveGame();
   renderHand();
@@ -4111,8 +3823,8 @@ function canPlaceCard(card, x, y) {
   if (isPath(x, y)) return false;
   const t = tileAt(x, y);
   if (card.kind === "terrain") {
-    const existing = TERRAIN_ORDER.find(k => t.terrains[k] > 0);
-    if (existing === card.terrain) return t.terrains[card.terrain] < TERRAIN_FULL_STACK;
+    // 같은 지형이 이미 있으면 배치 불가 (중첩 제거됨)
+    if (t.terrains[card.terrain] > 0) return false;
     return true;
   }
   if (card.kind === "piece") {
@@ -4122,23 +3834,11 @@ function canPlaceCard(card, x, y) {
   }
   return false;
 }
-function placeFailMessage(card, x, y) {
-  const t = tileAt(x, y);
-  if (card?.kind === "piece" && t?.piece?.type === "king" && card.piece === "king" && t.piece.count >= 3) {
-    return "킹은 한 타일에 최대 3개까지 겹칠 수 있어요";
-  }
-  if (card?.kind === "piece" && t?.piece && t.piece.type !== card.piece) {
-    return "다른 말 위에는 겹칠 수 없어요";
-  }
-  if (isPath(x, y)) return "몬스터 길에는 배치할 수 없어요";
-  return "배치 불가";
-}
 function placeSelectedCardAt(x, y) {
   if (!state.selectedCardKey) return;
   const card = selectedCard();
   if (!card) { state.selectedCardKey = null; renderHand(); refreshButtons(); return; }
-  if (!canPlaceCard(card, x, y)) return toast(placeFailMessage(card, x, y), "error");
-  const biomeTagsBefore = card.kind === "terrain" ? activeBiomeTags() : null;
+  if (!canPlaceCard(card, x, y)) return toast("배치 불가", "error");
   const tile = tileAt(x, y);
   const stackedPiece = card.kind === "piece" && tile.piece && tile.piece.type === card.piece;
   let terrainChanged = false;
@@ -4146,15 +3846,15 @@ function placeSelectedCardAt(x, y) {
   if (card.kind === "terrain") {
     const existing = TERRAIN_ORDER.find(t => tile.terrains[t] > 0);
     if (existing === card.terrain) {
-      tile.terrains[card.terrain] = Math.min(TERRAIN_FULL_STACK, tile.terrains[card.terrain] + 1);
-      toast(tile.terrains[card.terrain] >= TERRAIN_FULL_STACK ? `${TERRAIN_NAMES[card.terrain]} 완성` : `${TERRAIN_NAMES[card.terrain]} 반쪽`);
-    } else {
-      if (existing && existing !== card.terrain) {
-        tile.terrains = { sky:0, ground:0, underground:0 };
-        toast(`${TERRAIN_NAMES[card.terrain]} 반쪽으로 교체`);
-      }
-      tile.terrains[card.terrain] = 1;
+      // 같은 지형이 이미 있음 — 중첩 불가, 카드만 소비하지 않고 거부
+      toast("같은 지형 — 다른 타일에 깔아 연결망을 늘리세요", "error");
+      return;
     }
+    if (existing && existing !== card.terrain) {
+      tile.terrains = { sky:0, ground:0, underground:0 };
+      toast(`${TERRAIN_NAMES[card.terrain]}로 교체`);
+    }
+    tile.terrains[card.terrain] = 1;
     terrainChanged = true;
     sfx("place");
   } else {
@@ -4185,13 +3885,8 @@ function placeSelectedCardAt(x, y) {
   if (terrainChanged) markNetworksDirty();
   saveGame();
   hideRangePreview();
-  if (terrainChanged) ensureNetworks();
   renderTile(x, y);
-  if (terrainChanged) {
-    renderBoard();
-    renderNetworkDots();
-    announceNewBiomeTags(biomeTagsBefore);
-  }
+  if (terrainChanged) renderNetworkDots();
   renderHand();
   renderStats();
   renderPlacementHints();
@@ -4222,9 +3917,6 @@ function sellTile(x, y) {
   } else {
     // 2) 캐릭터가 없으면 그 타일의 지형 전부 제거
     const totalTerrain = TERRAIN_ORDER.reduce((s,k)=>s + t.terrains[k], 0);
-    if (totalTerrain > 0 && isInitialTerrainTile(x, y)) {
-      return toast("처음 깔린 기본 지형은 판매할 수 없어요", "error");
-    }
     // 지형은 환불 비율이 캐릭터의 (refundPct / 0.5) 배만큼 반영됨 — 기본 4코인/장
     const baseTerrain = totalTerrain * 4;
     refund = Math.max(1, Math.floor(baseTerrain * (refundPct / 0.5)));
@@ -4256,7 +3948,7 @@ function computeNetworks() {
       for (let x = 0; x < GRID; x++) {
         if (isPath(x, y)) continue;
         const tile = tileAt(x, y);
-        if (tile.terrains[t] < TERRAIN_FULL_STACK) continue;
+        if (tile.terrains[t] === 0) continue;
         const key = `${x},${y}`;
         if (map.has(key)) continue;
         const id = groups[t].length;
@@ -4266,12 +3958,12 @@ function computeNetworks() {
         while (queue.length) {
           const [cx, cy] = queue.shift();
           comp.push([cx, cy]);
-          for (const [dx, dy] of TERRAIN_CONNECT_DIRS) {
+          for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
             const nx = cx + dx, ny = cy + dy;
             if (nx < 0 || ny < 0 || nx >= GRID || ny >= GRID) continue;
             if (isPath(nx, ny)) continue;
             const nt = tileAt(nx, ny);
-            if (nt.terrains[t] < TERRAIN_FULL_STACK) continue;
+            if (nt.terrains[t] === 0) continue;
             const nk = `${nx},${ny}`;
             if (map.has(nk)) continue;
             map.set(nk, id);
@@ -4282,54 +3974,8 @@ function computeNetworks() {
       }
     }
   }
-  const biomeMap = new Map();
-  const biomeGroups = [];
-  const fullTerrainAt = (x, y) => {
-    const tile = tileAt(x, y);
-    return TERRAIN_ORDER.find(t => tile.terrains[t] >= TERRAIN_FULL_STACK) || null;
-  };
-  for (let y = 0; y < GRID; y++) {
-    for (let x = 0; x < GRID; x++) {
-      if (isPath(x, y)) continue;
-      const startTerrain = fullTerrainAt(x, y);
-      if (!startTerrain) continue;
-      const startKey = `${x},${y}`;
-      if (biomeMap.has(startKey)) continue;
-      const id = biomeGroups.length;
-      const queue = [[x, y]];
-      const comp = [];
-      const counts = { sky:0, ground:0, underground:0 };
-      biomeMap.set(startKey, id);
-      while (queue.length) {
-        const [cx, cy] = queue.shift();
-        const terrain = fullTerrainAt(cx, cy);
-        comp.push([cx, cy]);
-        if (terrain) counts[terrain]++;
-        for (const [dx, dy] of TERRAIN_CONNECT_DIRS) {
-          const nx = cx + dx, ny = cy + dy;
-          if (nx < 0 || ny < 0 || nx >= GRID || ny >= GRID) continue;
-          if (isPath(nx, ny) || !fullTerrainAt(nx, ny)) continue;
-          const nk = `${nx},${ny}`;
-          if (biomeMap.has(nk)) continue;
-          biomeMap.set(nk, id);
-          queue.push([nx, ny]);
-        }
-      }
-      const tags = [];
-      if (counts.sky >= 20) tags.push("sky30");
-      if (counts.ground >= 20) tags.push("ground30");
-      if (counts.underground >= 20) tags.push("underground30");
-      if (counts.sky >= 10 && counts.ground >= 10) tags.push("skyGround15");
-      if (counts.ground >= 10 && counts.underground >= 10) tags.push("groundUnderground15");
-      if (counts.sky >= 10 && counts.underground >= 10) tags.push("skyUnderground15");
-      if (counts.sky >= 7 && counts.ground >= 7 && counts.underground >= 7) tags.push("tri10");
-      biomeGroups.push({ id, tiles: comp, counts, tags });
-    }
-  }
   state._networks = result;
   state._networkGroups = groups;
-  state._biomeMap = biomeMap;
-  state._biomeGroups = biomeGroups;
   return result;
 }
 function networkDistance(terrain, ax, ay, bx, by) {
@@ -4342,12 +3988,12 @@ function networkDistance(terrain, ax, ay, bx, by) {
   let frontier = [[ax, ay, 0]];
   while (frontier.length) {
     const [cx, cy, d] = frontier.shift();
-    for (const [dx, dy] of TERRAIN_CONNECT_DIRS) {
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
       const nx = cx + dx, ny = cy + dy;
       if (nx < 0 || ny < 0 || nx >= GRID || ny >= GRID) continue;
       if (isPath(nx, ny)) continue;
       const nt = tileAt(nx, ny);
-      if (nt.terrains[terrain] < TERRAIN_FULL_STACK) continue;
+      if (nt.terrains[terrain] === 0) continue;
       const kk = k(nx, ny);
       if (visited.has(kk)) continue;
       if (nx === bx && ny === by) return d + 1;
@@ -4362,155 +4008,48 @@ function networkDistance(terrain, ax, ay, bx, by) {
 //  UNIT STATS  (new terrain effects)
 // =====================================================================
 function stackBonus(base, count) {
-  // V2: 대형 연결망은 강해지되 선형 폭주는 막음
+  // 무제한 선형 스케일: 연결망이 클수록 효과 비례 증가 (캡 없음)
   if (count <= 0) return 0;
-  return base * Math.pow(count, 0.62);
-}
-function terrainStackPower(tile, terrain) {
-  return Math.max(0, Math.min(TERRAIN_FULL_STACK, tile.terrains[terrain] || 0)) / TERRAIN_FULL_STACK;
-}
-function fullNetworkSizeAt(x, y, terrain) {
-  const tile = tileAt(x, y);
-  if ((tile.terrains[terrain] || 0) < TERRAIN_FULL_STACK) return 0;
-  const map = state._networks?.[terrain];
-  if (!map) return 0;
-  const id = map.get(`${x},${y}`);
-  if (id == null) return 0;
-  const grp = state._networkGroups?.[terrain]?.[id];
-  return grp ? grp.length : 0;
-}
-function biomeAt(x, y) {
-  const id = state._biomeMap?.get(`${x},${y}`);
-  return id == null ? null : state._biomeGroups?.[id] || null;
-}
-function fullTerrainAt(x, y) {
-  if (x < 0 || y < 0 || x >= GRID || y >= GRID || isPath(x, y)) return null;
-  const tile = tileAt(x, y);
-  return TERRAIN_ORDER.find(t => tile.terrains[t] >= TERRAIN_FULL_STACK) || null;
-}
-function terrainTagsAt(x, y) {
-  const terrain = fullTerrainAt(x, y);
-  if (!terrain) return [];
-  const biome = biomeAt(x, y);
-  const counts = biome?.counts;
-  if (!counts) return [];
-  const tags = [];
-  if (terrain === "sky" && counts.sky >= 20) tags.push("sky30");
-  if (terrain === "ground" && counts.ground >= 20) tags.push("ground30");
-  if (terrain === "underground" && counts.underground >= 20) tags.push("underground30");
-  if ((terrain === "sky" || terrain === "ground") && counts.sky >= 10 && counts.ground >= 10) tags.push("skyGround15");
-  if ((terrain === "ground" || terrain === "underground") && counts.ground >= 10 && counts.underground >= 10) tags.push("groundUnderground15");
-  if ((terrain === "sky" || terrain === "underground") && counts.sky >= 10 && counts.underground >= 10) tags.push("skyUnderground15");
-  if (counts.sky >= 7 && counts.ground >= 7 && counts.underground >= 7) tags.push("tri10");
-  return tags;
-}
-function displayBiomeTagAt(x, y) {
-  const tags = terrainTagsAt(x, y);
-  const priority = [
-    "tri10",
-    "skyGround15",
-    "groundUnderground15",
-    "skyUnderground15",
-    "sky30",
-    "ground30",
-    "underground30",
-  ];
-  return priority.find(tag => tags.includes(tag)) || null;
-}
-function activeBiomeTags() {
-  ensureNetworks();
-  const tags = new Set();
-  for (let y = 0; y < GRID; y++)
-    for (let x = 0; x < GRID; x++)
-      for (const tag of terrainTagsAt(x, y)) tags.add(`${tag}:${x},${y}`);
-  return tags;
-}
-function announceNewBiomeTags(beforeTags) {
-  if (!beforeTags) return;
-  const afterTags = activeBiomeTags();
-  const added = [...afterTags].filter(t => !beforeTags.has(t));
-  if (!added.length) return;
-  const names = [...new Set(added.map(t => t.split(":")[0]))].map(t => TERRAIN_SET_NAMES[t] || t).join(" · ");
-  toast(`✨ 지형 진화: ${names}`, "success", 3800);
+  return base * count;
 }
 function getUnitStats(x, y) {
   const tile = tileAt(x, y);
   if (!tile.piece) return null;
   const base = PIECE_STATS[tile.piece.type];
-  const countBonus = 1 + (tile.piece.count - 1) * 0.50;
+  const countBonus = 1 + (tile.piece.count - 1) * 0.40;
   let atk = base.atk * countBonus;
   let aps = base.aps;
   let range = base.range;
   let crit = (base.critBase != null) ? base.critBase : 0.05;
-  let critMul = 2.0;
-  let burnChance = 0;
-  let burnPower = 0;
 
   const terrainBoostAll = 1 + (state.mods?.terrainBoost || 0);
   const skyBoost    = terrainBoostAll * (1 + (state.mods?.skyBoost    || 0));
   const groundBoost = terrainBoostAll * (1 + (state.mods?.groundBoost || 0));
   const ugBoost     = terrainBoostAll * (1 + (state.mods?.ugBoost     || 0));
-  // V2 지형: 1장 반쪽 = 효과 50%, 2장 완성 = 연결망 참여
+  // 지형 효과 = 자기 타일이 속한 연결망의 크기 (스택 수 대신 네트워크 크기)
   ensureNetworks();
   const ksz = (terrain) => {
-    const power = terrainStackPower(tile, terrain);
-    if (power <= 0) return 0;
-    const fullSize = fullNetworkSizeAt(x, y, terrain);
-    return fullSize > 0 ? fullSize : power;
+    if (!tile.terrains[terrain]) return 0;
+    const map = state._networks[terrain];
+    if (!map) return 0;
+    const id = map.get(`${x},${y}`);
+    if (id == null) return 0;
+    const grp = state._networkGroups[terrain][id];
+    return grp ? grp.length : 0;
   };
   const sky = ksz("sky");
   if (sky > 0) {
-    aps *= 1 + stackBonus(TERRAIN_EFFECT.sky.aps, sky) * skyBoost;
-    crit -= stackBonus(TERRAIN_EFFECT.sky.critDown, sky) * skyBoost;
+    aps *= 1 + stackBonus(0.18, sky) * skyBoost;
+    crit -= stackBonus(0.025, sky) * skyBoost;  // 너프: 큰 하늘망에서도 치명 완전 봉쇄 안 되게
   }
   const gnd = ksz("ground");
   if (gnd > 0) {
-    crit += stackBonus(TERRAIN_EFFECT.ground.crit, gnd) * groundBoost;
-    critMul += stackBonus(TERRAIN_EFFECT.ground.critMul, gnd) * groundBoost;
+    crit += stackBonus(0.10, gnd) * groundBoost;
   }
   const ug = ksz("underground");
   if (ug > 0) {
-    aps *= 1 - stackBonus(TERRAIN_EFFECT.underground.apsDown, ug) * ugBoost;
-    atk *= 1 + stackBonus(TERRAIN_EFFECT.underground.atk, ug) * ugBoost;
-  }
-
-  const tags = new Set(terrainTagsAt(x, y));
-  if (tags.has("sky30")) {
-    crit += stackBonus(TERRAIN_EFFECT.sky.critDown, sky) * skyBoost;
-    aps *= 1.14;
-    range *= 1.08;
-  }
-  if (tags.has("ground30")) {
-    critMul += 0.45;
-    crit += 0.10;
-  }
-  if (tags.has("underground30")) {
-    aps *= 1 / Math.max(0.25, 1 - stackBonus(TERRAIN_EFFECT.underground.apsDown, ug) * ugBoost);
-    atk *= 1.25;
-    burnChance += 0.22;
-    burnPower += 0.24;
-  }
-  if (tags.has("skyGround15")) {
-    crit += stackBonus(TERRAIN_EFFECT.sky.critDown, sky) * skyBoost;
-    aps *= 1.10;
-    critMul += 0.25;
-  }
-  if (tags.has("groundUnderground15")) {
-    aps *= 1 / Math.max(0.35, 1 - stackBonus(TERRAIN_EFFECT.underground.apsDown, ug) * ugBoost);
-    critMul += 0.28;
-    burnChance += 0.16;
-    burnPower += 0.20;
-  }
-  if (tags.has("skyUnderground15")) {
-    crit += stackBonus(TERRAIN_EFFECT.sky.critDown, sky) * skyBoost;
-    aps *= 1.08;
-    atk *= 1.16;
-  }
-  if (tags.has("tri10")) {
-    aps *= 1.10;
-    atk *= 1.12;
-    crit += 0.07;
-    critMul += 0.22;
+    aps *= 1 - stackBonus(0.08, ug) * ugBoost;
+    atk *= 1 + stackBonus(0.30, ug) * ugBoost;
   }
 
   // 라운드 보상 전역 + 말별 수정치
@@ -4532,10 +4071,6 @@ function getUnitStats(x, y) {
     piece: tile.piece.type, count: tile.piece.count,
     atk, aps: Math.max(0.1, aps), range: Math.max(1.2, range),
     crit: Math.max(0, Math.min(0.9, crit)),
-    critMul: Math.max(1.5, Math.min(3.8, critMul)),
-    burnChance: Math.min(0.65, burnChance),
-    burnPower: Math.min(0.65, burnPower),
-    terrainTags: [...tags],
     tileX: x, tileY: y,
     attackType: base.type,
   };
@@ -4582,7 +4117,7 @@ function precomputeSupporters() {
     const usedKeys = new Set();
     let dom = null, mc = 0;
     for (const t of TERRAIN_ORDER) {
-      if (tile.terrains[t] < TERRAIN_FULL_STACK) continue;
+      if (tile.terrains[t] === 0) continue;
       if (tile.terrains[t] > mc) { mc = tile.terrains[t]; dom = t; }
       const netId = state._networks[t].get(`${u.tileX},${u.tileY}`);
       if (netId == null) continue;
@@ -4645,11 +4180,7 @@ function startRound() {
   if (state.life <= 0) return toast("게임 오버! 새 지도로 다시 시작", "error");
   cancelAutoCountdown();
   clearPendingPlace();
-  state.selectedCardKey = null;
   state._lastPlacedTile = null;
-  hideRangePreview();
-  hideInfo();
-  hand.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
   ensureNetworks();
   updateFxRect();
   fxDamageBudget = 0; fxSparkBudget = 0;
@@ -4847,7 +4378,6 @@ function endRound(success) {
       const earned = Math.floor(state.round / 3);
       meta.crowns += earned;
       meta.gamesPlayed += 1;
-      submitDailyLeaderboard(Math.max(0, state.round - 1));
       if (earned > 0) setTimeout(() => toast(`👑 왕관 +${earned} 획득`, "success"), 600);
     }
     saveMeta(meta);
@@ -4945,7 +4475,7 @@ function tickLoop(now) {
   const dt = rawDt * state.speed;
   simulate(dt);
   renderMonsters();
-  if (state._infoTile && !state._detailHiddenByUser && now - (state._detailRefreshAt || 0) > 250) {
+  if (state._infoTile && now - (state._detailRefreshAt || 0) > 250) {
     state._detailRefreshAt = now;
     const t = tileAt(state._infoTile.x, state._infoTile.y);
     if (t?.piece) showTileInfo(state._infoTile.x, state._infoTile.y, true);
@@ -4976,29 +4506,11 @@ function simulate(dt) {
   const now = performance.now();
   for (const m of state.monsters) {
     if (m.dead || m.reachedEnd) continue;
-    if ((m.burnUntil || 0) > now && (m.burnDps || 0) > 0) {
-      const burn = m.burnDps * dt;
-      m.hp -= burn;
-      if (m.burnOwner?.track) m.burnOwner.damageDone += burn;
-      if (m.hp <= 0 && !m.dead) {
-        m.dead = true;
-        if (m.burnOwner?.track) m.burnOwner.killCount = (m.burnOwner.killCount || 0) + 1;
-        const c = coinPerKill(m.type, state.round);
-        state.coin += c;
-        state.roundKills = (state.roundKills || 0) + 1;
-        state.roundCoinGain = (state.roundCoinGain || 0) + c;
-        renderCombatRail();
-        spawnCoinText(monsterPos(m), c);
-        spawnHitSpark(monsterPos(m), m.type === "boss");
-        renderStats();
-        continue;
-      }
-    }
     if (m.type === "boss" && (m.warningUntil || 0) > now) {
       if (!m.warningShown) {
         m.warningShown = true;
         state._bossBannerShown = true;
-        showBossWarningBanner(bossPatternName(m.bossPattern));
+        showBanner(`⚠ 보스 등장 예고 - 특성: ${bossPatternName(m.bossPattern)}`, true);
         sfx("boss");
       }
       continue;
@@ -5128,14 +4640,14 @@ function performAttack(u, targets) {
   // 치명타 2배 (기존 1.8 → 2.0)
   const critRand = combatRand();
   const isCrit = critRand < u.crit;
-  const baseDmg = u.atk * (isCrit ? (u.critMul || 2.0) : 1);
+  const baseDmg = u.atk * (isCrit ? 2.0 : 1);
 
   // Precomputed supporter sum
   let supportDmg = 0;
   const supHits = u.supporters || [];
   for (let i = 0; i < supHits.length; i++) {
     const s = supHits[i];
-    supportDmg += s.v.atk * s.factor * s.decay * (1 + (state.mods?.supportBoost || 0));
+    supportDmg += s.v.atk * s.factor * s.decay;
   }
 
   let hitTargets = [];
@@ -5258,12 +4770,6 @@ function performAttack(u, targets) {
     }
 
     t.m.hp -= dmg;
-    if ((u.burnChance || 0) > 0 && combatRand() < u.burnChance) {
-      const dps = u.atk * (u.burnPower || 0.12);
-      t.m.burnDps = Math.max(t.m.burnDps || 0, dps);
-      t.m.burnUntil = Math.max(t.m.burnUntil || 0, performance.now() + 3000);
-      t.m.burnOwner = u;
-    }
     // 개별 유닛 기여도 기록 (숫자만 누적)
     if (u.track) {
       u.damageDone += dmg;
@@ -5341,7 +4847,6 @@ let tileEls = [];
 let monsterLayer = null;
 let fxLayer = null;
 let networkLayer = null;
-let biomeBorderLayer = null;
 let fxRect = { w: 460, h: 460 };
 let fxDamageBudget = 0;
 let fxSparkBudget = 0;
@@ -5444,9 +4949,6 @@ function buildBoard() {
     board.appendChild(el);
     tileEls.push(el);
   }
-  biomeBorderLayer = document.createElement("div");
-  biomeBorderLayer.className = "biome-border-layer";
-  board.appendChild(biomeBorderLayer);
   networkLayer = document.createElement("div");
   networkLayer.className = "network-layer";
   board.appendChild(networkLayer);
@@ -5458,26 +4960,41 @@ function buildBoard() {
   board.appendChild(fxLayer);
   requestAnimationFrame(() => { updateFxRect(); renderNetworkDots(); });
   board.addEventListener("mouseleave", hideRangePreview);
+  board.addEventListener("pointermove", updateDetailPanelFade);
+  board.addEventListener("pointerleave", () => $("#detail-panel")?.classList.remove("is-faded"));
+  board.addEventListener("pointerdown", updateDetailPanelFade);
+  board.addEventListener("touchstart", () => {
+    const panel = $("#detail-panel");
+    if (!panel?.classList.contains("is-expanded")) return;
+    panel.classList.add("is-faded");
+    clearTimeout(state._detailFadeTimer);
+    state._detailFadeTimer = setTimeout(() => panel.classList.remove("is-faded"), 900);
+  }, { passive: true });
   // Initial render of all tiles
   renderBoard();
+}
+
+function updateDetailPanelFade(e) {
+  const panel = $("#detail-panel");
+  if (!panel || !panel.classList.contains("is-expanded")) return;
+  const r = panel.getBoundingClientRect();
+  const margin = 44;
+  const near =
+    e.clientX >= r.left - margin &&
+    e.clientX <= r.right + margin &&
+    e.clientY >= r.top - margin &&
+    e.clientY <= r.bottom + margin;
+  panel.classList.toggle("is-faded", near);
 }
 
 function renderNetworkDots() {
   if (!networkLayer) return;
   networkLayer.replaceChildren();
   ensureNetworks();
-  renderBiomeBorders();
   const pad = 4;
   const rect = board.getBoundingClientRect();
   if (rect.width === 0) return;
   const cell = (rect.width - pad * 2) / GRID;
-  const addDot = (x, y, className) => {
-    const dot = document.createElement("div");
-    dot.className = className;
-    dot.style.left = x + "px";
-    dot.style.top  = y + "px";
-    networkLayer.appendChild(dot);
-  };
   for (const t of TERRAIN_ORDER) {
     const map = state._networks[t];
     for (const [keyA, idA] of map) {
@@ -5488,68 +5005,14 @@ function renderNetworkDots() {
         if (!map.has(keyB) || map.get(keyB) !== idA) continue;
         const cx = (ax + 0.5 + dx * 0.5) * cell;
         const cy = (ay + 0.5 + dy * 0.5) * cell;
-        addDot(cx, cy, `network-dot ${t}`);
+        const dot = document.createElement("div");
+        dot.className = `network-dot ${t}`;
+        dot.style.left = cx + "px";
+        dot.style.top  = cy + "px";
+        networkLayer.appendChild(dot);
       }
     }
   }
-  for (let y = 0; y < GRID; y++) {
-    for (let x = 0; x < GRID; x++) {
-      const terrainA = fullTerrainAt(x, y);
-      if (!terrainA) continue;
-      const biomeA = state._biomeMap?.get(`${x},${y}`);
-      for (const [dx, dy] of [[1,0],[0,1]]) {
-        const nx = x + dx, ny = y + dy;
-        const terrainB = fullTerrainAt(nx, ny);
-        if (!terrainB || terrainB === terrainA) continue;
-        if (state._biomeMap?.get(`${nx},${ny}`) !== biomeA) continue;
-        const cx = (x + 0.5 + dx * 0.5) * cell;
-        const cy = (y + 0.5 + dy * 0.5) * cell;
-        addDot(cx, cy, "network-dot mixed");
-      }
-    }
-  }
-}
-
-function renderBiomeBorders() {
-  if (!biomeBorderLayer) return;
-  biomeBorderLayer.replaceChildren();
-  ensureNetworks();
-  const pad = 4;
-  const rect = board.getBoundingClientRect();
-  if (rect.width === 0) return;
-  const cell = (rect.width - pad * 2) / GRID;
-  const ns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(ns, "svg");
-  svg.classList.add("biome-border-svg");
-  svg.setAttribute("viewBox", `0 0 ${rect.width - pad * 2} ${rect.width - pad * 2}`);
-  svg.setAttribute("preserveAspectRatio", "none");
-  const paths = new Map();
-  const tagAt = (x, y) => displayBiomeTagAt(x, y);
-  const addEdge = (tag, x1, y1, x2, y2) => {
-    if (!paths.has(tag)) paths.set(tag, []);
-    paths.get(tag).push(`M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}`);
-  };
-  for (let y = 0; y < GRID; y++) {
-    for (let x = 0; x < GRID; x++) {
-      const tag = tagAt(x, y);
-      if (!tag) continue;
-      const x0 = x * cell, y0 = y * cell, x1 = (x + 1) * cell, y1 = (y + 1) * cell;
-      if (tagAt(x, y - 1) !== tag) addEdge(tag, x0, y0, x1, y0);
-      if (tagAt(x + 1, y) !== tag) addEdge(tag, x1, y0, x1, y1);
-      if (tagAt(x, y + 1) !== tag) addEdge(tag, x1, y1, x0, y1);
-      if (tagAt(x - 1, y) !== tag) addEdge(tag, x0, y1, x0, y0);
-    }
-  }
-  for (const [tag, segments] of paths) {
-    const path = document.createElementNS(ns, "path");
-    const color = TERRAIN_SET_COLORS[tag] || "#fff4be";
-    path.classList.add("biome-border-path");
-    path.setAttribute("d", segments.join(""));
-    path.style.setProperty("--biome-color", color);
-    path.style.setProperty("--biome-color-soft", color + "66");
-    svg.appendChild(path);
-  }
-  biomeBorderLayer.appendChild(svg);
 }
 
 function onTileClick(x, y) {
@@ -5578,9 +5041,6 @@ function onTileClick(x, y) {
         clearPendingPlace();
         // 말이 있는 타일이면 DPS/정보창을 대신 보여줌
         const tileAtXY = tileAt(x, y);
-        if (tileAtXY?.piece?.type === "king" && card.piece === "king" && tileAtXY.piece.count >= 3) {
-          return toast(placeFailMessage(card, x, y), "error");
-        }
         if (tileAtXY && tileAtXY.piece) { showTileInfo(x, y); return; }
         return toast("배치 불가", "error");
       }
@@ -5602,10 +5062,6 @@ function onTileClick(x, y) {
     const card = selectedCard();
     const tAtXY = tileAt(x, y);
     if (card && tAtXY && tAtXY.piece && !canPlaceCard(card, x, y)) {
-      if (tAtXY.piece.type === "king" && card.piece === "king" && tAtXY.piece.count >= 3) {
-        toast(placeFailMessage(card, x, y), "error");
-        return;
-      }
       showTileInfo(x, y);
       return;
     }
@@ -5627,10 +5083,9 @@ function terrainBgFor(terrains) {
   for (const t of TERRAIN_ORDER) {
     if (terrains[t] > 0) {
       const stack = terrains[t];
-      const alpha = stack >= TERRAIN_FULL_STACK ? 1 : 0.48;
-      if (t === "sky")         return `linear-gradient(135deg, hsla(208,85%,52%,${alpha}), hsla(208,85%,32%,${alpha}))`;
-      if (t === "ground")      return `linear-gradient(135deg, hsla(90,60%,45%,${alpha}), hsla(90,60%,24%,${alpha}))`;
-      if (t === "underground") return `linear-gradient(135deg, hsla(280,70%,42%,${alpha}), hsla(280,70%,24%,${alpha}))`;
+      if (t === "sky")         return `hsl(208, 85%, ${Math.max(30, 55 - stack * 3)}%)`;
+      if (t === "ground")      return `hsl(90, 60%, ${Math.max(22, 45 - stack * 2.2)}%)`;
+      if (t === "underground") return `hsl(280, 70%, ${Math.max(22, 42 - stack * 2)}%)`;
     }
   }
   return "";
@@ -5641,15 +5096,9 @@ function renderTile(x, y) {
   const el = tileEls[y * GRID + x];
   if (!el) return;
   const tile = tileAt(x, y);
-  el.classList.remove(
-    "has-terrain", "terrain-half", "small-label"
-  );
+  el.classList.remove("has-terrain", "small-label");
   const bg = terrainBgFor(tile.terrains);
-  if (bg) {
-    el.classList.add("has-terrain");
-    if (TERRAIN_ORDER.some(t => tile.terrains[t] > 0 && tile.terrains[t] < TERRAIN_FULL_STACK)) el.classList.add("terrain-half");
-    el.style.setProperty("--terrain-bg", bg);
-  }
+  if (bg) { el.classList.add("has-terrain"); el.style.setProperty("--terrain-bg", bg); }
   else el.style.removeProperty("--terrain-bg");
   let inner = "";
   if (tile.piece) {
@@ -5725,20 +5174,6 @@ function selectCardByKey(key) {
   hand.querySelectorAll(".card").forEach(c => {
     c.classList.toggle("selected", c.dataset.key === state.selectedCardKey);
   });
-  if (state.inBattle) {
-    for (const el of tileEls) el.classList.remove("placement-ok", "sell-mode-ok");
-    if (state.selectedCardKey) {
-      const c = selectedCard();
-      tutorialEvent("selected-card");
-      if (c && c.kind === "terrain") tutorialEvent("selected-terrain-card");
-      if (c && c.kind === "piece") tutorialEvent("selected-piece-card");
-    } else {
-      clearClickFocus();
-    }
-    refreshButtons();
-    sfx("click");
-    return;
-  }
   renderPlacementHints();
   refreshButtons();
   sfx("click");
@@ -5836,26 +5271,16 @@ function refreshButtons() {
   const inB = state.inBattle;
   $("#btn-draw-piece").disabled = state.coin < state.pieceDrawCost;
   $("#btn-draw-terrain").disabled = state.coin < state.terrainDrawCost;
-  const startBtn = $("#btn-start-round");
+  $("#btn-start-round").disabled = inB && !state.paused;
   const startLbl = $("#start-label");
-  const startIcon = startBtn?.querySelector(".ico");
-  startBtn.disabled = false;
-  startBtn?.classList.toggle("battle-state", inB && !state.paused);
-  startBtn?.classList.toggle("paused-state", inB && state.paused);
-  startBtn.title = inB ? (state.paused ? "전투 계속" : "일시정지") : "전투 시작";
-  if (autoStartCountdown > 0) {
-    startLbl.textContent = `${autoStartCountdown}초`;
-    if (startIcon) startIcon.textContent = "⏳";
-  } else if (inB) {
-    startLbl.textContent = state.paused ? "계속" : "일시정지";
-    if (startIcon) startIcon.textContent = state.paused ? "▶" : "⏸";
-  } else {
-    startLbl.textContent = `R${state.round} 시작`;
-    if (startIcon) startIcon.textContent = "▶";
-  }
+  if (autoStartCountdown > 0) startLbl.textContent = `${autoStartCountdown}초`;
+  else if (inB) startLbl.textContent = state.paused ? "계속" : "전투중";
+  else startLbl.textContent = `R${state.round} 시작`;
   $("#btn-auto-start")?.classList.toggle("active-auto", state.autoNext);
   $("#btn-sell")?.classList.toggle("active-sell", !!state.sellMode);
   // sellMode 제거됨 — sell 버튼은 항상 동일한 모양
+  $("#btn-pause").textContent = state.paused ? "▶" : "⏸";
+  $("#btn-pause").style.opacity = inB ? "1" : "0.5";
   $("#btn-speed").textContent = state.speed + "×";
   $("#speed-chip").style.display = (inB && state.speed !== 1) ? "block" : "none";
   $("#speed-chip").textContent = `${state.speed}× speed`;
@@ -6112,15 +5537,9 @@ function flashSupporter(tx, ty) {
 // =====================================================================
 function hideInfo() {
   $("#info-panel").classList.add("hidden");
-  $("#detail-panel")?.classList.add("detail-hidden");
-  $("#detail-panel")?.classList.remove("is-expanded", "is-unit-summary", "is-unit-full", "is-collapsed");
   for (const el of tileEls) el.classList.remove("selected", "network-highlight");
   document.querySelector(".range-circle:not(.preview)")?.remove();
-  if (state) {
-    state._infoTile = null;
-    state._detailHiddenByUser = false;
-    state._detailCollapsed = false;
-  }
+  if (state) state._infoTile = null;
 }
 function clearClickFocus() {
   try {
@@ -6131,33 +5550,14 @@ function clearClickFocus() {
 function setDetailEmpty(text = "카드를 뽑아 배치하세요") {
   const content = $("#detail-content");
   if (!content) return;
-  if (state) {
-    state._detailCollapsed = false;
-    state._detailHiddenByUser = false;
-  }
-  $("#detail-panel")?.classList.remove("is-expanded", "is-unit-summary", "is-unit-full", "is-collapsed", "detail-hidden");
+  $("#detail-panel")?.classList.remove("is-expanded", "is-unit-summary", "is-unit-full");
   content.className = "detail-empty";
   content.textContent = text;
-}
-function closeDetailOnly() {
-  const panel = $("#detail-panel");
-  if (!panel) return;
-  if (state) {
-    state._detailCollapsed = false;
-    state._detailHiddenByUser = true;
-  }
-  panel.classList.remove("is-expanded", "is-unit-summary", "is-unit-full", "is-collapsed");
-  panel.classList.add("detail-hidden");
-  clearClickFocus();
 }
 function renderCardDetail(card) {
   const content = $("#detail-content");
   if (!content || !card) return;
-  if (state) {
-    state._detailCollapsed = false;
-    state._detailHiddenByUser = false;
-  }
-  $("#detail-panel")?.classList.remove("is-unit-summary", "is-unit-full", "is-collapsed", "detail-hidden");
+  $("#detail-panel")?.classList.remove("is-unit-summary", "is-unit-full");
   $("#detail-panel")?.classList.add("is-expanded");
   content.className = "";
   const descClass = (text) => text.length >= 18 ? "fit-xlong" : (text.length >= 12 ? "fit-long" : "");
@@ -6167,10 +5567,7 @@ function renderCardDetail(card) {
     const dps = base.atk * base.aps;
     const descCls = descClass(base.desc);
     content.innerHTML = `
-      <div class="detail-head">
-        <div class="detail-title"><span>${PIECE_SYMBOL[card.piece]}</span><span class="detail-name">${PIECE_NAMES[card.piece]}</span></div>
-        <div class="detail-head-actions"><button class="detail-more" type="button" onclick="window.closeDetailOnly()">닫기</button></div>
-      </div>
+      <div class="detail-title"><span>${PIECE_SYMBOL[card.piece]}</span><span class="detail-name">${PIECE_NAMES[card.piece]}</span></div>
       <div class="detail-desc ${descCls}">${base.desc}</div>
       <div class="detail-grid">
         <div class="detail-stat"><span class="k">공격</span><span class="v">${base.atk}</span></div>
@@ -6188,10 +5585,7 @@ function renderCardDetail(card) {
     }[card.terrain];
     const descCls = descClass(data[0]);
     content.innerHTML = `
-      <div class="detail-head">
-        <div class="detail-title"><span>${TERRAIN_ICON[card.terrain]}</span><span class="detail-name">${TERRAIN_NAMES[card.terrain]} 지형</span></div>
-        <div class="detail-head-actions"><button class="detail-more" type="button" onclick="window.closeDetailOnly()">닫기</button></div>
-      </div>
+      <div class="detail-title"><span>${TERRAIN_ICON[card.terrain]}</span><span class="detail-name">${TERRAIN_NAMES[card.terrain]} 지형</span></div>
       <div class="detail-desc ${descCls}">${data[0]}</div>
       <div class="detail-grid">
         <div class="detail-stat"><span class="k">분류</span><span class="v">${TERRAIN_NAMES[card.terrain]}</span></div>
@@ -6203,16 +5597,11 @@ function renderCardDetail(card) {
   }
 }
 function showTileInfo(x, y, preserveDetail = false) {
-  if (preserveDetail && state?._detailHiddenByUser) return;
   hideInfo();
   if (!preserveDetail) state._tileDetailFull = false;
-  if (!preserveDetail) state._detailCollapsed = false;
-  if (state) {
-    state._infoTile = { x, y };
-    state._detailHiddenByUser = false;
-  }
+  if (state) state._infoTile = { x, y };
   const detailPanel = $("#detail-panel");
-  detailPanel?.classList.remove("is-unit-summary", "is-unit-full", "is-collapsed", "detail-hidden");
+  detailPanel?.classList.remove("is-unit-summary", "is-unit-full");
   detailPanel?.classList.add("is-expanded", state._tileDetailFull ? "is-unit-full" : "is-unit-summary");
   const tile = tileAt(x, y);
   const el = tileEls[y * GRID + x];
@@ -6255,7 +5644,7 @@ function showTileInfo(x, y, preserveDetail = false) {
     const liveUnit = (state.unitsCache || []).find(unit => unit.tileX === x && unit.tileY === y);
     const u = liveUnit || getUnitStats(x, y);
     const base = PIECE_STATS[tile.piece.type];
-    const countBonus = 1 + (tile.piece.count - 1) * 0.50;
+    const countBonus = 1 + (tile.piece.count - 1) * 0.40;
     const pType = tile.piece.type;
     // 지형별 Boost 계수
     const tbAll   = 1 + (state.mods?.terrainBoost || 0);
@@ -6278,15 +5667,19 @@ function showTileInfo(x, y, preserveDetail = false) {
     // 연결망 크기를 카운트로 사용 (stackBonus가 받는 값)
     ensureNetworks();
     const _netSize = (tname) => {
-      const power = terrainStackPower(tile, tname);
-      if (power <= 0) return 0;
-      return fullNetworkSizeAt(x, y, tname) || power;
+      if (!tile.terrains[tname]) return 0;
+      const m = state._networks[tname];
+      if (!m) return 0;
+      const id = m.get(`${x},${y}`);
+      if (id == null) return 0;
+      const grp = state._networkGroups[tname][id];
+      return grp ? grp.length : 0;
     };
     const _ugN = _netSize("underground");
     const _skyN = _netSize("sky");
     const _gndN = _netSize("ground");
     const atkBase = base.atk * countBonus;
-    const atkUG = (_ugN > 0) ? atkBase * stackBonus(TERRAIN_EFFECT.underground.atk, _ugN) * ugB : 0;
+    const atkUG = (_ugN > 0) ? atkBase * stackBonus(0.30, _ugN) * ugB : 0;
     const afterTerrainAtk = atkBase + atkUG;
     const atkModMul = (1 + (state.mods?.atkAll || 0)) * (1 + (state.mods?.["atk_"+pType] || 0));
     const atkMod = afterTerrainAtk * (atkModMul - 1);
@@ -6297,9 +5690,9 @@ function showTileInfo(x, y, preserveDetail = false) {
 
     // ───── 공속: base + 하늘 − 지하 + 증강 ─────
     const apsBase = base.aps;
-    const apsSky = (_skyN > 0) ? apsBase * stackBonus(TERRAIN_EFFECT.sky.aps, _skyN) * skyB : 0;
+    const apsSky = (_skyN > 0) ? apsBase * stackBonus(0.18, _skyN) * skyB : 0;
     const afterSkyAps = apsBase + apsSky;
-    const apsUG = (_ugN > 0) ? afterSkyAps * -stackBonus(TERRAIN_EFFECT.underground.apsDown, _ugN) * ugB : 0;
+    const apsUG = (_ugN > 0) ? afterSkyAps * -stackBonus(0.08, _ugN) * ugB : 0;
     const afterTerrainAps = afterSkyAps + apsUG;
     const apsModMul = (1 + (state.mods?.apsAll || 0)) * (1 + (state.mods?.["aps_"+pType] || 0));
     const apsMod = afterTerrainAps * (apsModMul - 1);
@@ -6322,23 +5715,14 @@ function showTileInfo(x, y, preserveDetail = false) {
 
     // ───── 치명타: base + 지상 − 하늘 + 증강 ─────
     const critBase = (base.critBase != null) ? base.critBase : 0.05;
-    const critGnd  = (_gndN > 0) ? stackBonus(TERRAIN_EFFECT.ground.crit, _gndN) * gndB : 0;
-    const critSky  = (_skyN > 0) ? -stackBonus(TERRAIN_EFFECT.sky.critDown, _skyN) * skyB : 0;
+    const critGnd  = (_gndN > 0) ? stackBonus(0.10, _gndN) * gndB : 0;
+    const critSky  = (_skyN > 0) ? -stackBonus(0.025, _skyN) * skyB : 0;
     const critMod  = state.mods?.critAll || 0;
     let critStr = fmt((critBase*100).toFixed(0) + "%", C.base);
     if (critGnd > 0.0001) critStr += ` ${fmt("+" + (critGnd*100).toFixed(0) + "%", C.ground)}<small>⛰</small>`;
     if (critSky < -0.0001) critStr += ` ${fmt((critSky*100).toFixed(0) + "%", C.danger)}<small>☁</small>`;
     if (critMod > 0.0001) critStr += ` ${fmt("+" + (critMod*100).toFixed(0) + "%", C.mod)}<small>증강</small>`;
     html += `<div class="row"><span class="k">치명타</span><span class="v">${critStr} = <b>${(u.crit*100).toFixed(0)}%</b></span></div>`;
-    if (u.terrainTags?.length) {
-      const tagDetail = u.terrainTags
-        .map(t => `<b>${TERRAIN_SET_NAMES[t] || t}</b> : ${TERRAIN_SET_INFO[t] || "진화 효과"}`)
-        .join("<br>");
-      html += `<div class="row"><span class="k">진화 특성</span><span class="v" style="font-size:10px;line-height:1.38">${tagDetail}</span></div>`;
-    }
-    if ((u.burnChance || 0) > 0) {
-      html += `<div class="row"><span class="k">화상</span><span class="v">${Math.round(u.burnChance*100)}% · ${Math.round(u.burnPower*100)}% 공격/s</span></div>`;
-    }
 
     // ───── 지원 기여도 (등급 고정) ─────
     const suppBase = PIECE_SUPPORT_FACTOR[pType];
@@ -6363,10 +5747,7 @@ function showTileInfo(x, y, preserveDetail = false) {
     summaryHtml = `
       <div class="detail-head">
         <div class="detail-title"><span>${PIECE_SYMBOL[pType]}</span><span class="detail-name">${PIECE_NAMES[pType]}${countLabel}</span></div>
-        <div class="detail-head-actions">
-          <button class="detail-more" type="button" onclick="window.closeDetailOnly()">닫기</button>
-          <button class="detail-more" type="button" onclick="window.toggleTileDetail()">상세</button>
-        </div>
+        <button class="detail-more" type="button" onclick="window.toggleTileDetail()">상세</button>
       </div>
       <div class="detail-desc">${base.desc}</div>
       <div class="detail-grid">
@@ -6410,61 +5791,18 @@ function showTileInfo(x, y, preserveDetail = false) {
     content.innerHTML = summaryHtml;
   } else {
     if (tile.piece) {
-      html = html.replace("<h3>", `<div class="detail-head"><h3>`).replace("</h3>", `</h3><div class="detail-head-actions"><button class="detail-more" type="button" onclick="window.closeDetailOnly()">닫기</button><button class="detail-more" type="button" onclick="window.toggleTileDetail()">요약</button></div></div>`);
+      html = html.replace("<h3>", `<div class="detail-head"><h3>`).replace("</h3>", `</h3><button class="detail-more" type="button" onclick="window.toggleTileDetail()">요약</button></div>`);
     }
     content.innerHTML = html;
   }
   content.dataset.tileInfo = `${x},${y}`;
   panel.classList.add("hidden");
-  if (state._detailCollapsed) renderCollapsedDetail();
 }
 window.toggleTileDetail = () => {
   if (!state?._infoTile) return;
-  state._detailCollapsed = false;
   state._tileDetailFull = !state._tileDetailFull;
   showTileInfo(state._infoTile.x, state._infoTile.y, true);
 };
-window.closeDetailOnly = closeDetailOnly;
-window.collapseDetailPanel = () => {
-  if (!state?._infoTile) return;
-  state._detailCollapsed = true;
-  renderCollapsedDetail();
-  clearClickFocus();
-};
-window.expandDetailPanel = () => {
-  if (!state?._infoTile) return;
-  state._detailCollapsed = false;
-  showTileInfo(state._infoTile.x, state._infoTile.y, true);
-};
-function collapsedDetailText() {
-  if (!state?._infoTile) return "정보";
-  const { x, y } = state._infoTile;
-  const tile = tileAt(x, y);
-  if (tile?.piece) {
-    const liveUnit = (state.unitsCache || []).find(unit => unit.tileX === x && unit.tileY === y);
-    const u = liveUnit || getUnitStats(x, y);
-    const st = tile.piece.stats;
-    const elapsed = Math.max(0.25, (performance.now() - (state.roundStartTime || performance.now())) / 1000);
-    const dps = state.inBattle ? ((u.damageDone || 0) / elapsed) : (st && st.lastDuration > 0 && (st.lastDamage || 0) > 0 ? st.lastDamage / st.lastDuration : u.atk * u.aps);
-    return `${PIECE_SYMBOL[tile.piece.type]} ${PIECE_NAMES[tile.piece.type]} · DPS ${dps.toFixed(1)}`;
-  }
-  const terrains = TERRAIN_ORDER.filter(t => tile?.terrains?.[t] > 0).map(t => `${TERRAIN_ICON[t]} ${TERRAIN_NAMES[t]}`);
-  return terrains.length ? terrains.join(" · ") : "빈 타일";
-}
-function renderCollapsedDetail() {
-  const panel = $("#detail-panel");
-  const content = $("#detail-content");
-  if (!panel || !content) return;
-  panel.classList.remove("is-unit-summary", "is-unit-full");
-  panel.classList.add("is-expanded", "is-collapsed");
-  content.className = "";
-  content.innerHTML = `
-    <button class="detail-chip" type="button" onclick="window.expandDetailPanel()">
-      <span class="chip-main">${collapsedDetailText()}</span>
-      <span class="chip-action">펼침</span>
-    </button>
-  `;
-}
 
 // =====================================================================
 //  BANNER / TOAST
@@ -6486,21 +5824,13 @@ function showBanner(text, danger=false) {
   document.body.appendChild(b);
   setTimeout(() => b.remove(), 1900);
 }
-function showBossWarningBanner(patternName) {
-  document.querySelector(".banner")?.remove();
-  const b = document.createElement("div");
-  b.className = "banner danger boss-warning-banner";
-  b.innerHTML = `<span class="boss-warning-title">보스 출현</span><span class="boss-warning-sub">특성: ${patternName}</span>`;
-  document.body.appendChild(b);
-  setTimeout(() => b.remove(), 2500);
-}
 let toastTimer = null;
-function toast(msg, variant = "", duration = 1400) {
+function toast(msg, variant = "") {
   const el = $("#toast");
   el.textContent = msg;
   el.className = "toast show" + (variant ? " " + variant : "");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), duration);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 1400);
 }
 
 // =====================================================================
@@ -6712,110 +6042,22 @@ function toggleAuto() {
 function openSeedModal() {
   $("#seed-current").textContent = formatSeed(state.seed);
   $("#seed-input").value = "";
-  const dateKey = getKstDateKey();
-  const dailySeed = dailySeedForDate(dateKey);
-  const hint = $("#daily-seed-hint");
-  if (hint) hint.textContent = `오늘 일일 시드: ${dateKey} · ${formatSeed(dailySeed)}`;
   $("#seed-modal").classList.remove("hidden");
   setTimeout(() => $("#seed-input").focus(), 50);
 }
-function startNewMapWithSeed(seed, options = {}) {
+function startNewMapWithSeed(seed) {
   cancelAutoCountdown();
-  newGame(seed, options);
+  newGame(seed);
   hideInfo();
   buildBoard();
   renderAll();
   updateSeedDisplay();
   $("#seed-modal").classList.add("hidden");
-  const label = state.dailySeedKey ? `일일 시드 ${state.dailySeedKey}` : `새 지도: ${formatSeed(state.seed)}`;
-  toast(label, "success");
+  toast(`새 지도: ${formatSeed(state.seed)}`, "success");
 }
 function updateSeedDisplay() {
   const el = $("#seed-display");
   if (el && state) el.textContent = formatSeed(state.seed);
-}
-function getPlayerId() {
-  try {
-    let id = localStorage.getItem(PLAYER_ID_KEY);
-    if (!id) {
-      id = `p${formatSeed(makeSeed())}${Date.now().toString(36).slice(-4)}`;
-      localStorage.setItem(PLAYER_ID_KEY, id);
-    }
-    return id;
-  } catch (_) {
-    return `p${formatSeed(makeSeed())}`;
-  }
-}
-function getPlayerName() {
-  try {
-    const saved = localStorage.getItem("chess-defense-player-name");
-    if (saved && saved.trim()) return saved.trim().slice(0, 16);
-  } catch (_) {}
-  return `플레이어 ${getPlayerId().slice(-4).toUpperCase()}`;
-}
-function saveLocalDailyRank(entry) {
-  try {
-    const key = DAILY_RANK_LOCAL_PREFIX + entry.dateKey;
-    const rows = JSON.parse(localStorage.getItem(key) || "[]").filter(r => r && r.playerId !== entry.playerId);
-    rows.push(entry);
-    rows.sort((a, b) => (b.score - a.score) || (a.finishedAt || "").localeCompare(b.finishedAt || ""));
-    localStorage.setItem(key, JSON.stringify(rows.slice(0, 50)));
-  } catch (_) {}
-}
-function dailyLeaderboardUrl(dateKey) {
-  if (!LEADERBOARD_ENDPOINT) return "";
-  const base = LEADERBOARD_ENDPOINT.replace(/\/+$/, "");
-  return base.endsWith(".json") ? base : `${base}/${encodeURIComponent(dateKey)}.json`;
-}
-async function fetchDailyLeaderboard(dateKey = getKstDateKey()) {
-  const localRows = (() => {
-    try { return JSON.parse(localStorage.getItem(DAILY_RANK_LOCAL_PREFIX + dateKey) || "[]"); }
-    catch (_) { return []; }
-  })();
-  const url = dailyLeaderboardUrl(dateKey);
-  if (!url) return localRows;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const rows = Array.isArray(data) ? data : Object.values(data || {});
-    return rows
-      .filter(r => r && r.dateKey === dateKey)
-      .sort((a, b) => (b.score - a.score) || (a.finishedAt || "").localeCompare(b.finishedAt || ""))
-      .slice(0, 50);
-  } catch (_) {
-    return localRows;
-  }
-}
-async function submitDailyLeaderboard(score) {
-  if (!state?.dailySeedKey) return;
-  const entry = {
-    game: "chess-defense",
-    version: "index-v2",
-    dateKey: state.dailySeedKey,
-    seed: formatSeed(state.seed),
-    score,
-    round: score,
-    playerId: getPlayerId(),
-    name: getPlayerName(),
-    finishedAt: new Date().toISOString(),
-  };
-  saveLocalDailyRank(entry);
-  if (!LEADERBOARD_ENDPOINT) {
-    toast("일일 기록 저장됨", "success");
-    return;
-  }
-  try {
-    const res = await fetch(dailyLeaderboardUrl(entry.dateKey), {
-      method: "POST",
-      headers: { "Content-Type": "application/json;charset=utf-8" },
-      body: JSON.stringify(entry),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    toast("일일 랭킹 전송됨", "success");
-  } catch (_) {
-    toast("온라인 랭킹 전송 실패 · 로컬 기록 저장", "error");
-  }
 }
 function cardRefundPrice(card) {
   let price = 0;
@@ -6861,11 +6103,6 @@ function sellTileFromMode(x, y) {
   if (!t.piece && TERRAIN_ORDER.every(k => t.terrains[k] === 0)) {
     toast("판매할 게 없음", "error");
     exitSellMode("판매할 대상이 없습니다");
-    return;
-  }
-  if (!t.piece && TERRAIN_ORDER.some(k => t.terrains[k] > 0) && isInitialTerrainTile(x, y)) {
-    toast("처음 깔린 기본 지형은 판매할 수 없어요", "error");
-    exitSellMode("기본 지형은 판매할 수 없습니다");
     return;
   }
   sellTile(x, y);
@@ -7005,12 +6242,6 @@ function init() {
   $("#btn-random-seed").addEventListener("click", () => {
     $("#seed-input").value = formatSeed(makeSeed());
   });
-  $("#btn-daily-seed")?.addEventListener("click", () => {
-    const dateKey = getKstDateKey();
-    const seed = dailySeedForDate(dateKey);
-    $("#seed-input").value = formatSeed(seed);
-    startNewMapWithSeed(seed, { dailySeedKey: dateKey });
-  });
   $("#btn-start-with-seed").addEventListener("click", () => {
     const seed = parseSeedInput($("#seed-input").value);
     startNewMapWithSeed(seed);
@@ -7065,6 +6296,7 @@ function init() {
   });
   $("#btn-auto-start").addEventListener("click", () => toggleAuto());
   $("#btn-speed").addEventListener("click", () => cycleSpeed());
+  $("#btn-pause").addEventListener("click", () => togglePause());
   $("#btn-help").addEventListener("click", () => $("#help-modal").classList.toggle("hidden"));
   $("#btn-settings")?.addEventListener("click", () => $("#settings-modal").classList.toggle("hidden"));
   $("#settings-close-btn")?.addEventListener("click", () => $("#settings-modal").classList.add("hidden"));
@@ -7121,7 +6353,7 @@ function init() {
     hideInfo();
   });
 
-  window.addEventListener("resize", () => { updateFxRect(); renderMonsters(); renderNetworkDots(); });
+  window.addEventListener("resize", () => { updateFxRect(); renderMonsters(); });
   requestAnimationFrame(updateFxRect);
 
   // reward modal listeners
