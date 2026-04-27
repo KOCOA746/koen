@@ -159,6 +159,22 @@ body::before {
 }
 .seed-chip:hover { background: rgba(0,0,0,0.55); border-color: var(--cyan); }
 .seed-chip:active { transform: scale(0.95); }
+.daily-badge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--danger);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  align-self: center;
+  cursor: help;
+  margin-left: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.daily-badge.hidden { display: none; }
 .stat-row {
   display: flex;
   gap: 6px;
@@ -775,6 +791,18 @@ body::before {
 .monster.boss-terrainShift {
   color: #77df68;
   filter: drop-shadow(0 0 14px rgba(119,223,104,0.72)) drop-shadow(0 6px 8px rgba(0,0,0,0.5));
+}
+.monster.boss-crystalRegen {
+  color: #9cecff;
+  filter: drop-shadow(0 0 16px rgba(120,230,255,0.82)) drop-shadow(0 6px 8px rgba(0,0,0,0.5));
+}
+.monster.boss-crystalized {
+  animation: none !important;
+  filter: drop-shadow(0 0 22px rgba(180,245,255,0.95)) drop-shadow(0 0 8px rgba(255,255,255,0.6));
+}
+.monster.boss-crystalized svg {
+  transform: scale(1.08);
+  opacity: 0.92;
 }
 .monster.boss-summoning::before,
 .monster.boss-summoning::after {
@@ -2614,11 +2642,15 @@ body::before {
   grid-template-columns: 1fr 1fr;
   gap: 6px;
   margin-top: 10px;
+  align-items: stretch;
 }
 .ranking-actions .btn {
   min-height: 44px;
   padding: 9px 10px;
   font-size: 12px;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 .ranking-actions .refresh {
   color: #101419;
@@ -3079,6 +3111,17 @@ body {
       <rect x="6" y="-4" width="8" height="9" rx="2" fill="#f1ffe8"/>
       <path d="M-12,18 L-4,25 L4,18 L12,25" stroke="#102b12" stroke-width="4" fill="none" stroke-linecap="round"/>
     </symbol>
+    <symbol id="m-boss-crystal" viewBox="-50 -50 100 100">
+      <circle cx="0" cy="0" r="45" fill="rgba(120,235,255,0.13)"/>
+      <path d="M0,-46 L28,-18 L20,32 L0,46 L-20,32 L-28,-18 Z" fill="currentColor" opacity="0.95"/>
+      <path d="M0,-42 L8,-10 L0,40 L-18,29 L-25,-16 Z" fill="#e9fbff" opacity="0.32"/>
+      <path d="M9,-11 L27,-17 L19,30 L2,42 Z" fill="#175073" opacity="0.34"/>
+      <path d="M-18,-7 L-8,-17 L2,-6 L12,-17 L22,-7" stroke="#f6feff" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.75"/>
+      <circle cx="-11" cy="6" r="5" fill="#07263d"/>
+      <circle cx="11" cy="6" r="5" fill="#07263d"/>
+      <path d="M-13,22 Q0,14 13,22" stroke="#06304a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M-38,-2 L-49,-13 M37,-3 L49,-15 M-34,18 L-47,24 M34,18 L48,24" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity="0.75"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -3088,6 +3131,7 @@ body {
       <div class="stat round" title="현재 라운드 / 최고 기록"><span class="k">라운드</span><span class="v" id="stat-round">1</span><span id="stat-best" class="hi-best">최고 -</span></div>
       <div class="stat gold"><span class="k">코인</span><span class="v" id="stat-coin">11</span></div>
       <div class="stat life"><span class="k">HP</span><span class="v" id="stat-life">20</span></div>
+      <span class="daily-badge hidden" id="daily-badge" title="랭킹전 진행 중 — 게임오버 시 자동 전송"><span id="daily-badge-text">랭킹전</span></span>
     </div>
     <div class="ctrl-group">
       <button class="icon-btn" id="btn-speed" title="속도 (S)">1×</button>
@@ -3420,12 +3464,23 @@ function roundHpMultiplier(r) {
 }
 function roundBaseHP(r) { return 42 * roundHpMultiplier(r); }
 function coinPerKill(type, r) {
-  // 일반/속공 = 1 고정, 탱커 = 2, 보스는 후반 더 많이 (양학 구간 지원)
-  if (type === "boss") return Math.round(10 + r * 1.2);
-  if (type === "tank") return 2;
-  return 1;
+  // 일반/속공 = 1, 탱커 = 2, 보스 = 10+1.2r
+  let base;
+  if (type === "boss") base = Math.round(10 + r * 1.2);
+  else if (type === "tank") base = 2;
+  else base = 1;
+  // 황금기 증강: 보스 ×2, 일반 ×1.5
+  if (state?.mods?.goldenAge) {
+    if (type === "boss") base *= 2;
+    else base = Math.max(base, Math.ceil(base * 1.5));
+  }
+  return base;
 }
-function endOfRoundBonus(r) { return 3 + Math.floor(r * 1.3); } // R1=3, R5=7, R10=12
+function endOfRoundBonus(r) {
+  let bonus = 3 + Math.floor(r * 1.3);
+  if (state?.mods?.royaltyBonus) bonus = Math.floor(bonus * (1 + state.mods.royaltyBonus));
+  return bonus;
+}
 function monsterCountForRound(r) {
   // 후반 cap을 살짝 낮춰서 양학 구간에서 DOM 부담 줄이고 체감 속도 향상
   const min = Math.min(32, 10 + Math.floor(r * 1.0));
@@ -3644,6 +3699,10 @@ function newGame(seed = null, options = {}) {
     roundCoinGain: 0,
     cleanCleared: true,
     gameStartedAt: Date.now(),
+    chaosBossIdx: 0,
+    pendingChaosChoice: null,
+    chaosBlessing: null,
+    chaosBlessingRounds: 0,
     _monsterSpatial: null,
     _aliveTargets: [],
   };
@@ -3680,6 +3739,10 @@ function saveGameNow() {
       gambit_doubleHalf: !!state.gambit_doubleHalf,
       acquiredAugments: state.acquiredAugments || [],
       gameStartedAt: state.gameStartedAt || Date.now(),
+      chaosBossIdx: state.chaosBossIdx || 0,
+      pendingChaosChoice: state.pendingChaosChoice || null,
+      chaosBlessing: state.chaosBlessing || null,
+      chaosBlessingRounds: state.chaosBlessingRounds || 0,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(snap));
   } catch (_) {}
@@ -3712,6 +3775,10 @@ function loadGame() {
       roundCoinGain: 0,
       cleanCleared: true,
       gameStartedAt: s.gameStartedAt || Date.now(),
+      chaosBossIdx: s.chaosBossIdx || 0,
+      pendingChaosChoice: s.pendingChaosChoice || null,
+      chaosBlessing: s.chaosBlessing || null,
+      chaosBlessingRounds: s.chaosBlessingRounds || 0,
       _monsterSpatial: null,
       _aliveTargets: [],
     };
@@ -3743,7 +3810,8 @@ function drawPieceCards() {
   if (state.coin < state.pieceDrawCost) return toast("코인 부족", "error");
   state.coin -= state.pieceDrawCost;
   state.pieceDrawCost += PIECE_COST_INCREMENT;
-  for (let i = 0; i < 3; i++) state.hand.push(makePieceCard());
+  const drawCount = 3 + (state.mods?.drawExtra || 0);
+  for (let i = 0; i < drawCount; i++) state.hand.push(makePieceCard());
   sfx("draw");
   saveGame();
   renderHand();
@@ -3912,6 +3980,61 @@ function rollEventForRound(r) {
   state.cardRand = (state.cardRand * 1664525 + 1013904223) >>> 0;
   return pool[state.cardRand % pool.length];
 }
+// 카오스 선택지 (R30+ 짝수 boss idx에서 발동)
+EVENTS["chaos_choice"] = {
+  title: "🌪 차원의 시련",
+  desc: "이번 라운드의 카오스. 운명을 선택하세요.",
+  options: [
+    {
+      name: "🛡 안정 — 성역",
+      desc: "기물·지형 있는 8칸을 2라운드 보호 (판매·카오스·보스 파괴 면역)",
+      icon: "🛡",
+      apply: () => {
+        state.pendingChaosChoice = "stable";
+        toast("안정 선택 — 성역 발동 예정", "success");
+      }
+    },
+    {
+      name: "🌪 격동 — 보상",
+      desc: "지형 7개 갈리지만 즉시 +50 코인, 다음 보스 처치 +25 코인",
+      icon: "🌪",
+      apply: () => {
+        state.pendingChaosChoice = "turbulence";
+        state.coin += 50;
+        toast("격동 선택 — +50 코인", "success");
+      }
+    },
+    {
+      name: "🌫 시간 정지",
+      desc: "이번 라운드 몬스터 속도 -25% + 즉시 +20 코인",
+      icon: "🌫",
+      apply: () => {
+        state.pendingChaosChoice = "slowtime";
+        state.coin += 20;
+        toast("시간 정지 선택 — 적 속도 -25%", "success");
+      }
+    },
+  ]
+};
+
+// 자동 긍정 카오스 (R30+ 홀수 idx에서 자동 발동)
+function applyChaosBlessing(rand) {
+  const r = rand();
+  if (r < 0.5) {
+    applyChaosSanctuary(rand);
+  } else if (r < 0.78) {
+    state.chaosBlessing = "abundance";
+    state.chaosBlessingRounds = 1;
+    showBanner("✨ 풍요의 비 — 다음 라운드 지형 효과 +30%", false);
+    toast("이번 라운드 모든 지형 효과 +30%", "success", 2600);
+  } else {
+    state.chaosBlessing = "dawn";
+    state.chaosBlessingRounds = 1;
+    showBanner("🌅 새벽의 기운 — 다음 라운드 모든 말 공격 +25%", false);
+    toast("이번 라운드 모든 말 공격력 +25%", "success", 2600);
+  }
+}
+
 function openEventModal(eventKey, onClose) {
   const ev = EVENTS[eventKey];
   if (!ev) { if (onClose) onClose(); return; }
@@ -4032,34 +4155,47 @@ function openMetaModal() {
 }
 
 const REWARDS = [
-  // ─── 지형별 세분 강화 ───
-  { id: "skyBoost",    name: "하늘 지형 강화 +10%", desc: "하늘 지형의 공속↑/치명↓ 효과 증폭", icon: "☁", add: { skyBoost: 0.10 } },
-  { id: "groundBoost", name: "지상 지형 강화 +10%", desc: "지상 지형의 치명타 증가 효과 증폭", icon: "⛰", add: { groundBoost: 0.10 } },
-  { id: "ugBoost",     name: "지하 지형 강화 +10%", desc: "지하 지형의 공격력↑/공속↓ 효과 증폭", icon: "⛧", add: { ugBoost: 0.10 } },
-  // ─── 전체 말 버프 (절제된 수치) ───
-  { id: "atkAll",      name: "전체 공격력 +5%",    desc: "모든 말의 공격력", icon: "⚔",  add: { atkAll: 0.05 } },
-  { id: "apsAll",      name: "전체 공속 +5%",      desc: "모든 말의 공격속도", icon: "⚡", add: { apsAll: 0.05 } },
-  { id: "critAll",     name: "전체 치명타 +3%",    desc: "모든 말의 치명타 확률", icon: "💥", add: { critAll: 0.03 } },
-  // ─── 말별 세분 강화 ───
-  { id: "atk_pawn",    name: "폰 공격력 +15%",     desc: "폰 계열 화력 증가", icon: "♟", add: { atk_pawn: 0.15 } },
-  { id: "aps_knight",  name: "나이트 공속 +12%",   desc: "나이트 공격 속도", icon: "♞", add: { aps_knight: 0.12 } },
-  { id: "rng_knight",  name: "나이트 사거리 +15%", desc: "나이트 사거리 확장", icon: "♞", add: { rng_knight: 0.15 } },
-  { id: "atk_rook",    name: "룩 공격력 +12%",     desc: "룩 레이저 데미지 ↑", icon: "♜", add: { atk_rook: 0.12 } },
-  { id: "rng_rook",    name: "룩 사거리 +20%",     desc: "룩 레이저가 더 멀리", icon: "♜", add: { rng_rook: 0.20 } },
-  { id: "atk_bishop",  name: "비숍 공격력 +12%",   desc: "비숍 감전 데미지 ↑", icon: "♝", add: { atk_bishop: 0.12 } },
-  { id: "atk_queen",   name: "퀸 공격력 +10%",     desc: "퀸 광역 데미지 ↑", icon: "♛", add: { atk_queen: 0.10 } },
-  { id: "rng_queen",   name: "퀸 사거리 +15%",     desc: "퀸 파괴 범위 확장", icon: "♛", add: { rng_queen: 0.15 } },
-  { id: "atk_king",    name: "킹 공격력 +8%",      desc: "킹 즉사급 피해 ↑", icon: "♚", add: { atk_king: 0.08 } },
-  // ─── 특수 능력 ───
-  { id: "knightStunR", name: "나이트 스턴 범위 +10%", desc: "스플래시 기절 범위 확장", icon: "♞", add: { knightStunR: 0.10 } },
-  { id: "rookKnockback", name: "룩 넉백 부여 (+0.4 거리)", desc: "룩이 적을 뒤로 밀치게 됨 (없으면 넉백 없음)", icon: "♜", add: { rookKnockback: 0.40 } },
-  { id: "support",     name: "지원 기여도 +7%",    desc: "연결망 지원 피해 증가", icon: "🔗", add: { supportBoost: 0.07 } },
-  // ─── 즉시 자원 ───
-  { id: "coin",        name: "코인 +10",           desc: "즉시 10 코인 획득", icon: "🪙", instant: "coin10" },
-  { id: "life",        name: "HP +3",              desc: "즉시 체력 3 회복", icon: "❤",  instant: "life3" },
-  // ─── 판매 환불 증강 (기본 50%에 가산) ───
-  { id: "sellRefund10", name: "판매 환불 +10%",     desc: "판매 시 환불률 +10%p (기본 50%)", icon: "💰", add: { sellRefund: 0.10 } },
-  { id: "sellRefund15", name: "판매 환불 +15%",     desc: "판매 시 환불률 +15%p (기본 50%)", icon: "💰", add: { sellRefund: 0.15 } },
+  // ===== T1 (R5+) — 기본 강화 =====
+  { id: "skyBoost",    tier: 1, name: "하늘 지형 강화 +10%", desc: "하늘 지형의 공속↑/치명↓ 효과 증폭", icon: "☁", add: { skyBoost: 0.10 } },
+  { id: "groundBoost", tier: 1, name: "지상 지형 강화 +10%", desc: "지상 지형의 치명타 증가 효과 증폭", icon: "⛰", add: { groundBoost: 0.10 } },
+  { id: "ugBoost",     tier: 1, name: "지하 지형 강화 +10%", desc: "지하 지형의 공격력↑/공속↓ 효과 증폭", icon: "⛧", add: { ugBoost: 0.10 } },
+  { id: "atkAll",      tier: 1, name: "전체 공격력 +5%",    desc: "모든 말의 공격력", icon: "⚔",  add: { atkAll: 0.05 } },
+  { id: "apsAll",      tier: 1, name: "전체 공속 +5%",      desc: "모든 말의 공격속도", icon: "⚡", add: { apsAll: 0.05 } },
+  { id: "critAll",     tier: 1, name: "전체 치명타 +3%",    desc: "모든 말의 치명타 확률", icon: "💥", add: { critAll: 0.03 } },
+  { id: "atk_pawn",    tier: 1, name: "폰 공격력 +15%",     desc: "폰 계열 화력 증가", icon: "♟", add: { atk_pawn: 0.15 } },
+  { id: "aps_knight",  tier: 1, name: "나이트 공속 +12%",   desc: "나이트 공격 속도", icon: "♞", add: { aps_knight: 0.12 } },
+  { id: "rng_knight",  tier: 1, name: "나이트 사거리 +15%", desc: "나이트 사거리 확장", icon: "♞", add: { rng_knight: 0.15 } },
+  { id: "atk_rook",    tier: 1, name: "룩 공격력 +12%",     desc: "룩 레이저 데미지 ↑", icon: "♜", add: { atk_rook: 0.12 } },
+  { id: "rng_rook",    tier: 1, name: "룩 사거리 +20%",     desc: "룩 레이저가 더 멀리", icon: "♜", add: { rng_rook: 0.20 } },
+  { id: "atk_bishop",  tier: 1, name: "비숍 공격력 +12%",   desc: "비숍 감전 데미지 ↑", icon: "♝", add: { atk_bishop: 0.12 } },
+  { id: "atk_queen",   tier: 1, name: "퀸 공격력 +10%",     desc: "퀸 광역 데미지 ↑", icon: "♛", add: { atk_queen: 0.10 } },
+  { id: "rng_queen",   tier: 1, name: "퀸 사거리 +15%",     desc: "퀸 파괴 범위 확장", icon: "♛", add: { rng_queen: 0.15 } },
+  { id: "atk_king",    tier: 1, name: "킹 공격력 +8%",      desc: "킹 즉사급 피해 ↑", icon: "♚", add: { atk_king: 0.08 } },
+  { id: "knightStunR", tier: 1, name: "나이트 스턴 범위 +10%", desc: "스플래시 기절 범위 확장", icon: "♞", add: { knightStunR: 0.10 } },
+  { id: "coin",        tier: 1, name: "코인 +10",           desc: "즉시 10 코인 획득", icon: "🪙", instant: "coin10" },
+  { id: "life",        tier: 1, name: "HP +3",              desc: "즉시 체력 3 회복", icon: "❤",  instant: "life3" },
+  { id: "sellRefund10", tier: 1, name: "판매 환불 +10%",     desc: "판매 시 환불률 +10%p (기본 50%)", icon: "💰", add: { sellRefund: 0.10 } },
+  // ===== T2 (R20+) — 보스 돌파용 =====
+  { id: "rookKnockback", tier: 2, minRound: 20, name: "룩 넉백 부여", desc: "룩이 적을 뒤로 밀치게 됨 (몹당 0.5초 쿨다운). 한 번만 등장", icon: "♜", add: { rookKnockback: 0.25 }, once: true },
+  { id: "support",     tier: 2, minRound: 20, name: "지원 기여도 +7%", desc: "연결망 지원 피해 증가", icon: "🔗", add: { supportBoost: 0.07 } },
+  { id: "sellRefund15", tier: 2, minRound: 20, name: "판매 환불 +15%", desc: "판매 시 환불률 +15%p", icon: "💰", add: { sellRefund: 0.15 } },
+  { id: "goldenAge",   tier: 2, minRound: 20, name: "황금기", desc: "보스 코인 ×2, 일반 몬스터 코인 ×1.5", icon: "🌟", add: { goldenAge: 1 } },
+  { id: "sageHand",    tier: 2, minRound: 20, name: "현자의 손길", desc: "캐릭터 카드 뽑기 +1장 (3→4)", icon: "🃏", add: { drawExtra: 1 } },
+  { id: "bigNetwork",  tier: 2, minRound: 20, name: "거대 연결망 +35%", desc: "5칸 이상 연결망 위 말은 공격력 +35%", icon: "🌐", add: { bigNetwork: 0.35 } },
+  // ===== T3 (R30+) — 카오스 시너지 =====
+  { id: "chessMaster", tier: 3, minRound: 30, name: "체스 마스터", desc: "보드에 폰~킹 6종 모두 있으면 모든 말 atk +30%", icon: "♚", add: { chessMaster: 0.30 } },
+  { id: "singleTribe", tier: 3, minRound: 30, name: "단일 종족 부대", desc: "보드의 모든 말이 같은 등급이면 atk +40%", icon: "⚜", add: { singleTribe: 0.40 } },
+  { id: "bossHunter",  tier: 3, minRound: 30, name: "보스 사냥꾼 +40%", desc: "보스에게 가하는 피해 +40%", icon: "⚔", add: { bossDmg: 0.40 } },
+  { id: "trinity",     tier: 3, minRound: 30, name: "삼위일체", desc: "같은 타일에 말 3개 쌓인 타일 atk +50%", icon: "✨", add: { trinity: 0.50 } },
+  { id: "knightFury",  tier: 3, minRound: 30, name: "나이트의 광기", desc: "나이트 스턴 확률 ×2, 지속 +50%", icon: "♞", add: { knightStunMult: 1.0, knightStunDur: 0.5 } },
+  { id: "queenStorm",  tier: 3, minRound: 30, name: "퀸의 폭풍", desc: "퀸 타겟 +2 (5→7), aps +25%", icon: "♛", add: { queenExtraTargets: 2, queenAps: 0.25 } },
+  { id: "haggler",     tier: 3, minRound: 30, name: "흥정의 달인", desc: "카드 판매 환불 100% (정가 환불)", icon: "💎", add: { sellRefund: 0.50 } },
+  { id: "lastShot",    tier: 3, minRound: 30, name: "마지막 한 발 +60%", desc: "적 HP ≤ 30%일 때 데미지 +60%", icon: "💀", add: { execDmg: 0.60 } },
+  { id: "royalty",     tier: 3, minRound: 30, name: "로열티 +50%", desc: "라운드 클리어 보너스 +50%", icon: "👑", add: { royaltyBonus: 0.50 } },
+  // ===== T4 (R40+) — 게임체인저 =====
+  { id: "bossExecutor",tier: 4, minRound: 40, name: "보스 처형자", desc: "보스 HP ≤ 50%일 때 보스 피해 +100%", icon: "💀", add: { bossExecDmg: 1.00 } },
+  { id: "infiniteHand",tier: 4, minRound: 40, name: "무한 손패", desc: "캐릭터 카드 뽑기 +2장 (3→5, 현자와 합치면 6)", icon: "🃏", add: { drawExtra: 2 } },
+  { id: "evolveNow",   tier: 4, minRound: 40, name: "진화 가속", desc: "즉시 임의의 말 1개를 다음 등급으로 진화 (1회)", icon: "🌟", instant: "evolveOne", once: true },
 ];
 function openRewardModal() {
   // 자동 카운트다운이 떠 있으면 즉시 취소 (안전망)
@@ -4067,7 +4203,10 @@ function openRewardModal() {
   // 3 random rewards
   state.cardRand = (state.cardRand * 1664525 + 1013904223) >>> 0;
   const rand = mulberry32(state.cardRand);
-  const pool = [...REWARDS].sort(() => rand() - 0.5);
+  const pool = REWARDS
+    .filter(r => state.round >= (r.minRound || 0))
+    .filter(r => !(r.once && state.acquiredAugments?.some(a => a.id === r.id)))
+    .sort(() => rand() - 0.5);
   const picks = pool.slice(0, 3);
   const modal = $("#reward-modal");
   const list = $("#reward-list");
@@ -4139,6 +4278,26 @@ function applyReward(r) {
   }
   if (r.instant === "coin10") state.coin += 10;
   if (r.instant === "life3") state.life = Math.min(999, state.life + 3);
+  if (r.instant === "evolveOne") {
+    // 임의의 진화 가능한 말 1개를 다음 등급으로
+    const candidates = [];
+    for (let y = 0; y < GRID; y++)
+      for (let x = 0; x < GRID; x++) {
+        const t = tileAt(x, y);
+        if (t.piece && PIECE_NEXT[t.piece.type]) candidates.push({ x, y, tile: t });
+      }
+    if (candidates.length > 0) {
+      const c = candidates[Math.floor(Math.random() * candidates.length)];
+      const next = PIECE_NEXT[c.tile.piece.type];
+      c.tile.piece = { type: next, count: 1 };
+      markNetworksDirty();
+      renderTile(c.x, c.y);
+      sfx("levelup");
+      toast(`✨ 진화: (${c.x+1},${c.y+1}) → ${PIECE_NAMES[next]}`, "success");
+    } else {
+      toast("진화 가능한 말이 없습니다", "error");
+    }
+  }
   // 획득 증강 기록 (즉시 효과는 일회성이라 제외)
   if (r.add) {
     if (!state.acquiredAugments) state.acquiredAugments = [];
@@ -4159,12 +4318,14 @@ function bossPatternName(pattern) {
   if (pattern === "teleport") return "텔레포트";
   if (pattern === "summoner") return "소환";
   if (pattern === "terrainShift") return "지형 변이";
+  if (pattern === "crystalRegen") return "결정 재생";
   return "표준";
 }
 function bossSvgRef(pattern) {
   if (pattern === "teleport") return "#m-boss-teleport";
   if (pattern === "summoner") return "#m-boss-summoner";
   if (pattern === "terrainShift") return "#m-boss-terrain";
+  if (pattern === "crystalRegen") return "#m-boss-crystal";
   return "#m-boss";
 }
 
@@ -4185,6 +4346,7 @@ function applyBossTerrainShift() {
   for (let i = 0; i < n; i++) {
     const c = candidates[i];
     const t = tileAt(c.x, c.y);
+    if (t.sanctuary > 0) continue;
     t.terrains = { sky:0, ground:0, underground:0 };
     renderTile(c.x, c.y);
   }
@@ -4193,8 +4355,37 @@ function applyBossTerrainShift() {
     return;
   }
   markNetworksDirty();
-  renderNetworkDots();
+  scheduleTerrainVisualRefresh();
   showBanner(`🌪 보스 지형 붕괴: 지형 ${n}칸 삭제`, true);
+}
+function applyChaosSanctuary(rand) {
+  const beforeTags = activeBiomeTags();
+  const candidates = [];
+  for (let y = 0; y < GRID; y++) {
+    for (let x = 0; x < GRID; x++) {
+      if (isPath(x, y)) continue;
+      const tile = tileAt(x, y);
+      if (tile.piece || TERRAIN_ORDER.some(t => tile.terrains[t] > 0)) candidates.push({ x, y });
+    }
+  }
+  for (let i = candidates.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+  }
+  let blessed = 0;
+  for (const c of candidates.slice(0, 8)) {
+    const tile = tileAt(c.x, c.y);
+    tile.sanctuary = Math.max(tile.sanctuary || 0, 2);
+    blessed++;
+    renderTile(c.x, c.y);
+  }
+  if (blessed) {
+    markNetworksDirty();
+    scheduleTerrainVisualRefresh();
+    announceNewBiomeTags(beforeTags);
+  }
+  showBanner(`🛡 성역: ${blessed}칸 보호`, false);
+  toast(`성역 축복: ${blessed}칸이 2라운드 동안 보호됩니다`, "success", 2600);
 }
 
 // =====================================================================
@@ -4372,6 +4563,9 @@ function sellTile(x, y) {
   } else {
     // 2) 캐릭터가 없으면 그 타일의 지형 전부 제거
     const totalTerrain = TERRAIN_ORDER.reduce((s,k)=>s + t.terrains[k], 0);
+    if (t.sanctuary > 0) {
+      return toast("성역 보호 중인 지형은 판매할 수 없어요", "error");
+    }
     if (totalTerrain > 0 && isInitialTerrainTile(x, y)) {
       return toast("처음 깔린 기본 지형은 판매할 수 없어요", "error");
     }
@@ -4387,7 +4581,7 @@ function sellTile(x, y) {
   if (terrainChanged) markNetworksDirty();
   saveGame();
   renderTile(x, y);
-  if (terrainChanged) renderNetworkDots();
+  if (terrainChanged) scheduleTerrainVisualRefresh();
   renderStats();
   renderPlacementHints();
   refreshButtons();
@@ -4583,6 +4777,13 @@ function announceNewBiomeTags(beforeTags) {
   const names = [...new Set(added.map(t => t.split(":")[0]))].map(t => TERRAIN_SET_NAMES[t] || t).join(" · ");
   toast(`✨ 지형 진화: ${names}`, "success", 3800);
 }
+function _chaosBlessingFactor(kind) {
+  if (!state || state.chaosBlessing !== kind) return 0;
+  if ((state.chaosBlessingRounds || 0) <= 0) return 0;
+  if (kind === "abundance") return 0.30;
+  if (kind === "dawn") return 0.25;
+  return 0;
+}
 function getUnitStats(x, y) {
   const tile = tileAt(x, y);
   if (!tile.piece) return null;
@@ -4596,7 +4797,7 @@ function getUnitStats(x, y) {
   let burnChance = 0;
   let burnPower = 0;
 
-  const terrainBoostAll = 1 + (state.mods?.terrainBoost || 0);
+  const terrainBoostAll = 1 + (state.mods?.terrainBoost || 0) + _chaosBlessingFactor("abundance");
   const skyBoost    = terrainBoostAll * (1 + (state.mods?.skyBoost    || 0));
   const groundBoost = terrainBoostAll * (1 + (state.mods?.groundBoost || 0));
   const ugBoost     = terrainBoostAll * (1 + (state.mods?.ugBoost     || 0));
@@ -4666,6 +4867,9 @@ function getUnitStats(x, y) {
   // 라운드 보상 전역 + 말별 수정치
   if (state.mods) {
     if (state.mods.atkAll)  atk *= 1 + state.mods.atkAll;
+    // 새벽의 기운 — 모든 말 +25% atk (1라운드)
+    const _dawn = _chaosBlessingFactor("dawn");
+    if (_dawn) atk *= 1 + _dawn;
     if (state.mods.apsAll)  aps *= 1 + state.mods.apsAll;
     if (state.mods.critAll) crit += state.mods.critAll;
     // 말별 강화
@@ -4676,6 +4880,8 @@ function getUnitStats(x, y) {
     if (pAtk) atk *= 1 + pAtk;
     if (pAps) aps *= 1 + pAps;
     if (pRng) range *= 1 + pRng;
+    // 퀸의 폭풍: 퀸 aps +25%
+    if (p === "queen" && state.mods.queenAps) aps *= 1 + state.mods.queenAps;
   }
 
   return {
@@ -4707,6 +4913,42 @@ function collectUnits() {
         v.atk *= 1.25;
         v.aps *= 1.10;
         v.crit = Math.min(0.9, v.crit + 0.05);
+      }
+    }
+  }
+  // ===== 시너지 증강 적용 (T3+) =====
+  if (list.length > 0 && state.mods) {
+    const types = new Set(list.map(u => u.piece));
+    const has6 = types.size === 6;
+    const allSame = types.size === 1;
+    const cm = state.mods.chessMaster, st = state.mods.singleTribe;
+    const bn = state.mods.bigNetwork, tri = state.mods.trinity;
+    if (cm || st || bn || tri) {
+      ensureNetworks();
+      for (const u of list) {
+        if (cm && has6) u.atk *= 1 + cm;
+        if (st && allSame) u.atk *= 1 + st;
+        if (tri) {
+          const tile = tileAt(u.tileX, u.tileY);
+          if (tile.piece && tile.piece.count === 3) u.atk *= 1 + tri;
+        }
+        if (bn) {
+          // 가장 큰 연결망 크기 찾기
+          let maxNet = 0;
+          const tile = tileAt(u.tileX, u.tileY);
+          for (const t of TERRAIN_ORDER) {
+            if (tile.terrains[t] > 0) {
+              const map = state._networks?.[t];
+              if (!map) continue;
+              const id = map.get(`${u.tileX},${u.tileY}`);
+              if (id != null) {
+                const grp = state._networkGroups?.[t]?.[id];
+                if (grp) maxNet = Math.max(maxNet, grp.length);
+              }
+            }
+          }
+          if (maxNet >= 5) u.atk *= 1 + bn;
+        }
       }
     }
   }
@@ -4793,6 +5035,24 @@ function refreshBattleState() {
 function startRound() {
   if (state.inBattle) return;
   if (state.life <= 0) return toast("게임 오버! 새 지도로 다시 시작", "error");
+  // === A+B 카오스 모달 게이트 ===
+  // 이번 라운드가 R30+ 보스 라운드 + chaosBossIdx 짝수 + 아직 결정 안 했으면 모달 띄우고 대기
+  try {
+    const r = state.round;
+    const isBossR = r >= 35 ? ((r - 35) % 10 === 0) : (r % 5 === 0);
+    if (r >= 30 && isBossR && !state.pendingChaosChoice) {
+      const idx = state.chaosBossIdx || 0;
+      if (idx % 2 === 0) {
+        cancelAutoCountdown();
+        showPreEventBanner("차원의 시련이 시작됩니다…");
+        setTimeout(() => openEventModal("chaos_choice", () => {
+          // 결정 후 다시 startRound 호출
+          startRound();
+        }), 600);
+        return;
+      }
+    }
+  } catch (_) {}
   cancelAutoCountdown();
   clearPendingPlace();
   state.selectedCardKey = null;
@@ -4825,7 +5085,11 @@ function startRound() {
   const count = rInt(rand, mnC, mxC);
   const monsters = [];
   let bossPlaced = 0;
-  let bossTarget = (isTutorialWeak ? 0 : (state.round % 15 === 0 ? 2 : (state.round % 5 === 0 ? 1 : 0)));
+  const bossRound = state.round >= 35 ? ((state.round - 35) % 10 === 0) : (state.round % 5 === 0);
+  let bossTarget = 0;
+  if (!isTutorialWeak && bossRound) {
+    bossTarget = (state.round < 35 && state.round % 15 === 0) ? 2 : 1;
+  }
   const bossSlots = new Set();
   // 균열 이벤트: 보스 추가 (저장된 카운트 적용)
   if (state.gambit_extraBoss && bossTarget > 0) {
@@ -4837,58 +5101,66 @@ function startRound() {
   state.bossesSpawnedThisRound = 0;
   state._bossBannerShown = false;
   state.cleanCleared = true;
+  for (const tile of state.tiles) {
+    if (tile.sanctuary > 0) tile.sanctuary--;
+    if (tile.sanctuary <= 0) delete tile.sanctuary;
+  }
   state.roundKills = 0;
   state.roundCoinGain = 0;
   renderCombatRail();
-  // ===== 카오스 이벤트: R30+ 5라운드마다 50/50 확률 =====
-  if (state.round >= 30 && state.round % 5 === 0) {
+  // ===== A+B 카오스 시스템: R30+ 보스 라운드마다 변동 =====
+  if (state.round >= 30 && bossTarget > 0) {
     state.cardRand = (state.cardRand * 1664525 + 1013904223) >>> 0;
     const rand = mulberry32(state.cardRand);
-    if (rand() < 0.5) {
-      // 카오스 A: 랜덤 기물 1개 사라짐
-      const piecedTiles = [];
-      for (let yy = 0; yy < GRID; yy++)
-        for (let xx = 0; xx < GRID; xx++) {
-          const t = tileAt(xx, yy);
-          if (t.piece) piecedTiles.push({ x: xx, y: yy });
+    const idx = state.chaosBossIdx || 0;
+    if (state.pendingChaosChoice) {
+      // ── 사용자 선택 결과 적용 ──
+      const choice = state.pendingChaosChoice;
+      state.pendingChaosChoice = null;
+      if (choice === "stable") {
+        applyChaosSanctuary(rand);
+      } else if (choice === "turbulence") {
+        // 지형 7개 변환 (격동) — 코인 보너스는 모달 시점에 이미 +50
+        const candidates = [];
+        for (let yy = 0; yy < GRID; yy++)
+          for (let xx = 0; xx < GRID; xx++) {
+            if (isPath(xx, yy)) continue;
+            candidates.push({ x: xx, y: yy });
+          }
+        for (let i = candidates.length - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
         }
-      if (piecedTiles.length > 0) {
-        const pick = piecedTiles[Math.floor(rand() * piecedTiles.length)];
-        const t = tileAt(pick.x, pick.y);
-        const lostName = PIECE_NAMES[t.piece.type] || "기물";
-        t.piece = null;
+        const pickN = Math.min(7, candidates.length);
+        let changed = 0;
+        for (let i = 0; i < pickN; i++) {
+          const c = candidates[i];
+          const t = tileAt(c.x, c.y);
+          if (t.sanctuary > 0) continue;
+          t.terrains = { sky:0, ground:0, underground:0 };
+          const newT = TERRAIN_ORDER[Math.floor(rand() * TERRAIN_ORDER.length)];
+          t.terrains[newT] = 1;
+          renderTile(c.x, c.y);
+          changed++;
+        }
         markNetworksDirty();
-        renderTile(pick.x, pick.y);
-        showBanner(`💥 카오스: ${lostName} 사라짐`, true);
-        toast(`카오스: (${pick.x+1},${pick.y+1}) ${lostName} 1개 사라짐`, "error");
+        scheduleTerrainVisualRefresh();
+        showBanner(`🌪 격동 — 지형 ${changed}곳 변환`, true);
+      } else if (choice === "slowtime") {
+        // 이번 라운드만 몬스터 속도 -25% — 아래 monster spawn에서 처리
+        state.chaosBlessing = "slowtime";
+        state.chaosBlessingRounds = 1;
+        showBanner("🌫 시간 정지 — 적 속도 -25%", false);
       }
+      state.chaosBossIdx = idx + 1;
+    } else if (idx % 2 === 1) {
+      // ── 홀수 idx: 자동 긍정 (R35, R55, R75…) ──
+      applyChaosBlessing(rand);
+      state.chaosBossIdx = idx + 1;
     } else {
-      // 카오스 B: 랜덤 비-경로 타일 7개의 지형을 랜덤 교체
-      const candidates = [];
-      for (let yy = 0; yy < GRID; yy++)
-        for (let xx = 0; xx < GRID; xx++) {
-          if (isPath(xx, yy)) continue;
-          candidates.push({ x: xx, y: yy });
-        }
-      // shuffle
-      for (let i = candidates.length - 1; i > 0; i--) {
-        const j = Math.floor(rand() * (i + 1));
-        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
-      }
-      const pickN = Math.min(7, candidates.length);
-      for (let i = 0; i < pickN; i++) {
-        const c = candidates[i];
-        const t = tileAt(c.x, c.y);
-        // 새 랜덤 지형으로 교체 (기존 지형 제거)
-        t.terrains = { sky:0, ground:0, underground:0 };
-        const newT = TERRAIN_ORDER[Math.floor(rand() * TERRAIN_ORDER.length)];
-        t.terrains[newT] = 1;
-        renderTile(c.x, c.y);
-      }
-      markNetworksDirty();
-      renderNetworkDots();
-      showBanner("🌪 카오스: 지형 7곳 변화", true);
-      toast("카오스: 지형 7개 랜덤 교체", "error");
+      // ── 짝수 idx인데 모달이 없으면(예외 케이스): 기본 성역 ──
+      applyChaosSanctuary(rand);
+      state.chaosBossIdx = idx + 1;
     }
   }
 
@@ -4914,10 +5186,13 @@ function startRound() {
     const mt = MONSTER_TYPES[type];
     let hp = isTutorialWeak ? 1 : roundBaseHP(state.round) * mt.hpMul;
     if (gambitDoubleHalf) hp *= 0.5;
+    // 시간 정지 적용 (slowtime): 이번 라운드만 몬스터 속도 -25%
+    const _slowMul = (state.chaosBlessing === "slowtime" && (state.chaosBlessingRounds || 0) > 0) ? 0.75 : 1;
+    const _spd = mt.speed * _slowMul;
     const monster = {
       id: `m${state.round}_${i}`,
       type, maxHP: hp, hp,
-      speed: mt.speed, baseSpeed: mt.speed,
+      speed: _spd, baseSpeed: _spd,
       pathIdx: -i * 0.55,
       dead: false, reachedEnd: false, stunTimer: 0,
       modifiers: {},
@@ -4928,7 +5203,9 @@ function startRound() {
       monster.modifiers = { enrage: true, stunResist: true, kbResist: true };
       // 라운드별 패턴 부여
       const r = state.round;
-      const pat = (r >= 25) ? combatRand() < 0.5 ? "summoner" : "terrainShift"
+      const rollPat = combatRand();
+      const pat = (r >= 35) ? (rollPat < 0.34 ? "crystalRegen" : (rollPat < 0.67 ? "summoner" : "terrainShift"))
+                : (r >= 25) ? (rollPat < 0.5 ? "summoner" : "terrainShift")
                 : (r >= 20) ? "terrainShift"
                 : (r >= 15) ? "summoner"
                 : (r >= 10) ? "teleport"
@@ -4940,6 +5217,11 @@ function startRound() {
       // 패턴별 데이터 초기화
       if (pat === "summoner") monster.lastSummon = performance.now();
       if (pat === "teleport") monster.usedTeleport = false;
+      if (pat === "crystalRegen") {
+        monster.crystalAt = performance.now() + 5000;
+        monster.crystalizedUntil = 0;
+        monster.usedCrystalRegen = false;
+      }
     } else if (type === "tank") {
       monster.modifiers = { kbResist: true };
     }
@@ -4994,12 +5276,15 @@ function endRound(success) {
     meta.totalKills += killedThisRound;
     meta.totalBossKills += bossesThisRound;
     if (!success && state.life <= 0) {
-      // 게임 오버 — 왕관 지급 (도달 라운드의 1/3)
-      const earned = Math.floor(state.round / 3);
-      meta.crowns += earned;
       meta.gamesPlayed += 1;
+      // 왕관은 랭킹전(일일 시드 + 검증 통과)일 때만 지급
+      const isRanked = !!state?.dailySeedKey && (typeof isCurrentDailyRun === "function") && isCurrentDailyRun();
+      if (isRanked) {
+        const earned = Math.floor(state.round / 3);
+        meta.crowns += earned;
+      }
       submitDailyLeaderboard(Math.max(0, state.round - 1));
-      if (earned > 0) setTimeout(() => toast(`👑 왕관 +${earned} 획득`, "success"), 600);
+      // (왕관 토스트는 일일 랭킹 토스트와 충돌해서 제거 — 통계는 정상 적립)
     }
     saveMeta(meta);
   } catch (_) {}
@@ -5040,6 +5325,11 @@ function endRound(success) {
   }
   state.monsters = [];
   state.unitsCache = null;
+  // 카오스 축복 라운드 카운트다운
+  if ((state.chaosBlessingRounds || 0) > 0) {
+    state.chaosBlessingRounds--;
+    if (state.chaosBlessingRounds <= 0) state.chaosBlessing = null;
+  }
   if (success) {
     const bonus = endOfRoundBonus(state.round);
     state.coin += bonus;
@@ -5164,6 +5454,30 @@ function simulate(dt) {
     if (m.type === "boss" && m.bossPattern === "terrainShift" && !m.terrainShiftDone) {
       m.terrainShiftDone = true;
       applyBossTerrainShift();
+    }
+    if (m.type === "boss" && m.bossPattern === "crystalRegen") {
+      if (!m.usedCrystalRegen && now >= (m.crystalAt || 0)) {
+        m.usedCrystalRegen = true;
+        m.crystalizedUntil = now + 1800;
+        m.speedBeforeCrystal = m.speed;
+        m.speed = 0;
+        m.stunTimer = 0;
+        m.hp = m.maxHP;
+        m.modifiers = { ...(m.modifiers || {}), crystalImmune: true, stunResist: true, kbResist: true };
+        m._el?.classList.add("boss-crystalized");
+        showBanner("💎 보스 결정화: 체력 재생", true);
+        toast("결정화 보스가 멈춰서 체력을 회복했습니다", "error", 2200);
+        sfx("boss");
+      }
+      if (m.crystalizedUntil && now < m.crystalizedUntil) {
+        continue;
+      }
+      if (m.crystalizedUntil && now >= m.crystalizedUntil) {
+        m.crystalizedUntil = 0;
+        m.speed = Math.max(m.baseSpeed * 1.08, m.speedBeforeCrystal || m.baseSpeed);
+        if (m.modifiers) delete m.modifiers.crystalImmune;
+        m._el?.classList.remove("boss-crystalized");
+      }
     }
     // 보스 격노
     if (m.modifiers?.enrage && m.hp / m.maxHP <= 0.35 && !m._enraged) {
@@ -5336,8 +5650,9 @@ function performAttack(u, targets) {
 
   let hitTargets = [];
   if (u.attackType === "multi") {
-    // 퀸: 광범위 파괴 — 사거리 안 최대 5명 동시 타격
-    hitTargets = targets.slice(0, 5);
+    // 퀸: 광범위 파괴 — 기본 5명 + queenExtraTargets
+    const _qTgt = 5 + (state.mods?.queenExtraTargets || 0);
+    hitTargets = targets.slice(0, _qTgt);
   } else if (u.attackType === "line") {
     // 룩: 상하좌우 직선만 — primary 축(수평/수직) 결정 후 같은 축의 적 관통
     const primary = targets[0];
@@ -5403,9 +5718,11 @@ function performAttack(u, targets) {
       const resistMul = (t.m.modifiers && t.m.modifiers.stunResist) ? 0.5 : 1;
       const ccMul = bossCCMul(t.m);
       // 주 타겟: 15% 확률 · 0.25초
-      if (combatRand() < 0.15 * resistMul * ccMul) {
+      const _knFuryMul = 1 + (state.mods?.knightStunMult || 0);
+      const _knFuryDur = 1 + (state.mods?.knightStunDur || 0);
+      if (combatRand() < 0.15 * _knFuryMul * resistMul * ccMul) {
         const dr = Math.pow(0.65, t.m.stunsReceived || 0);
-        const dur = 0.25 * ccMul * dr;
+        const dur = 0.25 * _knFuryDur * ccMul * dr;
         if (dur > 0.03) {
           t.m.stunTimer = Math.max(t.m.stunTimer, dur);
           t.m.stunsReceived = (t.m.stunsReceived || 0) + 1;
@@ -5419,9 +5736,11 @@ function performAttack(u, targets) {
           const rm = (other.modifiers && other.modifiers.stunResist) ? 0.5 : 1;
           const otherCC = bossCCMul(other);
           // 스플래시: 30% 확률 · 0.2초
-          if (combatRand() < 0.30 * rm * otherCC) {
+          const _knFuryMul2 = 1 + (state.mods?.knightStunMult || 0);
+          const _knFuryDur2 = 1 + (state.mods?.knightStunDur || 0);
+          if (combatRand() < 0.30 * _knFuryMul2 * rm * otherCC) {
             const dr2 = Math.pow(0.65, other.stunsReceived || 0);
-            const dur2 = 0.2 * otherCC * dr2;
+            const dur2 = 0.2 * _knFuryDur2 * otherCC * dr2;
             if (dur2 > 0.03) {
               other.stunTimer = Math.max(other.stunTimer, dur2);
               other.stunsReceived = (other.stunsReceived || 0) + 1;
@@ -5445,16 +5764,30 @@ function performAttack(u, targets) {
         }
       }
     }
-    // 룩: 넉백 — 증강(rookKnockback)이 있을 때만 발동
-    if (u.attackType === "line" && rookKnockback > 0) {
-      const kbResist = (t.m.modifiers && t.m.modifiers.kbResist) ? 0.4 : 1;
-      // 보스 면역 램프 적용
-      const kbCoef = bossCCMul(t.m);
-      t.m.pathIdx = Math.max(-1, t.m.pathIdx - rookKnockback * kbResist * kbCoef);
-      if (u.track) u.knockbackCount++;
+    // 룩: 넉백 — 몹당 0.5초 쿨다운 + 보스 면역 램프 + 저항
+    if (u.attackType === "line" && rookKnockback > 0 && !t.m.modifiers?.crystalImmune) {
+      const _now = performance.now();
+      const _kbReady = !t.m._kbImmuneUntil || _now >= t.m._kbImmuneUntil;
+      if (_kbReady) {
+        const kbResist = (t.m.modifiers && t.m.modifiers.kbResist) ? 0.4 : 1;
+        const kbCoef = bossCCMul(t.m);
+        t.m.pathIdx = Math.max(-1, t.m.pathIdx - rookKnockback * kbResist * kbCoef);
+        // 다음 넉백까지 쿨다운 (보스: 0.6s, 일반/탱커: 0.3s)
+        const cdMs = (t.m.type === "boss") ? 600 : 300;
+        t.m._kbImmuneUntil = _now + cdMs;
+        if (u.track) u.knockbackCount++;
+      }
     }
 
-    t.m.hp -= dmg;
+    // 보스 사냥꾼 / 처형자 / 마지막 한 발 데미지 보정
+    if (state.mods) {
+      if (t.m.type === "boss") {
+        if (state.mods.bossDmg) dmg *= 1 + state.mods.bossDmg;
+        if (state.mods.bossExecDmg && t.m.hp / t.m.maxHP <= 0.5) dmg *= 1 + state.mods.bossExecDmg;
+      }
+      if (state.mods.execDmg && t.m.hp / t.m.maxHP <= 0.30) dmg *= 1 + state.mods.execDmg;
+    }
+    if (!t.m.modifiers?.crystalImmune) t.m.hp -= dmg;
     if ((u.burnChance || 0) > 0 && combatRand() < u.burnChance) {
       const dps = u.atk * (u.burnPower || 0.12);
       t.m.burnDps = Math.max(t.m.burnDps || 0, dps);
@@ -5875,6 +6208,7 @@ function renderTile(x, y) {
   }
   else el.style.removeProperty("--terrain-bg");
   let inner = "";
+  if (tile.sanctuary > 0) inner += `<span class="terrain-pip sanctuary">🛡</span>`;
   if (tile.piece) {
     const name = PIECE_NAMES[tile.piece.type];
     if (name.length >= 3) el.classList.add("small-label");
@@ -5883,10 +6217,12 @@ function renderTile(x, y) {
       + `<div class="piece-label">${name}</div></div>`;
     if (tile.piece.count > 1) inner += `<div class="count-badge">×${tile.piece.count}</div>`;
   }
-  for (const t of TERRAIN_ORDER) {
-    if (tile.terrains[t] > 0) {
-      inner += `<span class="terrain-pip ${t}">${TERRAIN_ICON[t]}</span>`;
-      break;
+  if (!(tile.sanctuary > 0)) {
+    for (const t of TERRAIN_ORDER) {
+      if (tile.terrains[t] > 0) {
+        inner += `<span class="terrain-pip ${t}">${TERRAIN_ICON[t]}</span>`;
+        break;
+      }
     }
   }
   el.innerHTML = inner;
@@ -6020,7 +6356,22 @@ function renderPlacementHints() {
   }
 }
 
+function _updateDailyBadge() {
+  try {
+    const el = document.getElementById("daily-badge");
+    const txtEl = document.getElementById("daily-badge-text");
+    if (!el) return;
+    if (state?.dailySeedKey && typeof isCurrentDailyRun === "function" && isCurrentDailyRun()) {
+      el.classList.remove("hidden");
+      const isToday = (typeof isTodayDailyRun === "function") && isTodayDailyRun();
+      if (txtEl) txtEl.textContent = isToday ? "랭킹전" : `랭킹전 ${state.dailySeedKey}`;
+    } else {
+      el.classList.add("hidden");
+    }
+  } catch (_) {}
+}
 function renderStats() {
+  _updateDailyBadge();
   $("#stat-round").textContent = state.round;
   $("#stat-coin").textContent = state.coin;
   $("#stat-life").textContent = state.life;
@@ -6161,6 +6512,7 @@ function renderMonsters() {
       cl.toggle("stun", m.stunTimer > 0);
       m._stateLast = stateKey;
     }
+    m._el.classList.toggle("boss-crystalized", !!m.crystalizedUntil);
   }
 }
 
@@ -6946,9 +7298,16 @@ function openSeedModal() {
   setTimeout(() => $("#seed-input").focus(), 50);
 }
 function confirmStartDailyRank() {
+  // 닉네임 자동 저장 (입력창 값이 있으면)
+  try {
+    const inputEl = document.getElementById("ranking-name-input");
+    if (inputEl && inputEl.value.trim()) {
+      setPlayerName(inputEl.value);
+    }
+  } catch (_) {}
   const dateKey = getKstDateKey();
   const seed = dailySeedForDate(dateKey);
-  const ok = window.confirm(`일일랭크를 시작합니다.\n현재까지 진행 사항은 초기화됩니다.\n\n오늘 시드: ${formatSeed(seed)}\n시작할까요?`);
+  const ok = window.confirm(`일일랭크를 시작합니다.\n현재까지 진행 사항은 초기화됩니다.\n\n오늘 시드: ${formatSeed(seed)}\n닉네임: ${getPlayerName()}\n\n시작할까요?`);
   if (!ok) return;
   $("#ranking-modal")?.classList.add("hidden");
   $("#seed-modal")?.classList.add("hidden");
@@ -7003,9 +7362,15 @@ function calculateDailyScore(reachedRound) {
   return Math.max(0, Math.floor(roundScore + hpScore + coinScore + killScore));
 }
 function isCurrentDailyRun() {
+  // dailySeedKey가 가리키는 날짜의 시드와 현재 시드가 일치하기만 하면 OK
+  // (다중일 세션도 허용 — 예: 어제 시작 → 오늘 R75 도달)
   if (!state?.dailySeedKey) return false;
-  const today = getKstDateKey();
-  return state.dailySeedKey === today && formatSeed(state.seed) === formatSeed(dailySeedForDate(today));
+  return formatSeed(state.seed) === formatSeed(dailySeedForDate(state.dailySeedKey));
+}
+function isTodayDailyRun() {
+  // 오늘자 일일 시드인지 (어제·이전 시드면 false)
+  if (!state?.dailySeedKey) return false;
+  return state.dailySeedKey === getKstDateKey() && isCurrentDailyRun();
 }
 function currentPlayTimeSec() {
   return Math.max(0, Math.floor((Date.now() - (state?.gameStartedAt || Date.now())) / 1000));
@@ -7033,17 +7398,35 @@ function supabaseReady() {
 }
 async function supabaseRpc(fn, payload = {}) {
   if (!supabaseReady()) throw new Error("Supabase 설정 없음");
-  const res = await fetch(`${SUPABASE_URL.replace(/\/+$/, "")}/rest/v1/rpc/${fn}`, {
-    method: "POST",
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      "Content-Type": "application/json;charset=utf-8",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return await res.json();
+  const url = `${SUPABASE_URL.replace(/\/+$/, "")}/rest/v1/rpc/${fn}`;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json;charset=utf-8",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (netErr) {
+    console.error("[supabase-rpc] network error:", fn, netErr);
+    throw new Error(`network: ${netErr?.message || netErr}`);
+  }
+  if (!res.ok) {
+    let body = "";
+    try { body = await res.text(); } catch (_) {}
+    console.error(`[supabase-rpc] HTTP ${res.status} ${fn} url=${url}`, body, "payload=", payload);
+    throw new Error(`HTTP ${res.status}: ${body || res.statusText}`);
+  }
+  try {
+    return await res.json();
+  } catch (parseErr) {
+    console.error(`[supabase-rpc] parse error ${fn}:`, parseErr);
+    throw parseErr;
+  }
 }
 async function fetchDailyLeaderboard(dateKey = getKstDateKey()) {
   const localRows = (() => {
@@ -7099,17 +7482,32 @@ async function fetchMyRankingHistory() {
   }
 }
 async function submitDailyLeaderboard(reachedRound) {
-  if (!state?.dailySeedKey) return;
-  if (!isCurrentDailyRun()) {
-    toast("오늘 일일시드 기록만 랭킹에 올라갑니다", "error");
+  if (!state?.dailySeedKey) {
+    console.log("[daily-rank] 일일 시드 모드 아님 — 제출 스킵");
     return;
   }
+  if (!isCurrentDailyRun()) {
+    console.warn("[daily-rank] 시드 불일치 — 변조 가능성", {
+      stored: state.dailySeedKey,
+      currentSeed: formatSeed(state.seed),
+      expectedSeed: formatSeed(dailySeedForDate(state.dailySeedKey)),
+    });
+    toast("일일 시드 검증 실패 — 랭킹 전송 안 됨", "error", 3000);
+    return;
+  }
+  const isToday = isTodayDailyRun();
   const score = calculateDailyScore(reachedRound);
+  // 시드는 dailySeedKey로부터 결정론적으로 재계산 (state.seed drift 방지)
+  const canonicalSeed = formatSeed(dailySeedForDate(state.dailySeedKey));
+  const liveSeed = formatSeed(state.seed);
+  if (canonicalSeed !== liveSeed) {
+    console.warn("[daily-rank] seed drift detected", { dateKey: state.dailySeedKey, liveSeed, canonicalSeed });
+  }
   const entry = {
     game: "chess-defense",
     version: "index-v2",
     dateKey: state.dailySeedKey,
-    seed: formatSeed(state.seed),
+    seed: canonicalSeed,
     score,
     round: reachedRound,
     hp: Math.max(0, state.life || 0),
@@ -7119,9 +7517,19 @@ async function submitDailyLeaderboard(reachedRound) {
     name: getPlayerName(),
     finishedAt: new Date().toISOString(),
   };
+  console.info("[daily-rank] submitting:", {
+    p_play_date: entry.dateKey,
+    p_daily_seed: entry.seed,
+    today_kst: getKstDateKey(),
+    today_seed: formatSeed(dailySeedForDate(getKstDateKey())),
+    isToday,
+  });
   saveLocalDailyRank(entry);
   saveLocalDailyHistory(entry);
-  if (!supabaseReady()) return toast("일일 기록 저장됨", "success");
+  if (!supabaseReady()) {
+    const dayLabel = isToday ? "오늘" : entry.dateKey;
+    return toast(`💾 ${dayLabel} 기록 로컬 저장됨 (${score.toLocaleString()}점)`, "success", 3000);
+  }
   try {
     await supabaseRpc("submit_daily_score", {
       p_play_date: entry.dateKey,
@@ -7135,9 +7543,12 @@ async function submitDailyLeaderboard(reachedRound) {
       p_play_time_sec: entry.playTimeSec,
       p_client_version: entry.version,
     });
-    toast("일일 랭킹 전송됨", "success");
-  } catch (_) {
-    toast("온라인 랭킹 전송 실패 · 로컬 기록 저장", "error");
+    const dayLabel = isToday ? "오늘" : `${entry.dateKey}`;
+    toast(`🏆 ${dayLabel} 랭킹 전송됨 (${score.toLocaleString()}점)`, "success", 3000);
+  } catch (err) {
+    console.error("[daily-rank] supabase 전송 실패:", err, "entry=", entry);
+    const msg = err?.message ? String(err.message).slice(0, 80) : "unknown";
+    toast(`온라인 전송 실패 (${msg}) · 로컬 저장됨`, "error", 4500);
   }
 }
 function formatRankTime(iso) {
