@@ -3212,6 +3212,7 @@ body {
       <button class="btn ghost active" id="btn-ranking-today">오늘 랭킹</button>
       <button class="btn ghost" id="btn-ranking-history">내 기록</button>
     </div>
+    <button class="btn success" id="btn-start-daily-rank" style="width:100%; min-height:44px; margin-bottom:8px;">🏁 랭크시작</button>
     <div class="ranking-status" id="ranking-status"></div>
     <div class="ranking-list" id="ranking-list"></div>
     <div class="ranking-actions">
@@ -3238,10 +3239,8 @@ body {
 
     <div style="display:flex; gap:6px;">
       <button class="btn ghost" id="btn-random-seed" style="flex:1">🎲 랜덤</button>
-      <button class="btn ghost" id="btn-daily-seed" style="flex:1">☀ 일일</button>
       <button class="btn primary" id="btn-start-with-seed" style="flex:2">▶ 이 시드로 시작</button>
     </div>
-    <div id="daily-seed-hint" style="margin-top:7px; font-size:10.5px; color:var(--ink-mute); text-align:center;"></div>
     <button class="btn ghost" id="seed-modal-close" style="width:100%; margin-top:8px; font-size:11px;">취소</button>
   </div>
 </div>
@@ -6848,12 +6847,17 @@ function toggleAuto() {
 function openSeedModal() {
   $("#seed-current").textContent = formatSeed(state.seed);
   $("#seed-input").value = "";
-  const dateKey = getKstDateKey();
-  const dailySeed = dailySeedForDate(dateKey);
-  const hint = $("#daily-seed-hint");
-  if (hint) hint.textContent = `오늘 일일 시드: ${dateKey} · ${formatSeed(dailySeed)}`;
   $("#seed-modal").classList.remove("hidden");
   setTimeout(() => $("#seed-input").focus(), 50);
+}
+function confirmStartDailyRank() {
+  const dateKey = getKstDateKey();
+  const seed = dailySeedForDate(dateKey);
+  const ok = window.confirm(`일일랭크를 시작합니다.\n현재까지 진행 사항은 초기화됩니다.\n\n오늘 시드: ${formatSeed(seed)}\n시작할까요?`);
+  if (!ok) return;
+  $("#ranking-modal")?.classList.add("hidden");
+  $("#seed-modal")?.classList.add("hidden");
+  startNewMapWithSeed(seed, { dailySeedKey: dateKey });
 }
 function startNewMapWithSeed(seed, options = {}) {
   cancelAutoCountdown();
@@ -7278,12 +7282,6 @@ function init() {
   $("#btn-random-seed").addEventListener("click", () => {
     $("#seed-input").value = formatSeed(makeSeed());
   });
-  $("#btn-daily-seed")?.addEventListener("click", () => {
-    const dateKey = getKstDateKey();
-    const seed = dailySeedForDate(dateKey);
-    $("#seed-input").value = formatSeed(seed);
-    startNewMapWithSeed(seed, { dailySeedKey: dateKey });
-  });
   $("#btn-start-with-seed").addEventListener("click", () => {
     const seed = parseSeedInput($("#seed-input").value);
     startNewMapWithSeed(seed);
@@ -7355,6 +7353,7 @@ function init() {
   $("#btn-ranking-today")?.addEventListener("click", () => openRankingModal("today"));
   $("#btn-ranking-history")?.addEventListener("click", () => openRankingModal("history"));
   $("#btn-ranking-refresh")?.addEventListener("click", () => renderRankingModal());
+  $("#btn-start-daily-rank")?.addEventListener("click", () => confirmStartDailyRank());
   $("#btn-save-ranking-name")?.addEventListener("click", () => {
     $("#ranking-name-input").value = setPlayerName($("#ranking-name-input").value);
     toast("닉네임 저장됨", "success");
