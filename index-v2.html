@@ -2521,6 +2521,111 @@ body::before {
   background: linear-gradient(180deg, #ffe28a, #f4b73e);
   border-color: rgba(255,226,138,0.9);
 }
+.ranking-modal {
+  max-width: 430px;
+}
+.ranking-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 8px 0;
+}
+.ranking-tabs .btn.active {
+  color: #101419;
+  background: linear-gradient(180deg, #ffe28a, #f4b73e);
+  border-color: rgba(255,226,138,0.9);
+}
+.ranking-name-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+.ranking-name-row input {
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.35);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: min(52vh, 420px);
+  overflow: auto;
+  padding-right: 2px;
+}
+.ranking-row {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  font-size: 12px;
+}
+.ranking-row.mine {
+  border-color: rgba(255,226,138,0.8);
+  background: rgba(255,226,138,0.10);
+}
+.ranking-pos {
+  color: var(--gold);
+  font-weight: 900;
+  text-align: center;
+}
+.ranking-main {
+  min-width: 0;
+}
+.ranking-name {
+  display: block;
+  color: var(--ink);
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ranking-sub {
+  display: block;
+  color: var(--ink-mute);
+  font-size: 10.5px;
+  margin-top: 2px;
+}
+.ranking-score {
+  color: var(--cyan);
+  font-weight: 1000;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ranking-status {
+  min-height: 20px;
+  color: var(--ink-mute);
+  font-size: 11px;
+  text-align: center;
+  margin: 6px 0;
+}
+.ranking-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+.ranking-actions .btn {
+  min-height: 44px;
+  padding: 9px 10px;
+  font-size: 12px;
+}
+.ranking-actions .refresh {
+  color: #101419;
+  background: linear-gradient(180deg, #73dcff, #2797d8);
+  border-color: rgba(115,220,255,0.85);
+  box-shadow: 0 4px 10px -3px rgba(60,180,240,0.42), inset 0 1px 0 rgba(255,255,255,0.22);
+}
 .toast {
   top: 72px;
   border-radius: 8px;
@@ -2987,6 +3092,7 @@ body {
     <div class="ctrl-group">
       <button class="icon-btn" id="btn-speed" title="속도 (S)">1×</button>
       <button class="icon-btn" id="btn-help" title="도움말">?</button>
+      <button class="icon-btn" id="btn-ranking" title="일일 랭킹">🏆</button>
       <button class="icon-btn" id="btn-settings" title="설정">⚙</button>
       <button class="icon-btn" id="btn-new-map" title="새 지도 (N)">↻</button>
     </div>
@@ -3094,6 +3200,27 @@ body {
   </div>
 </div>
 
+<div class="modal-backdrop hidden" id="ranking-modal">
+  <div class="modal ranking-modal">
+    <h2>🏆 일일 랭킹</h2>
+    <p style="font-size:11.5px; margin-bottom:8px">오늘 랭킹은 모두에게 공개됩니다. 지난 기록은 내 기록만 볼 수 있습니다.</p>
+    <div class="ranking-name-row">
+      <input id="ranking-name-input" type="text" maxlength="16" placeholder="닉네임" autocomplete="nickname">
+      <button class="btn ghost" id="btn-save-ranking-name">저장</button>
+    </div>
+    <div class="ranking-tabs">
+      <button class="btn ghost active" id="btn-ranking-today">오늘 랭킹</button>
+      <button class="btn ghost" id="btn-ranking-history">내 기록</button>
+    </div>
+    <div class="ranking-status" id="ranking-status"></div>
+    <div class="ranking-list" id="ranking-list"></div>
+    <div class="ranking-actions">
+      <button class="btn refresh" id="btn-ranking-refresh">새로고침</button>
+      <button class="btn primary modal-close-btn" id="ranking-close-btn">닫기</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop hidden" id="seed-modal">
   <div class="modal" style="max-width: 340px">
     <h2>🌱 새 지도 / 시드</h2>
@@ -3166,7 +3293,11 @@ const TOTAL_TILES = GRID * GRID;
 const SAVE_KEY = "chess-defense-v6";
 const DAILY_SEED_PREFIX = "chess-defense-daily-v1";
 const DAILY_RANK_LOCAL_PREFIX = "chess-defense-daily-rank-";
+const DAILY_HISTORY_LOCAL_KEY = "chess-defense-daily-history";
 const PLAYER_ID_KEY = "chess-defense-player-id";
+const PLAYER_NAME_KEY = "chess-defense-player-name";
+const SUPABASE_URL = window.CHESS_DEFENSE_SUPABASE_URL || "https://oadoupdnedzkbygvtpkz.supabase.co";
+const SUPABASE_ANON_KEY = window.CHESS_DEFENSE_SUPABASE_ANON_KEY || "sb_publishable_UruMK4aE5eQucsXR4QuPyQ_1B-lkPyx";
 const LEADERBOARD_ENDPOINT = window.CHESS_DEFENSE_LEADERBOARD_ENDPOINT || "";
 
 const INITIAL_COIN = 11;
@@ -3512,6 +3643,8 @@ function newGame(seed = null, options = {}) {
     acquiredAugments: [],
     roundKills: 0,
     roundCoinGain: 0,
+    cleanCleared: true,
+    gameStartedAt: Date.now(),
   };
   // 캐시: 최고 라운드 (renderStats가 매번 localStorage 안 읽도록)
   try { state._cachedBestRound = parseInt(localStorage.getItem("chess-defense-best-round") || "0", 10); } catch (_) { state._cachedBestRound = 0; }
@@ -3533,6 +3666,7 @@ function saveGame() {
       gambit_extraBoss: state.gambit_extraBoss || 0,
       gambit_doubleHalf: !!state.gambit_doubleHalf,
       acquiredAugments: state.acquiredAugments || [],
+      gameStartedAt: state.gameStartedAt || Date.now(),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(snap));
   } catch (_) {}
@@ -3563,6 +3697,8 @@ function loadGame() {
       acquiredAugments: Array.isArray(s.acquiredAugments) ? s.acquiredAugments : [],
       roundKills: 0,
       roundCoinGain: 0,
+      cleanCleared: true,
+      gameStartedAt: s.gameStartedAt || Date.now(),
     };
     try { state._cachedBestRound = parseInt(localStorage.getItem("chess-defense-best-round") || "0", 10); } catch (_) { state._cachedBestRound = 0; }
     return true;
@@ -6725,14 +6861,9 @@ function startNewMapWithSeed(seed, options = {}) {
   hideInfo();
   buildBoard();
   renderAll();
-  updateSeedDisplay();
   $("#seed-modal").classList.add("hidden");
   const label = state.dailySeedKey ? `일일 시드 ${state.dailySeedKey}` : `새 지도: ${formatSeed(state.seed)}`;
   toast(label, "success");
-}
-function updateSeedDisplay() {
-  const el = $("#seed-display");
-  if (el && state) el.textContent = formatSeed(state.seed);
 }
 function getPlayerId() {
   try {
@@ -6748,10 +6879,37 @@ function getPlayerId() {
 }
 function getPlayerName() {
   try {
-    const saved = localStorage.getItem("chess-defense-player-name");
-    if (saved && saved.trim()) return saved.trim().slice(0, 16);
+    const saved = localStorage.getItem(PLAYER_NAME_KEY);
+    if (saved && saved.trim()) return sanitizePlayerName(saved);
   } catch (_) {}
   return `플레이어 ${getPlayerId().slice(-4).toUpperCase()}`;
+}
+function sanitizePlayerName(name) {
+  return String(name || "")
+    .replace(/[\u0000-\u001f<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 16) || `플레이어 ${getPlayerId().slice(-4).toUpperCase()}`;
+}
+function setPlayerName(name) {
+  const clean = sanitizePlayerName(name);
+  try { localStorage.setItem(PLAYER_NAME_KEY, clean); } catch (_) {}
+  return clean;
+}
+function calculateDailyScore(reachedRound) {
+  const roundScore = Math.max(0, reachedRound) * 10000;
+  const hpScore = Math.max(0, state?.life || 0) * 180;
+  const coinScore = Math.max(0, state?.coin || 0) * 12;
+  const killScore = Math.max(0, state?.roundKills || 0) * 35;
+  return Math.max(0, Math.floor(roundScore + hpScore + coinScore + killScore));
+}
+function isCurrentDailyRun() {
+  if (!state?.dailySeedKey) return false;
+  const today = getKstDateKey();
+  return state.dailySeedKey === today && formatSeed(state.seed) === formatSeed(dailySeedForDate(today));
+}
+function currentPlayTimeSec() {
+  return Math.max(0, Math.floor((Date.now() - (state?.gameStartedAt || Date.now())) / 1000));
 }
 function saveLocalDailyRank(entry) {
   try {
@@ -6762,59 +6920,175 @@ function saveLocalDailyRank(entry) {
     localStorage.setItem(key, JSON.stringify(rows.slice(0, 50)));
   } catch (_) {}
 }
-function dailyLeaderboardUrl(dateKey) {
-  if (!LEADERBOARD_ENDPOINT) return "";
-  const base = LEADERBOARD_ENDPOINT.replace(/\/+$/, "");
-  return base.endsWith(".json") ? base : `${base}/${encodeURIComponent(dateKey)}.json`;
+function saveLocalDailyHistory(entry) {
+  try {
+    const rows = JSON.parse(localStorage.getItem(DAILY_HISTORY_LOCAL_KEY) || "[]")
+      .filter(r => r && !(r.playerId === entry.playerId && r.dateKey === entry.dateKey));
+    rows.push(entry);
+    rows.sort((a, b) => (b.dateKey || "").localeCompare(a.dateKey || ""));
+    localStorage.setItem(DAILY_HISTORY_LOCAL_KEY, JSON.stringify(rows.slice(0, 60)));
+  } catch (_) {}
+}
+function supabaseReady() {
+  return /^https:\/\/.+\.supabase\.co$/i.test(SUPABASE_URL || "") && !!SUPABASE_ANON_KEY;
+}
+async function supabaseRpc(fn, payload = {}) {
+  if (!supabaseReady()) throw new Error("Supabase 설정 없음");
+  const res = await fetch(`${SUPABASE_URL.replace(/\/+$/, "")}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json;charset=utf-8",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.json();
 }
 async function fetchDailyLeaderboard(dateKey = getKstDateKey()) {
   const localRows = (() => {
     try { return JSON.parse(localStorage.getItem(DAILY_RANK_LOCAL_PREFIX + dateKey) || "[]"); }
     catch (_) { return []; }
   })();
-  const url = dailyLeaderboardUrl(dateKey);
-  if (!url) return localRows;
+  if (!supabaseReady()) return localRows;
   try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const rows = Array.isArray(data) ? data : Object.values(data || {});
+    const rows = await supabaseRpc("get_today_leaderboard", { p_play_date: dateKey, p_limit: 100 });
     return rows
-      .filter(r => r && r.dateKey === dateKey)
+      .filter(r => r && (r.play_date === dateKey || r.dateKey === dateKey))
+      .map((r, i) => ({
+        rank: r.rank || i + 1,
+        dateKey: r.play_date || r.dateKey,
+        playerId: r.player_id || r.playerId,
+        name: r.nickname || r.name,
+        score: r.score,
+        round: r.round_reached ?? r.round,
+        hp: r.hp,
+        coin: r.coin,
+        playTimeSec: r.play_time_sec ?? r.playTimeSec,
+        finishedAt: r.submitted_at || r.finishedAt,
+      }))
       .sort((a, b) => (b.score - a.score) || (a.finishedAt || "").localeCompare(b.finishedAt || ""))
-      .slice(0, 50);
+      .slice(0, 100);
   } catch (_) {
     return localRows;
   }
 }
-async function submitDailyLeaderboard(score) {
+async function fetchMyRankingHistory() {
+  const playerId = getPlayerId();
+  const localRows = (() => {
+    try { return JSON.parse(localStorage.getItem(DAILY_HISTORY_LOCAL_KEY) || "[]").filter(r => r.playerId === playerId); }
+    catch (_) { return []; }
+  })();
+  if (!supabaseReady()) return localRows;
+  try {
+    const rows = await supabaseRpc("get_my_score_history", { p_player_id: playerId, p_limit: 60 });
+    return rows.map(r => ({
+      dateKey: r.play_date || r.dateKey,
+      seed: r.daily_seed || r.seed,
+      playerId: r.player_id || r.playerId,
+      name: r.nickname || r.name,
+      score: r.score,
+      round: r.round_reached ?? r.round,
+      hp: r.hp,
+      coin: r.coin,
+      playTimeSec: r.play_time_sec ?? r.playTimeSec,
+      finishedAt: r.submitted_at || r.finishedAt,
+    }));
+  } catch (_) {
+    return localRows;
+  }
+}
+async function submitDailyLeaderboard(reachedRound) {
   if (!state?.dailySeedKey) return;
+  if (!isCurrentDailyRun()) {
+    toast("오늘 일일시드 기록만 랭킹에 올라갑니다", "error");
+    return;
+  }
+  const score = calculateDailyScore(reachedRound);
   const entry = {
     game: "chess-defense",
     version: "index-v2",
     dateKey: state.dailySeedKey,
     seed: formatSeed(state.seed),
     score,
-    round: score,
+    round: reachedRound,
+    hp: Math.max(0, state.life || 0),
+    coin: Math.max(0, state.coin || 0),
+    playTimeSec: currentPlayTimeSec(),
     playerId: getPlayerId(),
     name: getPlayerName(),
     finishedAt: new Date().toISOString(),
   };
   saveLocalDailyRank(entry);
-  if (!LEADERBOARD_ENDPOINT) {
-    toast("일일 기록 저장됨", "success");
-    return;
-  }
+  saveLocalDailyHistory(entry);
+  if (!supabaseReady()) return toast("일일 기록 저장됨", "success");
   try {
-    const res = await fetch(dailyLeaderboardUrl(entry.dateKey), {
-      method: "POST",
-      headers: { "Content-Type": "application/json;charset=utf-8" },
-      body: JSON.stringify(entry),
+    await supabaseRpc("submit_daily_score", {
+      p_play_date: entry.dateKey,
+      p_daily_seed: entry.seed,
+      p_player_id: entry.playerId,
+      p_nickname: entry.name,
+      p_score: entry.score,
+      p_round_reached: entry.round,
+      p_hp: entry.hp,
+      p_coin: entry.coin,
+      p_play_time_sec: entry.playTimeSec,
+      p_client_version: entry.version,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     toast("일일 랭킹 전송됨", "success");
   } catch (_) {
     toast("온라인 랭킹 전송 실패 · 로컬 기록 저장", "error");
+  }
+}
+function formatRankTime(iso) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleTimeString("ko-KR", { hour:"2-digit", minute:"2-digit" });
+  } catch (_) { return ""; }
+}
+function rankingRowHtml(row, index, mode) {
+  const mine = row.playerId === getPlayerId();
+  const pos = mode === "today" ? (row.rank || index + 1) : (index + 1);
+  const name = mode === "today" ? (row.name || "플레이어") : (row.dateKey || "-");
+  const sub = mode === "today"
+    ? `R${row.round ?? 0} · HP ${row.hp ?? 0} · ${formatRankTime(row.finishedAt)}`
+    : `${row.name || getPlayerName()} · R${row.round ?? 0} · ${row.seed || "-"}`;
+  return `<div class="ranking-row${mine ? " mine" : ""}">
+    <div class="ranking-pos">${pos}</div>
+    <div class="ranking-main"><span class="ranking-name">${escapeHtml(name)}</span><span class="ranking-sub">${escapeHtml(sub)}</span></div>
+    <div class="ranking-score">${Number(row.score || 0).toLocaleString("ko-KR")}</div>
+  </div>`;
+}
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+let rankingMode = "today";
+async function openRankingModal(mode = rankingMode) {
+  rankingMode = mode;
+  $("#ranking-name-input").value = getPlayerName();
+  $("#ranking-modal").classList.remove("hidden");
+  await renderRankingModal();
+}
+async function renderRankingModal() {
+  const list = $("#ranking-list");
+  const status = $("#ranking-status");
+  $("#btn-ranking-today").classList.toggle("active", rankingMode === "today");
+  $("#btn-ranking-history").classList.toggle("active", rankingMode === "history");
+  list.innerHTML = "";
+  status.textContent = rankingMode === "today" ? "오늘 랭킹 불러오는 중..." : "내 기록 불러오는 중...";
+  try {
+    const rows = rankingMode === "today"
+      ? await fetchDailyLeaderboard(getKstDateKey())
+      : await fetchMyRankingHistory();
+    if (!rows.length) {
+      status.textContent = rankingMode === "today" ? "아직 오늘 기록이 없습니다." : "아직 저장된 내 기록이 없습니다.";
+      return;
+    }
+    status.textContent = rankingMode === "today" ? `오늘 ${rows.length}개 기록` : `내 기록 ${rows.length}개`;
+    list.innerHTML = rows.map((r, i) => rankingRowHtml(r, i, rankingMode)).join("");
+  } catch (_) {
+    status.textContent = "랭킹을 불러오지 못했습니다.";
   }
 }
 function cardRefundPrice(card) {
@@ -6912,6 +7186,7 @@ document.addEventListener("keydown", (e) => {
   if (k === "Escape") {
     if (!$("#help-modal").classList.contains("hidden")) { $("#help-modal").classList.add("hidden"); return; }
     if (!$("#settings-modal").classList.contains("hidden")) { $("#settings-modal").classList.add("hidden"); return; }
+    if (!$("#ranking-modal").classList.contains("hidden")) { $("#ranking-modal").classList.add("hidden"); return; }
     if (!$("#combine-modal").classList.contains("hidden")) { $("#combine-modal").classList.add("hidden"); return; }
     state.selectedCardKey = null;
     clearPendingPlace();
@@ -6968,7 +7243,6 @@ function init() {
   }
   buildBoard();
   renderAll();
-  updateSeedDisplay();
   renderAugmentRail();
   renderCombatRail();
 
@@ -7001,7 +7275,6 @@ function init() {
   $("#btn-combine").addEventListener("click", () => tryCombine());
   $("#btn-sell").addEventListener("click", () => toggleSellMode());
   $("#btn-new-map").addEventListener("click", () => openSeedModal());
-  $("#btn-seed-chip")?.addEventListener("click", () => openSeedModal());
   $("#btn-random-seed").addEventListener("click", () => {
     $("#seed-input").value = formatSeed(makeSeed());
   });
@@ -7070,6 +7343,28 @@ function init() {
   $("#settings-close-btn")?.addEventListener("click", () => $("#settings-modal").classList.add("hidden"));
   $("#settings-modal")?.addEventListener("click", (e) => {
     if (e.target.id === "settings-modal") e.currentTarget.classList.add("hidden");
+  });
+  $("#btn-ranking")?.addEventListener("click", () => {
+    $("#settings-modal")?.classList.add("hidden");
+    openRankingModal("today");
+  });
+  $("#ranking-close-btn")?.addEventListener("click", () => $("#ranking-modal").classList.add("hidden"));
+  $("#ranking-modal")?.addEventListener("click", (e) => {
+    if (e.target.id === "ranking-modal") e.currentTarget.classList.add("hidden");
+  });
+  $("#btn-ranking-today")?.addEventListener("click", () => openRankingModal("today"));
+  $("#btn-ranking-history")?.addEventListener("click", () => openRankingModal("history"));
+  $("#btn-ranking-refresh")?.addEventListener("click", () => renderRankingModal());
+  $("#btn-save-ranking-name")?.addEventListener("click", () => {
+    $("#ranking-name-input").value = setPlayerName($("#ranking-name-input").value);
+    toast("닉네임 저장됨", "success");
+    renderRankingModal();
+  });
+  $("#ranking-name-input")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      $("#btn-save-ranking-name")?.click();
+    }
   });
   $("#modal-close-btn").addEventListener("click", () => $("#help-modal").classList.add("hidden"));
   $("#btn-replay-tut").addEventListener("click", () => {
