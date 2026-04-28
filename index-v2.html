@@ -738,6 +738,7 @@ body::before {
   z-index: 6;
   overflow: visible; /* let bosses extend past tile bounds */
   border-radius: 12px;
+  contain: layout style; /* 자식 변경이 외부 reflow 유발 안 하도록 격리 */
 }
 .monster {
   position: absolute;
@@ -871,6 +872,7 @@ body::before {
   z-index: 8;
   overflow: hidden;
   border-radius: 12px;
+  contain: strict; /* layout/style/paint/size 모두 격리 — 메뉴 깜빡임 방지 */
 }
 .attack-line {
   position: absolute;
@@ -3459,7 +3461,7 @@ const TERRAIN_FULL_STACK = 2;
 const TERRAIN_EFFECT = {
   sky:         { aps: 0.115, critDown: 0.012 },
   ground:      { crit: 0.08, critMul: 0.04 },
-  underground: { atk: 0.22, apsDown: 0.04 },
+  underground: { atk: 0.16, apsDown: 0.04 },
 };
 const TERRAIN_SET_NAMES = {
   sky30: "천공",
@@ -4902,10 +4904,10 @@ function getUnitStats(x, y) {
     crit += 0.10;
   }
   if (tags.has("underground30")) {
-    aps *= 1 / Math.max(0.25, 1 - stackBonus(TERRAIN_EFFECT.underground.apsDown, ug) * ugBoost);
-    atk *= 1.25;
-    burnChance += 0.22;
-    burnPower += 0.24;
+    // 페널티 회복 제거 — 지하의 트레이드오프 정체성 유지
+    atk *= 1.10;
+    burnChance += 0.15;
+    burnPower += 0.18;
   }
   if (tags.has("skyGround15")) {
     crit += stackBonus(TERRAIN_EFFECT.sky.critDown, sky) * skyBoost;
@@ -6850,7 +6852,7 @@ function spawnDamageText(pos, dmg, crit) {
   el.textContent = dmg;
   el.style.cssText = `left:${(pos.x / GRID) * fxRect.w}px;top:${(pos.y / GRID) * fxRect.h}px`;
   fxLayer.appendChild(el);
-  setTimeout(() => { el.remove(); fxDamageBudget--; }, 720);
+  setTimeout(() => { el.remove(); fxDamageBudget--; }, 500);
 }
 function spawnCoinText(pos, coin) {
   if (!canSpawnFx("coin", true) || fxDamageBudget > (isMobilePerfMode() ? 12 : 22)) return;
@@ -6860,7 +6862,7 @@ function spawnCoinText(pos, coin) {
   el.textContent = `+${coin}₵`;
   el.style.cssText = `left:${(pos.x / GRID) * fxRect.w + 10}px;top:${(pos.y / GRID) * fxRect.h - 8}px`;
   fxLayer.appendChild(el);
-  setTimeout(() => { el.remove(); fxDamageBudget--; }, 720);
+  setTimeout(() => { el.remove(); fxDamageBudget--; }, 500);
 }
 function flashSupporter(tx, ty) {
   const el = tileEls[ty * GRID + tx];
