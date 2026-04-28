@@ -5106,6 +5106,7 @@ function startRound() {
     if (tile.sanctuary <= 0) delete tile.sanctuary;
   }
   state.roundKills = 0;
+  state.roundBossKills = 0;
   state.roundCoinGain = 0;
   renderCombatRail();
   // ===== A+B 카오스 시스템: R30+ 보스 라운드마다 변동 =====
@@ -5271,8 +5272,8 @@ function endRound(success) {
     localStorage.setItem("chess-defense-best-round", String(meta.bestRound));
     state._cachedBestRound = meta.bestRound;
     // 처치/보스 통계
-    const killedThisRound  = (state.monsters || []).filter(m => m.dead).length;
-    const bossesThisRound  = (state.monsters || []).filter(m => m.dead && m.type === "boss").length;
+    const killedThisRound  = (state.roundKills || 0);
+    const bossesThisRound  = (state.roundBossKills || 0);
     meta.totalKills += killedThisRound;
     meta.totalBossKills += bossesThisRound;
     if (!success && state.life <= 0) {
@@ -5428,10 +5429,12 @@ function simulate(dt) {
         const c = coinPerKill(m.type, state.round);
         state.coin += c;
         state.roundKills = (state.roundKills || 0) + 1;
+        if (m.type === "boss") state.roundBossKills = (state.roundBossKills || 0) + 1;
         state.roundCoinGain = (state.roundCoinGain || 0) + c;
         renderCombatRail();
-        spawnCoinText(monsterPos(m), c);
-        spawnHitSpark(monsterPos(m), m.type === "boss");
+        const _bp = monsterPos(m);
+        spawnCoinText(_bp, c);
+        spawnHitSpark(_bp, m.type === "boss");
         renderStats();
         continue;
       }
@@ -5581,7 +5584,14 @@ function simulate(dt) {
     const safeAps = (typeof u.aps === "number" && u.aps > 0.05) ? u.aps : 0.5;
     u.cd = 1 / safeAps;
   }
-  state.monsters = state.monsters.filter(m => !m.reachedEnd);
+  // 죽은 몬스터: dying 애니메이션(360ms) 종료된 것만 정리
+  // 도망친 몬스터: 즉시 제거
+  const _now2 = performance.now();
+  state.monsters = state.monsters.filter(m => {
+    if (m.reachedEnd) return false;
+    if (m.dead && m._removeAt && _now2 >= m._removeAt) return false;
+    return true;
+  });
 }
 
 // 보스 CC 면역 램프 — 1분 동안 정상, 1~2분에 점점 감쇠, 2분+ 완전 면역
@@ -5721,7 +5731,7 @@ function performAttack(u, targets) {
       const _knFuryMul = 1 + (state.mods?.knightStunMult || 0);
       const _knFuryDur = 1 + (state.mods?.knightStunDur || 0);
       if (combatRand() < 0.15 * _knFuryMul * resistMul * ccMul) {
-        const dr = Math.pow(0.65, t.m.stunsReceived || 0);
+        const dr = Math.pow(0.78, Math.min(5, t.m.stunsReceived || 0));
         const dur = 0.25 * _knFuryDur * ccMul * dr;
         if (dur > 0.03) {
           t.m.stunTimer = Math.max(t.m.stunTimer, dur);
@@ -5739,7 +5749,7 @@ function performAttack(u, targets) {
           const _knFuryMul2 = 1 + (state.mods?.knightStunMult || 0);
           const _knFuryDur2 = 1 + (state.mods?.knightStunDur || 0);
           if (combatRand() < 0.30 * _knFuryMul2 * rm * otherCC) {
-            const dr2 = Math.pow(0.65, other.stunsReceived || 0);
+            const dr2 = Math.pow(0.78, Math.min(5, other.stunsReceived || 0));
             const dur2 = 0.2 * _knFuryDur2 * otherCC * dr2;
             if (dur2 > 0.03) {
               other.stunTimer = Math.max(other.stunTimer, dur2);
@@ -5755,7 +5765,7 @@ function performAttack(u, targets) {
       const ccMul = bossCCMul(t.m);
       const resistMul = (t.m.modifiers && t.m.modifiers.stunResist) ? 0.5 : 1;
       if (combatRand() < 0.20 * resistMul * ccMul) {
-        const drK = Math.pow(0.65, t.m.stunsReceived || 0);
+        const drK = Math.pow(0.78, Math.min(5, t.m.stunsReceived || 0));
         const durK = 0.5 * ccMul * drK;
         if (durK > 0.05) {
           t.m.stunTimer = Math.max(t.m.stunTimer, durK);
@@ -5820,6 +5830,7 @@ function performAttack(u, targets) {
       const c = coinPerKill(t.m.type, state.round);
       state.coin += c;
       state.roundKills = (state.roundKills || 0) + 1;
+      if (t.m.type === "boss") state.roundBossKills = (state.roundBossKills || 0) + 1;
       state.roundCoinGain = (state.roundCoinGain || 0) + c;
       renderCombatRail();
       spawnCoinText(t.p, c);
@@ -6292,13 +6303,15 @@ function selectCardByKey(key) {
     c.classList.toggle("selected", c.dataset.key === state.selectedCardKey);
   });
   if (state.inBattle) {
-    for (const el of tileEls) el.classList.remove("placement-ok", "sell-mode-ok");
     if (state.selectedCardKey) {
+      // 전투 중에도 선택 카드의 배치 가능 타일 표시
+      renderPlacementHints();
       const c = selectedCard();
       tutorialEvent("selected-card");
       if (c && c.kind === "terrain") tutorialEvent("selected-terrain-card");
       if (c && c.kind === "piece") tutorialEvent("selected-piece-card");
     } else {
+      for (const el of tileEls) el.classList.remove("placement-ok", "sell-mode-ok");
       clearClickFocus();
     }
     refreshButtons();
@@ -6475,7 +6488,7 @@ function renderMonsters() {
       m._stateLast = "";
       m._visible = false; // 처음엔 숨김 상태로 시작
     }
-    if (m.reachedEnd) { m._el.remove(); m._el = null; continue; }
+    if (m.reachedEnd) { if (m._el) { m._el.remove(); m._el = null; } m._gone = true; continue; }
     if (m.dead) {
       if (m._stateLast !== "dying") {
         m._el.classList.add("dying");
@@ -6483,6 +6496,8 @@ function renderMonsters() {
         setTimeout(() => el.remove(), 360);
         m._el = null;
         m._stateLast = "dying";
+        // 360ms 뒤 state.monsters에서 제거하도록 마킹 — simulate의 cleanup 단계에서 splice
+        m._removeAt = performance.now() + 360;
       }
       continue;
     }
