@@ -5822,7 +5822,9 @@ function performAttack(u, targets) {
     }
     // 룩/비숍/킹은 per-target 스킵 — 루프 끝나고 한 번에 커스텀으로 그림
     if (u.attackType !== "line" && u.attackType !== "chain" && u.attackType !== "aoe_buff") {
-      spawnAttackLine(u, t.p);
+      // 퀸 광역: 첫 타겟에만 빔/별 시각 효과, 나머지 타겟은 데미지 텍스트만 (DOM 폭주 방지)
+      const isQueenSplash = (u.piece === "queen") && (i > 0);
+      if (!isQueenSplash) spawnAttackLine(u, t.p);
       spawnDamageText(t.p, Math.round(dmg), isCrit);
     } else if (u.attackType === "aoe_buff") {
       // 킹: 데미지 텍스트를 3타로 쪼개 staggered로 표시 (실제 hp는 위에서 한 번에 적용됨)
@@ -5918,8 +5920,12 @@ function canSpawnFx(kind = "normal", important = false) {
     fxSecondStart = now;
     fxSecondCount = 0;
   }
-  const limit = isMobilePerfMode() ? 34 : 64;
+  const mobile = isMobilePerfMode();
+  // 일반 FX 캡과 important FX 캡(더 높지만 무한 아님 — 퀸 다수 시 폭주 방지)
+  const limit = mobile ? 34 : 64;
+  const importantLimit = mobile ? 80 : 140;
   if (!important && fxSecondCount >= limit) return false;
+  if (important && fxSecondCount >= importantLimit) return false;
   fxSecondCount++;
   return true;
 }
