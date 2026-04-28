@@ -3445,7 +3445,7 @@ const PIECE_ABILITY = {
 };
 
 // 말 카드 내부 확률
-const PIECE_WEIGHTS = { pawn:60, knight:25, rook:10, bishop:4, queen:0.9, king:0.1 };
+const PIECE_WEIGHTS = { pawn:60, knight:25, rook:10, bishop:4, queen:1.8, king:0.2 };
 
 const TERRAIN_ORDER = ["sky", "ground", "underground"];
 const TERRAIN_NAMES = { sky:"하늘", ground:"지상", underground:"지하" };
@@ -3524,10 +3524,12 @@ function roundHpMultiplier(r) {
 function roundBaseHP(r) { return 42 * roundHpMultiplier(r); }
 function coinPerKill(type, r) {
   // 일반/속공 = 1, 탱커 = 2, 보스 = 10+1.2r
+  // R30 이후 30라운드마다 일반/탱커 +1 (R60→2/3, R90→3/4 …)
+  const tier = Math.max(0, Math.floor((r - 30) / 30));
   let base;
   if (type === "boss") base = Math.round(10 + r * 1.2);
-  else if (type === "tank") base = 2;
-  else base = 1;
+  else if (type === "tank") base = 2 + tier;
+  else base = 1 + tier;
   // 황금기 증강: 보스 ×2, 일반 ×1.5
   if (state?.mods?.goldenAge) {
     if (type === "boss") base *= 2;
@@ -4067,13 +4069,15 @@ EVENTS["chaos_choice"] = {
       }
     },
     {
-      name: "🌫 시간 정지",
-      desc: "이번 라운드 몬스터 속도 -25% + 즉시 +20 코인",
-      icon: "🌫",
+      name: "🌌 차원 정렬",
+      desc: "즉시 캐릭터 카드 +5장 + 지형 카드 +3장",
+      icon: "🌌",
       apply: () => {
-        state.pendingChaosChoice = "slowtime";
-        state.coin += 20;
-        toast("시간 정지 선택 — 적 속도 -25%", "success");
+        state.pendingChaosChoice = "dimension";
+        for (let i = 0; i < 5; i++) state.hand.push(makePieceCard());
+        for (let i = 0; i < 3; i++) state.hand.push(makeTerrainCard());
+        try { renderHand(); } catch (_) {}
+        toast("차원 정렬 — 카드 +8장", "success");
       }
     },
   ]
@@ -4975,7 +4979,7 @@ function triggerKingDeclarationCinematic() {
     requestAnimationFrame(() => overlay.classList.add("visible"));
   });
 
-  // 약 2.6초 후 페이드아웃 → 게임 재개 + 타일 글로우
+  // 약 4초 후 페이드아웃 → 게임 재개 + 타일 글로우 (사용자 요청으로 길어짐)
   setTimeout(() => {
     overlay.classList.remove("visible");
     setTimeout(() => {
@@ -5002,7 +5006,7 @@ function triggerKingDeclarationCinematic() {
       // 발동 알림 (작게)
       try { toast("👑 삼왕강림 — 보드 전체 atk+80% aps+30% crit+12% · 보스 +40%", "success", 3500); } catch (_) {}
     }, 600); // 페이드 아웃 시간 (CSS transition 0.55s + 여유)
-  }, 2600);
+  }, 4000);
 }
 
 function collectUnits() {
@@ -5256,11 +5260,16 @@ function startRound() {
       if (choice === "stable") {
         applyChaosSanctuary(rand);
       } else if (choice === "turbulence") {
-        // 지형 7개 변환 (격동) — 코인 보너스는 모달 시점에 이미 +50
+        // 격동: 지형이 있는 타일 중 7개 무작위로 파괴 (성역 제외) — 코인 보너스는 모달 시점에 이미 +50
         const candidates = [];
         for (let yy = 0; yy < GRID; yy++)
           for (let xx = 0; xx < GRID; xx++) {
             if (isPath(xx, yy)) continue;
+            const tt = tileAt(xx, yy);
+            if (tt.sanctuary > 0) continue;
+            // 지형이 1개 이상 있는 타일만 후보에 포함
+            const hasTerrain = TERRAIN_ORDER.some(k => tt.terrains[k] > 0);
+            if (!hasTerrain) continue;
             candidates.push({ x: xx, y: yy });
           }
         for (let i = candidates.length - 1; i > 0; i--) {
@@ -5268,25 +5277,25 @@ function startRound() {
           [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
         }
         const pickN = Math.min(7, candidates.length);
-        let changed = 0;
+        let destroyed = 0;
         for (let i = 0; i < pickN; i++) {
           const c = candidates[i];
           const t = tileAt(c.x, c.y);
-          if (t.sanctuary > 0) continue;
+          // 모든 지형 스택 클리어 (실제로 "갈림")
           t.terrains = { sky:0, ground:0, underground:0 };
-          const newT = TERRAIN_ORDER[Math.floor(rand() * TERRAIN_ORDER.length)];
-          t.terrains[newT] = 1;
           renderTile(c.x, c.y);
-          changed++;
+          destroyed++;
         }
         markNetworksDirty();
         scheduleTerrainVisualRefresh();
-        showBanner(`🌪 격동 — 지형 ${changed}곳 변환`, true);
-      } else if (choice === "slowtime") {
-        // 이번 라운드만 몬스터 속도 -25% — 아래 monster spawn에서 처리
-        state.chaosBlessing = "slowtime";
-        state.chaosBlessingRounds = 1;
-        showBanner("🌫 시간 정지 — 적 속도 -25%", false);
+        if (destroyed > 0) {
+          showBanner(`🌪 격동 — 지형 ${destroyed}곳 파괴`, true);
+        } else {
+          showBanner("🌪 격동 — 파괴할 지형 없음", false);
+        }
+      } else if (choice === "dimension") {
+        // 카드 지급은 모달 apply 시점에 이미 처리됨 — 여기선 배너만
+        showBanner("🌌 차원 정렬 — 카드 +8장 보충", false);
       }
       state.chaosBossIdx = idx + 1;
     } else if (idx % 2 === 1) {
@@ -6452,15 +6461,14 @@ function selectCardByKey(key) {
     c.classList.toggle("selected", c.dataset.key === state.selectedCardKey);
   });
   if (state.inBattle) {
+    // 전투 중에는 placement-ok 미리보기 OFF (모바일 페인트 비용 폭증 방지)
+    for (const el of tileEls) el.classList.remove("placement-ok", "sell-mode-ok");
     if (state.selectedCardKey) {
-      // 전투 중에도 선택 카드의 배치 가능 타일 표시
-      renderPlacementHints();
       const c = selectedCard();
       tutorialEvent("selected-card");
       if (c && c.kind === "terrain") tutorialEvent("selected-terrain-card");
       if (c && c.kind === "piece") tutorialEvent("selected-piece-card");
     } else {
-      for (const el of tileEls) el.classList.remove("placement-ok", "sell-mode-ok");
       clearClickFocus();
     }
     refreshButtons();
