@@ -1476,7 +1476,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 250; /* 튜토리얼 overlay(200)/bubble(210)보다 위 — 튜토리얼 중에도 모달 사용 가능 */
   animation: fadeIn 0.18s ease-out;
   padding: 16px;
 }
@@ -6947,7 +6947,7 @@ function renderCardDetail(card) {
   } else {
     const data = {
       sky: ["공속 증가, 치명타 감소", "공속", "치명↓"],
-      ground: ["치명타 확률 증가", "치명", "공격 보조"],
+      ground: ["치명타 확률 + 치명 피해 증가", "치명", "—"],
       underground: ["공격력 증가, 공속 감소", "공격", "공속↓"],
     }[card.terrain];
     const descCls = descClass(data[0]);
@@ -6960,7 +6960,7 @@ function renderCardDetail(card) {
       <div class="detail-grid">
         <div class="detail-stat"><span class="k">분류</span><span class="v">${TERRAIN_NAMES[card.terrain]}</span></div>
         <div class="detail-stat"><span class="k">주효과</span><span class="v cyan">${data[1]}</span></div>
-        <div class="detail-stat"><span class="k">보정</span><span class="v gold">${data[2]}</span></div>
+        <div class="detail-stat"><span class="k">페널티</span><span class="v gold">${data[2]}</span></div>
         <div class="detail-stat"><span class="k">연결</span><span class="v">인접</span></div>
       </div>
     `;
@@ -7094,6 +7094,15 @@ function showTileInfo(x, y, preserveDetail = false) {
     if (critSky < -0.0001) critStr += ` ${fmt((critSky*100).toFixed(0) + "%", C.danger)}<small>☁</small>`;
     if (critMod > 0.0001) critStr += ` ${fmt("+" + (critMod*100).toFixed(0) + "%", C.mod)}<small>증강</small>`;
     html += `<div class="row"><span class="k">치명타</span><span class="v">${critStr} = <b>${(u.crit*100).toFixed(0)}%</b></span></div>`;
+
+    // ───── 치명 배수: base 2.0 + 지상 + 증강 ─────
+    const critMulBase = 2.0;
+    const critMulGnd  = (_gndN > 0) ? stackBonus(TERRAIN_EFFECT.ground.critMul, _gndN) * gndB : 0;
+    let critMulStr = fmt(critMulBase.toFixed(2) + "x", C.base);
+    if (critMulGnd > 0.0001) critMulStr += ` ${fmt("+" + critMulGnd.toFixed(2), C.ground)}<small>⛰</small>`;
+    const critMulFinal = (typeof u.critMul === "number" ? u.critMul : critMulBase + critMulGnd);
+    html += `<div class="row"><span class="k">치명 배수</span><span class="v">${critMulStr} = <b>${critMulFinal.toFixed(2)}x</b></span></div>`;
+
     if (u.terrainTags?.length) {
       const tagDetail = u.terrainTags
         .map(t => `<b>${TERRAIN_SET_NAMES[t] || t}</b> : ${TERRAIN_SET_INFO[t] || "진화 효과"}`)
@@ -7157,7 +7166,64 @@ function showTileInfo(x, y, preserveDetail = false) {
       const map = state._networks[t];
       const id = map ? map.get(`${x},${y}`) : null;
       const sz = (id != null && state._networkGroups[t][id]) ? state._networkGroups[t][id].length : 1;
-      html += `<div class="row"><span class="k">${TERRAIN_NAMES[t]} 연결망</span><span class="v">${sz}칸</span></div>`;
+      const stack = tile.terrains[t];
+      const stackLabel = stack >= TERRAIN_FULL_STACK ? "완성" : "반쪽";
+      html += `<div class="row"><span class="k">${TERRAIN_ICON[t]} ${TERRAIN_NAMES[t]} 연결망</span><span class="v">${sz}칸 (${stackLabel})</span></div>`;
+    }
+
+    // ───── 바이옴 정보 + 활성 세트 + 다음 세트까지 ─────
+    const biome = (typeof biomeAt === "function") ? biomeAt(x, y) : null;
+    if (biome) {
+      const c = biome.counts || { sky:0, ground:0, underground:0 };
+      const total = c.sky + c.ground + c.underground;
+      html += `<div class="sep"></div><h4>바이옴 (${total}칸)</h4>`;
+      html += `<div class="row" style="font-size:10.5px"><span class="k">구성</span><span class="v">☁ ${c.sky} · ⛰ ${c.ground} · ⛧ ${c.underground}</span></div>`;
+
+      // 활성 세트 표시
+      const activeTags = biome.tags || [];
+      if (activeTags.length) {
+        const tagDetail = activeTags
+          .map(t => `<b style="color:${TERRAIN_SET_COLORS?.[t]||'var(--gold)'}">${TERRAIN_SET_NAMES[t] || t}</b> — ${TERRAIN_SET_INFO[t] || ""}`)
+          .join("<br>");
+        html += `<div class="row" style="display:block"><span class="k">활성 세트</span><div style="font-size:10px;line-height:1.45;color:var(--ink-dim);margin-top:3px">${tagDetail}</div></div>`;
+      } else {
+        html += `<div class="row"><span class="k">활성 세트</span><span class="v" style="color:var(--ink-mute)">없음</span></div>`;
+      }
+
+      // 다음 세트까지 남은 칸 (가장 가까운 미달성 세트)
+      const targets = [
+        { tag: "sky30",   label: "천공",     need: { sky:20 } },
+        { tag: "ground30", label: "가이아",   need: { ground:20 } },
+        { tag: "underground30", label: "하데스", need: { underground:20 } },
+        { tag: "skyGround15", label: "성역",  need: { sky:10, ground:10 } },
+        { tag: "groundUnderground15", label: "맨틀", need: { ground:10, underground:10 } },
+        { tag: "skyUnderground15", label: "폭풍심연", need: { sky:10, underground:10 } },
+        { tag: "tri10", label: "삼위지맥", need: { sky:7, ground:7, underground:7 } },
+      ];
+      const remaining = [];
+      for (const tg of targets) {
+        if (activeTags.includes(tg.tag)) continue;
+        let needTotal = 0;
+        const parts = [];
+        for (const k of Object.keys(tg.need)) {
+          const have = c[k] || 0;
+          const want = tg.need[k];
+          if (have < want) {
+            const diff = want - have;
+            needTotal += diff;
+            parts.push(`${TERRAIN_ICON[k]}${diff}`);
+          }
+        }
+        if (needTotal > 0) remaining.push({ label: tg.label, parts, needTotal });
+      }
+      if (remaining.length) {
+        // 가장 적게 남은 3개만 미리 보여주기
+        remaining.sort((a, b) => a.needTotal - b.needTotal);
+        const top = remaining.slice(0, 3)
+          .map(r => `<b>${r.label}</b>: ${r.parts.join(" ")}`)
+          .join("<br>");
+        html += `<div class="row" style="display:block"><span class="k">다음 세트까지</span><div style="font-size:10px;line-height:1.45;color:var(--ink-dim);margin-top:3px">${top}</div></div>`;
+      }
     }
   }
   const nets = [];
@@ -7876,7 +7942,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (k === "Escape") {
-    if (!$("#help-modal").classList.contains("hidden")) { $("#help-modal").classList.add("hidden"); return; }
+    if (!$("#help-modal").classList.contains("hidden")) { $("#help-modal").classList.add("hidden"); tutorialEvent("opened-help"); return; }
     if (!$("#settings-modal").classList.contains("hidden")) { $("#settings-modal").classList.add("hidden"); return; }
     if (!$("#ranking-modal").classList.contains("hidden")) { $("#ranking-modal").classList.add("hidden"); return; }
     if (!$("#combine-modal").classList.contains("hidden")) { $("#combine-modal").classList.add("hidden"); return; }
@@ -7897,6 +7963,7 @@ document.addEventListener("keydown", (e) => {
   }
   if (k === "?" || k === "/") {
     $("#help-modal").classList.toggle("hidden");
+    if ($("#help-modal").classList.contains("hidden")) tutorialEvent("opened-help");
     e.preventDefault();
     return;
   }
@@ -8053,14 +8120,14 @@ function init() {
       $("#btn-save-ranking-name")?.click();
     }
   });
-  $("#modal-close-btn").addEventListener("click", () => $("#help-modal").classList.add("hidden"));
+  $("#modal-close-btn").addEventListener("click", () => { $("#help-modal").classList.add("hidden"); tutorialEvent("opened-help"); });
   $("#btn-replay-tut").addEventListener("click", () => {
     $("#help-modal").classList.add("hidden");
     startTutorial(true);
   });
   $("#combine-close-btn").addEventListener("click", () => $("#combine-modal").classList.add("hidden"));
   $("#help-modal").addEventListener("click", (e) => {
-    if (e.target.id === "help-modal") e.currentTarget.classList.add("hidden");
+    if (e.target.id === "help-modal") { e.currentTarget.classList.add("hidden"); tutorialEvent("opened-help"); }
   });
   $("#combine-modal").addEventListener("click", (e) => {
     if (e.target.id === "combine-modal") e.currentTarget.classList.add("hidden");
@@ -8134,8 +8201,11 @@ function init() {
 // =====================================================================
 //  TUTORIAL
 // =====================================================================
-// Stage 1 — 간결한 5단계
+// Stage 1 — 메뉴 소개 2단계 + 게임 진행 5단계
 const TUT_STEPS_STAGE1 = [
+  { text: "왼쪽 위는 <b>라운드 · 코인 · HP</b>입니다.", target: ".topbar .stat-row", wait: "next" },
+  { text: "오른쪽 위는 <b>속도 · 도움말 · 랭킹 · 설정 · 새 지도</b>입니다.", target: ".topbar .ctrl-group", wait: "next" },
+  { text: "특히 <b>? (도움말)</b>을 한 번 눌러보세요.", target: "#btn-help", wait: "opened-help" },
   { text: "몬스터가 오른쪽 끝에 닿기 전에 막으세요.", target: "#board", wait: "next" },
   { text: "🃏 <b>캐릭터 뽑기</b> 눌러주세요.", target: "#btn-draw-piece", wait: "drew-piece" },
   { text: "손패에서 <b>카드 1개</b> 골라 탭하세요.", target: "#hand", wait: "selected-piece-card" },
@@ -8148,10 +8218,11 @@ const TUT_STEPS_STAGE2 = [
   { text: "🌍 <b>지형</b> 버튼을 눌러 지형 카드를 사보세요.", target: "#btn-draw-terrain", wait: "drew-terrain" },
   { text: "손패의 <b>지형 카드</b> 하나 선택. (🌍 아이콘)", target: "#hand", wait: "selected-terrain-card" },
   { text: "말이 있는 타일에 <b>지형 배치</b>해보세요.", target: "#board", wait: "placed-terrain" },
+  { text: "지형은 한 칸에 <b>1장이면 반쪽</b>, <b>2장이면 완성</b>되어 활성화됩니다.", target: "#board", wait: "next" },
   { text: "같은 지형 타일이 이어지면 <b>연결망</b>이 생기고, 그 위 말들은 <b>연결망 크기만큼</b> 효과가 강해집니다 (3칸 이어지면 ×3 효과).", target: "#board", wait: "next" },
   { text: "<b>튜토리얼은 여기까지예요.</b><br>안내를 닫고 직접 R2를 시작해보세요.", target: "#btn-start-round", wait: "next" },
 ];
-const TUTORIAL_VERSION = "v3";
+const TUTORIAL_VERSION = "v4";
 const TUT_KEY_S1 = "tutorialSeen_" + TUTORIAL_VERSION;
 const TUT_KEY_S2 = "tutorialStage2Seen_" + TUTORIAL_VERSION;
 let tutState = null;
