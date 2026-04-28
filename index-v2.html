@@ -2142,6 +2142,54 @@ body::before {
   box-shadow: inset 0 0 0 2px rgba(155,227,91,0.95), 0 0 16px rgba(155,227,91,0.28);
 }
 
+/* === 삼왕강림 시네마틱 === */
+.king-cinematic-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.86), rgba(0,0,0,0.97));
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.55s ease;
+}
+.king-cinematic-overlay.visible { opacity: 1; }
+.king-cinematic-text {
+  font-size: clamp(22px, 6.5vw, 38px);
+  font-weight: 900;
+  color: #ff3a4d;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 18px rgba(255,40,60,0.55), 0 0 40px rgba(255,40,60,0.35);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.85s ease 0.35s, transform 0.85s ease 0.35s;
+}
+.king-cinematic-overlay.visible .king-cinematic-text {
+  opacity: 1;
+  transform: translateY(0);
+}
+.king-cinematic-sub {
+  margin-top: 14px;
+  font-size: clamp(11px, 2.6vw, 13px);
+  font-weight: 600;
+  color: rgba(255,210,74,0.78);
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transition: opacity 1.1s ease 0.85s;
+}
+.king-cinematic-overlay.visible .king-cinematic-sub { opacity: 1; }
+@keyframes kingTileGlow {
+  0%   { box-shadow: inset 0 0 0 2px rgba(255,210,74,0), 0 0 0 rgba(255,210,74,0); }
+  30%  { box-shadow: inset 0 0 0 2px rgba(255,210,74,0.95), 0 0 22px rgba(255,210,74,0.65); }
+  100% { box-shadow: inset 0 0 0 2px rgba(255,210,74,0), 0 0 0 rgba(255,210,74,0); }
+}
+.tile.king-glow {
+  animation: kingTileGlow 1.6s ease-out forwards;
+}
+
 .tile .chess-symbol { font-size: clamp(17px, 6.5vw, 28px); }
 .tile .piece-label { display: none; }
 .tile .terrain-pip {
@@ -3714,6 +3762,7 @@ function newGame(seed = null, options = {}) {
     pendingChaosChoice: null,
     chaosBlessing: null,
     chaosBlessingRounds: 0,
+    kingDeclarationSeen: false,
     _monsterSpatial: null,
     _aliveTargets: [],
   };
@@ -3754,6 +3803,7 @@ function saveGameNow() {
       pendingChaosChoice: state.pendingChaosChoice || null,
       chaosBlessing: state.chaosBlessing || null,
       chaosBlessingRounds: state.chaosBlessingRounds || 0,
+      kingDeclarationSeen: !!state.kingDeclarationSeen,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(snap));
   } catch (_) {}
@@ -3790,6 +3840,7 @@ function loadGame() {
       pendingChaosChoice: s.pendingChaosChoice || null,
       chaosBlessing: s.chaosBlessing || null,
       chaosBlessingRounds: s.chaosBlessingRounds || 0,
+      kingDeclarationSeen: !!s.kingDeclarationSeen,
       _monsterSpatial: null,
       _aliveTargets: [],
     };
@@ -3953,7 +4004,7 @@ const EVENTS = {
     options: [
       {
         name: "보스 한 마리 더 (다음 보스 라운드 적용)",
-        desc: "다음 보스 라운드에 보스 +1, 즉시 보너스 코인 +30",
+        desc: "다음 보스 라운드에 보스 +1",
         icon: "👹",
         apply: () => {
           state.gambit_extraBoss = (state.gambit_extraBoss||0) + 1;
@@ -4191,13 +4242,13 @@ const REWARDS = [
   { id: "support",     tier: 2, minRound: 20, name: "지원 기여도 +7%", desc: "연결망 지원 피해 증가", icon: "🔗", add: { supportBoost: 0.07 } },
   { id: "sellRefund15", tier: 2, minRound: 20, name: "판매 환불 +15%", desc: "판매 시 환불률 +15%p", icon: "💰", add: { sellRefund: 0.15 } },
   { id: "goldenAge",   tier: 2, minRound: 20, name: "황금기", desc: "보스 코인 ×2, 일반 몬스터 코인 ×1.5", icon: "🌟", add: { goldenAge: 1 } },
-  { id: "sageHand",    tier: 2, minRound: 20, name: "현자의 손길", desc: "캐릭터 카드 뽑기 +1장 (3→4)", icon: "🃏", add: { drawExtra: 1 } },
+  { id: "sageHand",    tier: 2, minRound: 20, name: "현자의 손길", desc: "캐릭터 카드 뽑기 +1장", icon: "🃏", add: { drawExtra: 1 } },
   { id: "bigNetwork",  tier: 2, minRound: 20, name: "거대 연결망 +35%", desc: "5칸 이상 연결망 위 말은 공격력 +35%", icon: "🌐", add: { bigNetwork: 0.35 } },
   // ===== T3 (R30+) — 카오스 시너지 =====
   { id: "chessMaster", tier: 3, minRound: 30, name: "체스 마스터", desc: "보드에 폰~킹 6종 모두 있으면 모든 말 atk +30%", icon: "♚", add: { chessMaster: 0.30 } },
+  { id: "duo",         tier: 3, minRound: 30, name: "동고동락", desc: "같은 타일에 말 2개 쌓인 타일 atk +50%", icon: "🤝", add: { duo: 0.50 } },
   { id: "singleTribe", tier: 3, minRound: 30, name: "단일 종족 부대", desc: "보드의 모든 말이 같은 등급이면 atk +40%", icon: "⚜", add: { singleTribe: 0.40 } },
   { id: "bossHunter",  tier: 3, minRound: 30, name: "보스 사냥꾼 +40%", desc: "보스에게 가하는 피해 +40%", icon: "⚔", add: { bossDmg: 0.40 } },
-  { id: "trinity",     tier: 3, minRound: 30, name: "삼위일체", desc: "같은 타일에 말 3개 쌓인 타일 atk +50%", icon: "✨", add: { trinity: 0.50 } },
   { id: "knightFury",  tier: 3, minRound: 30, name: "나이트의 광기", desc: "나이트 스턴 확률 ×2, 지속 +50%", icon: "♞", add: { knightStunMult: 1.0, knightStunDur: 0.5 } },
   { id: "queenStorm",  tier: 3, minRound: 30, name: "퀸의 폭풍", desc: "퀸 타겟 +2 (5→7), aps +25%", icon: "♛", add: { queenExtraTargets: 2, queenAps: 0.25 } },
   { id: "haggler",     tier: 3, minRound: 30, name: "흥정의 달인", desc: "카드 판매 환불 100% (정가 환불)", icon: "💎", add: { sellRefund: 0.50 } },
@@ -4907,6 +4958,53 @@ function getUnitStats(x, y) {
     attackType: base.type,
   };
 }
+function triggerKingDeclarationCinematic() {
+  // 게임 일시정지 (전투 중일 때만)
+  const wasPaused = !!state.paused;
+  const wasInBattle = !!state.inBattle;
+  if (wasInBattle) state.paused = true;
+
+  // 오버레이 생성
+  const overlay = document.createElement("div");
+  overlay.className = "king-cinematic-overlay";
+  overlay.innerHTML = '<div class="king-cinematic-text">내가 왕이 될 상인가?</div>'
+                    + '<div class="king-cinematic-sub">(왕의 선언 발동)</div>';
+  document.body.appendChild(overlay);
+  // 다음 프레임에 visible 클래스 추가 (transition 발동)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => overlay.classList.add("visible"));
+  });
+
+  // 약 2.6초 후 페이드아웃 → 게임 재개 + 타일 글로우
+  setTimeout(() => {
+    overlay.classList.remove("visible");
+    setTimeout(() => {
+      overlay.remove();
+      // 게임 재개
+      if (wasInBattle && !wasPaused) {
+        state.paused = false;
+        state.lastTick = performance.now();
+      }
+      // 모든 타일 글로우 (path 제외)
+      try {
+        const els = (typeof tileEls !== "undefined" && tileEls) ? tileEls : [];
+        for (let i = 0; i < els.length; i++) {
+          const el = els[i];
+          if (!el || el.classList.contains("path")) continue;
+          el.classList.remove("king-glow"); // 재발동 대비
+          // 강제 reflow로 애니메이션 재시작 보장
+          void el.offsetWidth;
+          el.classList.add("king-glow");
+          // 1.7초 후 클래스 제거
+          setTimeout(() => el.classList.remove("king-glow"), 1700);
+        }
+      } catch (_) {}
+      // 발동 알림 (작게)
+      try { toast("👑 삼왕강림 — 보드 전체 atk+80% aps+30% crit+12% · 보스 +40%", "success", 3500); } catch (_) {}
+    }, 600); // 페이드 아웃 시간 (CSS transition 0.55s + 여유)
+  }, 2600);
+}
+
 function collectUnits() {
   const list = [];
   for (let y = 0; y < GRID; y++) {
@@ -4915,16 +5013,43 @@ function collectUnits() {
       if (u) list.push(u);
     }
   }
+  // 삼왕강림 감지: 같은 타일에 킹 3개 쌓이면 끝판왕 버프
+  let kingDeclarationActive = false;
+  for (const u of list) {
+    if (u.piece === "king") {
+      const tile = tileAt(u.tileX, u.tileY);
+      if (tile?.piece?.type === "king" && tile.piece.count >= 3) {
+        kingDeclarationActive = true;
+        break;
+      }
+    }
+  }
+  state._kingDeclaration = kingDeclarationActive;
   for (const u of list) if (u.piece === "king") {
-    // 왕의 오라: 4칸 이내 아군 atk +25%, aps +10%, crit +5%
+    // 왕의 오라: 기본 4칸 (삼왕강림 시 6칸)
+    const auraRange = kingDeclarationActive ? 6.0 : 4.0;
     for (const v of list) {
       if (v === u) continue;
       const d = Math.hypot(v.tileX - u.tileX, v.tileY - u.tileY);
-      if (d <= 4.0) {
+      if (d <= auraRange) {
         v.atk *= 1.25;
         v.aps *= 1.10;
         v.crit = Math.min(0.9, v.crit + 0.05);
       }
+    }
+  }
+  // 삼왕강림: 보드 전체 글로벌 버프 (atk +80%, aps +30%, crit +12%)
+  if (kingDeclarationActive) {
+    for (const v of list) {
+      v.atk *= 1.80;
+      v.aps *= 1.30;
+      v.crit = Math.min(0.95, v.crit + 0.12);
+    }
+    // 게임당 1회 시네마틱: 일시정지 + 어두운 오버레이 + 빨간 텍스트 → 화면 회복 + 모든 타일 글로우
+    if (!state.kingDeclarationSeen) {
+      state.kingDeclarationSeen = true;
+      try { saveGame(); } catch (_) {}
+      try { triggerKingDeclarationCinematic(); } catch (e) { console.warn("cinematic err", e); }
     }
   }
   // ===== 시너지 증강 적용 (T3+) =====
@@ -4933,15 +5058,15 @@ function collectUnits() {
     const has6 = types.size === 6;
     const allSame = types.size === 1;
     const cm = state.mods.chessMaster, st = state.mods.singleTribe;
-    const bn = state.mods.bigNetwork, tri = state.mods.trinity;
-    if (cm || st || bn || tri) {
+    const bn = state.mods.bigNetwork, duo = state.mods.duo;
+    if (cm || st || bn || duo) {
       ensureNetworks();
       for (const u of list) {
         if (cm && has6) u.atk *= 1 + cm;
         if (st && allSame) u.atk *= 1 + st;
-        if (tri) {
+        if (duo) {
           const tile = tileAt(u.tileX, u.tileY);
-          if (tile.piece && tile.piece.count === 3) u.atk *= 1 + tri;
+          if (tile.piece && tile.piece.count === 2) u.atk *= 1 + duo;
         }
         if (bn) {
           // 가장 큰 연결망 크기 찾기
@@ -5105,8 +5230,7 @@ function startRound() {
   // 균열 이벤트: 보스 추가 (저장된 카운트 적용)
   if (state.gambit_extraBoss && bossTarget > 0) {
     bossTarget += state.gambit_extraBoss;
-    setTimeout(() => toast(`💥 균열 효과: 보스 +${state.gambit_extraBoss} 마리, +${30 * state.gambit_extraBoss} 코인`, "success"), 200);
-    state.coin += 30 * state.gambit_extraBoss;
+    setTimeout(() => toast(`💥 균열 효과: 보스 +${state.gambit_extraBoss} 마리`, "success"), 200);
     state.gambit_extraBoss = 0;
   }
   state.bossesSpawnedThisRound = 0;
@@ -5619,9 +5743,11 @@ function rebuildMonsterSpatial() {
   const alive = [];
   const key = (x, y) => `${x},${y}`;
   for (const m of state.monsters || []) {
-    if (m.dead || m.reachedEnd) continue;
+    // 캐시 무효화: dead/reachedEnd인 몹의 _renderPos는 이번 프레임 무의미
+    if (m.dead || m.reachedEnd) { m._renderPos = null; continue; }
     const p = monsterPos(m);
-    if (!p.spawned) continue;
+    if (!p.spawned) { m._renderPos = null; continue; }
+    m._renderPos = p; // renderMonsters가 동일 프레임에 재계산하지 않고 재사용
     const target = { m, p, cellX: Math.max(0, Math.min(GRID - 1, Math.floor(p.x))), cellY: Math.max(0, Math.min(GRID - 1, Math.floor(p.y))) };
     alive.push(target);
     const k = key(target.cellX, target.cellY);
@@ -5808,6 +5934,10 @@ function performAttack(u, targets) {
       }
       if (state.mods.execDmg && t.m.hp / t.m.maxHP <= 0.30) dmg *= 1 + state.mods.execDmg;
     }
+    // 삼왕강림: 보스 추가 피해 +40%
+    if (state._kingDeclaration && t.m.type === "boss") {
+      dmg *= 1.40;
+    }
     if (!t.m.modifiers?.crystalImmune) t.m.hp -= dmg;
     if ((u.burnChance || 0) > 0 && combatRand() < u.burnChance) {
       const dps = u.atk * (u.burnPower || 0.12);
@@ -5921,9 +6051,11 @@ function canSpawnFx(kind = "normal", important = false) {
     fxSecondCount = 0;
   }
   const mobile = isMobilePerfMode();
-  // 일반 FX 캡과 important FX 캡(더 높지만 무한 아님 — 퀸 다수 시 폭주 방지)
-  const limit = mobile ? 34 : 64;
-  const importantLimit = mobile ? 80 : 140;
+  // 배속에 따라 캡을 축소 (2× → 70%, 3× → 50%) — 단위시간당 attack 횟수가 배속만큼 늘어나기 때문
+  const speed = state?.speed || 1;
+  const speedScale = speed >= 3 ? 0.50 : (speed >= 2 ? 0.70 : 1.0);
+  const limit = Math.floor((mobile ? 34 : 64) * speedScale);
+  const importantLimit = Math.floor((mobile ? 80 : 140) * speedScale);
   if (!important && fxSecondCount >= limit) return false;
   if (important && fxSecondCount >= importantLimit) return false;
   fxSecondCount++;
@@ -6518,10 +6650,11 @@ function renderMonsters() {
       }
       continue;
     }
-    const p = monsterPos(m);
-    if (!p.spawned) {
-      // 아직 스폰 전 — 숨김 유지
-      continue;
+    // _renderPos는 같은 프레임의 rebuildMonsterSpatial에서 세팅됨. 없으면 폴백 계산.
+    let p = m._renderPos;
+    if (!p) {
+      p = monsterPos(m);
+      if (!p.spawned) continue; // 아직 스폰 전 — 숨김 유지
     }
     // 위치를 먼저 세팅 → 그 다음 보이게 (반대 순서면 좌상단에 잠깐 보임)
     m._el.style.left = `${(p.x / GRID) * 100}%`;
@@ -6562,11 +6695,15 @@ function spawnAttackLine(u, targetPos) {
 
   // Queen — 파바바박: 실제 타겟으로 짧고 빠른 핑크 빔
   if (piece === "queen") {
-    const line = document.createElement("div");
-    line.className = "attack-line atk-queen";
-    line.style.cssText = `left:${x1}px;top:${y1}px;width:${len}px;transform:rotate(${ang}deg)`;
-    fxLayer.appendChild(line);
-    setTimeout(() => line.remove(), 180); // 짧게 (초고속 공격 느낌)
+    // 3배속: line은 스킵하고 star만 (DOM 절반)
+    const fastSpeed = (state?.speed || 1) >= 3;
+    if (!fastSpeed) {
+      const line = document.createElement("div");
+      line.className = "attack-line atk-queen";
+      line.style.cssText = `left:${x1}px;top:${y1}px;width:${len}px;transform:rotate(${ang}deg)`;
+      fxLayer.appendChild(line);
+      setTimeout(() => line.remove(), 180);
+    }
     const star = document.createElement("div");
     star.className = "queen-star";
     star.style.cssText = `left:${x2}px;top:${y2}px`;
@@ -6695,7 +6832,10 @@ function spawnHitSpark(pos, big) {
 }
 function spawnDamageText(pos, dmg, crit) {
   if (!canSpawnFx("damage", crit)) return;
-  if (!crit && fxDamageBudget > (isMobilePerfMode() ? 8 : 16)) return;
+  const _spd = state?.speed || 1;
+  const _spdScale = _spd >= 3 ? 0.50 : (_spd >= 2 ? 0.70 : 1.0);
+  const _dmgCap = Math.floor((isMobilePerfMode() ? 8 : 16) * _spdScale);
+  if (!crit && fxDamageBudget > _dmgCap) return;
   fxDamageBudget++;
   const el = document.createElement("div");
   el.className = "dmg-text" + (crit ? " crit" : "");
