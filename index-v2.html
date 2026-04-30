@@ -8609,3 +8609,18 @@ function renderTutStep() {
 }
 function tutorialAdvance() {
   if (!tutState) return;
+  tutState.step++;
+  if (tutState.step >= currentTutSteps().length) { endTutorial(); return; }
+  renderTutStep();
+}
+function tutorialEvent(ev) {
+  if (!tutState) return;
+  const step = currentTutSteps()[tutState.step];
+  if (!step) return;
+  if (step.wait === ev) tutorialAdvance();
+}
+
+init();
+</script>
+</body>
+</html>
